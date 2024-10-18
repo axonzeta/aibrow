@@ -1,6 +1,6 @@
 AiBrow is a browser extension that brings AI to your device. It uses small language models on your machine, making it fast and keeping your data private. With AiBrow, you can complete sentences, improve your writing, rephrase text, or sum up complex information using the latest small LLMs such as Llama 3.2, Phi 3.5, Gemma 2 and Qwen 2.5.
 
-The development API follows the current proposal for the browser [https://github.com/explainers-by-googlers/prompt-api?tab=readme-ov-file#stakeholder-feedback]("Prompt API") in development within [https://developer.chrome.com/docs/ai/built-in](Chrome). It uses [https://github.com/ggerganov/llama.cpp](llama.cpp) and the inference engine and supports the use of grammar schemas and LoRA Adapters.
+The development API follows the current proposal for the browser [Prompt API](https://github.com/explainers-by-googlers/prompt-api?tab=readme-ov-file#stakeholder-feedback) in development within [Chrome](https://developer.chrome.com/docs/ai/built-in). It uses [llama.cpp](https://github.com/ggerganov/llama.cpp) and the inference engine and supports the use of grammar schemas and LoRA Adapters.
 
 The extension works on all Chromium based browsers as well as Firefox.
 
@@ -9,7 +9,7 @@ The extension works on all Chromium based browsers as well as Firefox.
 
 The easiest way is to download through the Chrome Web Store or Mozilla add-on store. If you want to try the latest version, you can also install the developer version of the extension
 
-1. Open the [Releases](releases) page, download the latest zip of the extension and extract it on disk
+1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest zip of the extension and extract it on disk
 2. Open chrome://extensions in a new tab and turn on the developer tools
 3. Click the `Load unpacked` button and locate extracted folder
 4. Try out our demo
