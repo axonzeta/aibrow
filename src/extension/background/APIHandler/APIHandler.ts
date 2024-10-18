@@ -6,6 +6,9 @@ import AILanguageModelHandler from './AILanguageModelHandler'
 import AICoreModelHandler from './AICoreModelHandler'
 import { kPrefGetUseBrowserAI } from '#Shared/API/PrefIPCMessageTypes'
 import { getUseBrowserAI } from '#Shared/Prefs'
+import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
+import System, { NativeInstalledResult } from '../System'
+import { AICapabilities } from '#Shared/API/AI'
 
 class APIHandler {
   /* **************************************************************************/
@@ -35,6 +38,7 @@ class APIHandler {
 
     this.#server
       .addRequestHandler(kPrefGetUseBrowserAI, this.#handleGetUseBrowserAI)
+      .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
   }
 
   /* **************************************************************************/
@@ -43,6 +47,16 @@ class APIHandler {
 
   #handleGetUseBrowserAI = async () => {
     return await getUseBrowserAI()
+  }
+
+  /* **************************************************************************/
+  // MARK: Handlers: Capabilities
+  /* **************************************************************************/
+
+  #handleGetCapabilities = async () => {
+    return {
+      helper: (await System.isNativeInstalled()) === NativeInstalledResult.Responded
+    } as AICapabilities
   }
 }
 

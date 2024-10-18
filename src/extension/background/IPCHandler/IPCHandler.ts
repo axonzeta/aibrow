@@ -1,5 +1,4 @@
 import IPCManagementHandler from './IPCManagementHandler'
-import IPCWebHandler from './IPCWebHandler'
 import IPCPermissionHandler from './IPCPermissionHandler'
 
 class IPCHandler {
@@ -9,7 +8,6 @@ class IPCHandler {
 
   #started = false
   #management: IPCManagementHandler
-  #web: IPCWebHandler
   #permission: IPCPermissionHandler
 
   /* **************************************************************************/
@@ -21,7 +19,6 @@ class IPCHandler {
     this.#started = true
 
     this.#management = new IPCManagementHandler()
-    this.#web = new IPCWebHandler()
     this.#permission = new IPCPermissionHandler()
   }
 }

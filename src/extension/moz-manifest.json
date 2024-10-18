@@ -39,12 +39,6 @@
       "world": "MAIN",
       "run_at": "document_start",
       "all_frames": true
-    },
-    {
-      "matches": ["https://aibrow.ai/*"],
-      "js": ["contentscript-az.js"],
-      "world": "ISOLATED",
-      "run_at": "document_start"
     }
   ],
   "permissions": [

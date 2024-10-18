@@ -27,6 +27,10 @@ export enum AICapabilityPromptType {
 // MARK: Core capabilities
 /* **************************************************************************/
 
+export type AICapabilities = {
+  helper: boolean
+}
+
 export type AIRootCapabilitiesOptions = {
   model?: string
 }

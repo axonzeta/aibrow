@@ -48,10 +48,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
           'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
           'contentscript-main': path.join(srcDir, 'contentscript-main/index.ts'),
           'permission-popup': path.join(srcDir, 'permission-popup/index.ts'),
-          options: path.join(srcDir, 'options/index.ts'),
-          ...browser === 'moz'
-            ? { 'contentscript-az': path.join(srcDir, 'moz-contentscript-az/index.ts') }
-            : undefined
+          options: path.join(srcDir, 'options/index.ts')
         }
         output = {
           filename: '[name].js',

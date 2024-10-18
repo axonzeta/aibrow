@@ -3,6 +3,10 @@ import AIWriterFactory from './AIWriter/AIWriterFactory'
 import AIRewriterFactory from './AIRewriter/AIRewriterFactory'
 import AILanguageModelFactory from './AILanguageModel/AILanguageModelFactory'
 import AICoreModelFactory from './AICoreModel/AICoreModelFactory'
+import IPC from './IPC'
+import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
+import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
+import { AICapabilities } from '#Shared/API/AI'
 
 class AI extends EventTarget {
   /* **************************************************************************/
@@ -50,6 +54,17 @@ class AI extends EventTarget {
   get languageModel () { return this.#languageModel }
 
   get coreModel () { return this.#coreModel }
+
+  /* **************************************************************************/
+  // MARK: Capabilities
+  /* **************************************************************************/
+
+  capabilities = async () => {
+    const capabilities = throwIPCErrorResponse(
+      await IPC.request(kAIGetCapabilities, {})
+    ) as AICapabilities
+    return capabilities
+  }
 }
 
 export default AI

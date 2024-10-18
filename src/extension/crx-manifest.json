@@ -38,10 +38,7 @@
     }
   ],
   "externally_connectable": {
-    "ids": ["*"],
-    "matches": [
-      "https://aibrow.ai/*"
-    ]
+    "ids": ["*"]
   },
   "permissions": [
     "nativeMessaging",
