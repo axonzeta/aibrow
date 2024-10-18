@@ -15,13 +15,18 @@ import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 import { kModelPromptAborted } from '#Shared/Errors'
 import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
 import { nanoid } from 'nanoid'
+import { clamp } from '#Shared/API/Untrusted/UntrustedParser'
+
+type PromptSessionOptions = {
+  modelId: string
+  gpuEngine: AICapabilityGpuEngine | undefined
+  contextSize: number
+  grammar?: any
+}
 
 type PromptSession = {
   sessionIds: string[]
-  options: {
-    modelId: string
-    gpuEngine: AICapabilityGpuEngine | undefined
-  }
+  options: PromptSessionOptions
   model: LlamaModel
   context: LlamaContext
   session: LlamaChatSession
@@ -105,14 +110,17 @@ class PrompterAPIHandler {
       this.#promptRunning = true
       // Extract the options
       const payload = new UntrustedParser(channel.payload)
-      const gpuEngine = payload.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
       const modelId = payload.getAIModelId('modelId')
+      const manifest = await AIModelFileSystem.readModelManifest(modelId)
+
+      const gpuEngine = payload.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
       const sessionId = payload.getNonEmptyString('sessionId', nanoid())
       const prompt = payload.getNonEmptyString('prompt')
-      const topK = payload.getNumber('topK')
-      const temperature = payload.getNumber('temperature')
+      const topK = clamp(payload.getNumber('topK', manifest.config.defaultTopK), 0, manifest.config.maxTopK)
+      const temperature = clamp(payload.getNumber('temperature', manifest.config.defaultTemperature), 0, manifest.config.maxTemperature)
       const grammar = payload.getAny('grammar')
-      const sessionOptions = { gpuEngine, modelId, grammar }
+      const contextSize = clamp(payload.getNumber('contextSize', manifest.tokens.default), 0, manifest.tokens.max)
+      const sessionOptions: PromptSessionOptions = { gpuEngine, modelId, grammar, contextSize }
 
       // Create or re-use the session
       if (deepEqual(this.#promptSession?.options, sessionOptions)) {
@@ -129,7 +137,6 @@ class PrompterAPIHandler {
           options: sessionOptions
         }
 
-        const manifest = await AIModelFileSystem.readModelManifest(modelId)
         const { getLlama, LlamaChatSession } = await importLlama()
         const llama = await getLlama({
           build: 'never',
@@ -144,6 +151,7 @@ class PrompterAPIHandler {
         })
 
         nextPromptSession.context = await nextPromptSession.model.createContext({
+          contextSize,
           lora: manifest.adapter
             ? { adapters: [{ filePath: AIModelFileSystem.getAssetPath(manifest.adapter) }] }
             : undefined

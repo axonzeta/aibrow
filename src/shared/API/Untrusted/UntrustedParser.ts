@@ -30,6 +30,10 @@ export function getAny (val: any, defaultVal?: any): any {
   return val ?? defaultVal
 }
 
+export function clamp (val: number, min: number, max: number) {
+  return Math.min(Math.max(val, min), max)
+}
+
 /* **************************************************************************/
 // MARK: AI types
 /* **************************************************************************/

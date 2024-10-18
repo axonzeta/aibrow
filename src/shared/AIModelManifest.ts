@@ -36,6 +36,7 @@ export type AIModelManifest = {
   licenseUrl: string
   tokens: {
     max: number
+    default: number
     method: AIModelTokenCountMethod[] | AIModelTokenCountMethod
   }
   prompts?: {
