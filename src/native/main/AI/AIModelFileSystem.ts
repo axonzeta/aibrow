@@ -21,7 +21,7 @@ class AIModelFileSystem {
    * @returns the path to the local model
    */
   getModelRepoPath (modelId: string) {
-    return path.join(Paths.models, sanitizeFilename(modelId))
+    return path.join(Paths.models, sanitizeFilename(modelId.replaceAll('/', '--')))
   }
 
   /**
