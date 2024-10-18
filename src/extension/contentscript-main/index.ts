@@ -5,7 +5,10 @@ const browserAI = genericWindow.ai
 const ai = new AI(browserAI)
 
 if (process.env.BROWSER !== 'extlib') {
-  genericWindow.ai = ai
+  if (!genericWindow.ai) {
+    genericWindow.ai = ai
+  }
+  genericWindow.aibrow = ai
 }
 
 export default ai

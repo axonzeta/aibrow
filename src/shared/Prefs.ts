@@ -43,7 +43,7 @@ export async function getDefaultModel () { return getPref(kDefaultModelKey, Conf
 export async function setDefaultModel (modelId: string) { return setPref(kDefaultModelKey, modelId) }
 
 const kDefaultUseBrowserAIKey = `${kPrefKeyPrefix}:useBrowserAI`
-export async function getUseBrowserAI () { return getPref(kDefaultUseBrowserAIKey, true) }
+export async function getUseBrowserAI () { return getPref(kDefaultUseBrowserAIKey, false) }
 export async function setUseBrowserAI (use: boolean) { return setPref(kDefaultUseBrowserAIKey, use) }
 
 const kDefaultModelEngineKey = `${kPrefKeyPrefix}:defaultModelEngine`
