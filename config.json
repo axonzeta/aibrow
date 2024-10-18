@@ -1,0 +1,34 @@
+{
+  "native": {
+    "identifier": "ai.axonzeta.aibrow",
+    "execName": "aibrow",
+    "name": "AiBrow",
+    "safeName": "AiBrow",
+    "description": "AiBrow on-device AI provider",
+    "updateUrl": "https://download.aibrow.ai/releases",
+    "useModelDownloader": true
+  },
+  "extension": {
+    "crxExtensionIds": [
+      "bbkbjiehfkggfkbampigbbakecijicdm"
+    ],
+    "mozExtensionIds": [
+      "{048a4901-3fbf-4fcd-b6cd-adb9c419d3c1}"
+    ],
+    "installHelperUrl": "https://aibrow.ai/install",
+    "installHelperOrigins": ["https://aibrow.ai"],
+    "browserActionUrl": "https://aibrow.ai/extension"
+  },
+  "extensionLibrary": {
+    "name": "aibrow-extension"
+  },
+
+  "defaultAiModel": "gemma-2b-instruct-q4-k-m",
+  "permissionRequiredForDefaultModel": true,
+  "permissionAlwaysAllowedOrigins": ["https://aibrow.ai"],
+
+  "autoDisposeModelTimeout": 300000,
+  "autoShutdownNativeClientTimeout": 300000,
+
+  "updateCheckInterval": 21600000
+}

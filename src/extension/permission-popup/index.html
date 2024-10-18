@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AiBrow device AI</title>
+  </head>
+  <body>
+    <div class="heading">
+      <span id="origin"></span> wants to
+    </div>
+    <div class="request">
+      <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"><path d="M480-80q-33 0-56.5-23.5T400-160h160q0 33-23.5 56.5T480-80ZM320-200v-80h320v80H320Zm10-120q-69-41-109.5-110T180-580q0-125 87.5-212.5T480-880q125 0 212.5 87.5T780-580q0 81-40.5 150T630-320H330Zm24-80h252q45-32 69.5-79T700-580q0-92-64-156t-156-64q-92 0-156 64t-64 156q0 54 24.5 101t69.5 79Zm126 0Z"/></svg>
+      <div class="details">
+        <div>Use an AI model to improve your experience</div>
+        <div id="model"></div>
+      </div>
+    </div>
+    <div id="license">
+      By using this model you're agreeing to it's <a id="license-link" target="_blank">license terms</a>.
+    </div>
+    <div class="actions">
+      <button id="action-allow">Allow</button>
+      <button id="action-deny">Deny</button>
+    </div>
+    <div id="action-close">
+      <svg class="icon" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+    </div>
+    <script src="permission-popup.js"></script>
+  </body>
+</html>

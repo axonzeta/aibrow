@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "ESNext",
+    "allowJs": false,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "paths": {
+      "#Extension/*": ["./src/extension/*"],
+      "#Native/*": ["./src/native/*"],
+      "#R/*": ["./src/*"],
+      "#Shared/*": ["./src/shared/*"]
+    }
+  },
+  "include": [
+    "./src/*.ts",
+    "./src/*.tsx"
+  ],
+  "exclude": ["./node_modules"]
+}

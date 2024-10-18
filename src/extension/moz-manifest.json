@@ -1,0 +1,56 @@
+{
+  "name": "AiBrow",
+  "manifest_version": 3,
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{048a4901-3fbf-4fcd-b6cd-adb9c419d3c1}",
+      "strict_min_version": "128.0"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentscript-isolated.js"],
+      "world": "ISOLATED",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentscript-main.js"],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://aibrow.ai/*"],
+      "js": ["contentscript-az.js"],
+      "world": "ISOLATED",
+      "run_at": "document_start"
+    }
+  ],
+  "permissions": [
+    "nativeMessaging",
+    "notifications",
+    "storage",
+    "webNavigation"
+  ]
+}

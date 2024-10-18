@@ -1,0 +1,15 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack --mode=development",
+    "watch": "webpack --watch --mode=development"
+  },
+  "author": "Thomas Beverley<tom@aibrow.ai>",
+  "license": "MPL-2.0",
+  "description": "",
+  "dependencies": {
+    "aibrow-extension": "file:../out/aibrow-extension"
+  }
+}

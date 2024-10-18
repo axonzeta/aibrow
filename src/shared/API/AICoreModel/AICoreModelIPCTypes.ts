@@ -1,0 +1,5 @@
+export const kCoreModelGetCapabilities = 'AI:CoreModel:GetCapabilities'
+export const kCoreModelCreate = 'AI:CoreModel:Create'
+export const kCoreModelDestroy = 'AI:CoreModel:Destroy'
+export const kCoreModelCountTokens = 'AI:CoreModel:CountTokens'
+export const kCoreModelPrompt = 'AI:CoreModel:Prompt'

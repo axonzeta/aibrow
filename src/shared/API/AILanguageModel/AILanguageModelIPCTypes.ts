@@ -1,0 +1,5 @@
+export const kLanguageModelGetCapabilities = 'AI:LanguageModel:GetCapabilities'
+export const kLanguageModelCreate = 'AI:LanguageModel:Create'
+export const kLanguageModelDestroy = 'AI:LanguageModel:Destroy'
+export const kLanguageModelCountTokens = 'AI:LanguageModel:CountTokens'
+export const kLanguageModelPrompt = 'AI:LanguageModel:Prompt'

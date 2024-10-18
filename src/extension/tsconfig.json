@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "ESNext",
+    "allowJs": false,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "paths": {
+      "#R/*": ["./*"],
+      "#Shared/*": ["../shared/*"]
+    }
+  },
+  "include": [
+    "./*/*.ts"
+  ],
+  "exclude": ["../node_modules"]
+}

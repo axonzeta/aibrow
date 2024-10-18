@@ -1,0 +1,73 @@
+import {
+  AILanguageModelInitialPrompt,
+  AILanguageModelInitialPromptRole,
+  AILanguageModelPrompt,
+  AILanguageModelPromptRole
+} from '#Shared/API/AILanguageModel/AILanguageModelTypes'
+import config from '#Shared/Config'
+
+/* **************************************************************************/
+// MARK: Base types
+/* **************************************************************************/
+
+export function getString (val: any, defaultVal?: string | undefined): string | undefined {
+  return typeof val === 'string' ? val : defaultVal
+}
+
+export function getNonEmptyString (val: any, defaultVal?: string | undefined): string | undefined {
+  return typeof val === 'string' && val.length > 0 ? val : defaultVal
+}
+
+export function getNumber (val: any, defaultVal?: number | undefined): number | undefined {
+  return typeof val === 'number' ? val : defaultVal
+}
+
+export function getEnum (val: any, enumType: any, defaultVal?: any): any {
+  return Object.values(enumType).includes(val) ? val : defaultVal
+}
+
+export function getAny (val: any, defaultVal?: any): any {
+  return val ?? defaultVal
+}
+
+/* **************************************************************************/
+// MARK: AI types
+/* **************************************************************************/
+
+export function getAIModelId (modelId: any, defaultVal: string = config.defaultAiModel): string {
+  return getNonEmptyString(modelId, defaultVal) as string
+}
+
+/* **************************************************************************/
+// MARK: AI Language model
+/* **************************************************************************/
+
+export function getAILanguageModelInitialPrompts (prompts: any): AILanguageModelInitialPrompt[] {
+  if (Array.isArray(prompts)) {
+    return prompts.reduce((acc, prompt) => {
+      const content = getNonEmptyString(prompt?.content)
+      const role = getEnum(prompt?.role, AILanguageModelInitialPromptRole)
+      if (content && role) {
+        acc.push({ content, role })
+      }
+      return acc
+    }, [])
+  }
+
+  return []
+}
+
+export function getAILanguageModelPrompts (prompts: any): AILanguageModelPrompt[] {
+  if (Array.isArray(prompts)) {
+    return prompts.reduce((acc, prompt) => {
+      const content = getNonEmptyString(prompt?.content)
+      const role = getEnum(prompt?.role, AILanguageModelPromptRole)
+      if (content && role) {
+        acc.push({ content, role })
+      }
+      return acc
+    }, [])
+  }
+
+  return []
+}

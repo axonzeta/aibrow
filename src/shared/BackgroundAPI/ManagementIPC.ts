@@ -1,0 +1,5 @@
+export const kGetInstalledModels = 'Management:GetInstalledModels'
+export const kUninstallModel = 'Management:UninstallModel'
+export const kUpdateNativeBinary = 'Management:UpdateNativeBinary'
+export const kGetInfo = 'Management:GetInfo'
+export const kGetSupportedGpuEngines = 'Management:GetSupportedGpuEngines'
