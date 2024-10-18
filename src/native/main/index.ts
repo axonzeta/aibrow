@@ -4,6 +4,7 @@ import config from '#Shared/Config'
 import AIModelFileSystem from './AI/AIModelFileSystem'
 import { importLlama } from './Llama'
 import * as Installer from './Installer/Installer'
+import * as Updater from './Installer/Updater'
 import APIHandler from './APIHandler'
 
 /* **************************************************************************/
@@ -77,6 +78,12 @@ async function main () {
       onTextChunk (chunk) { Logger.log(chunk) }
     })
     Logger.log(reply)
+    process.exit(0)
+  } else if (Argv.check) {
+    Logger.log('Starting: check')
+    Logger.logToConsole = true
+    const updateResult = await Updater.update(/* dry */ true)
+    Logger.log(`OK: ${updateResult}`)
     process.exit(0)
   } else {
     Logger.log('Starting: extension')

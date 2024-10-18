@@ -34,9 +34,10 @@ async function verifyUpdate (filepath: string, signature: string) {
 
 /**
  * Checks for update
+ * @param dry=false: if false, just checks for an update, if true, updates
  * @returns true if we updated, false otherwise
  */
-export async function update () {
+export async function update (dry = false) {
   if (!sea.isSea()) {
     return UpdateResult.NoUpdate
   }
@@ -76,6 +77,10 @@ export async function update () {
     if (manifest.version === config.version) {
       Logger.log('Already up to date')
       return UpdateResult.NoUpdate
+    }
+
+    if (dry) {
+      return UpdateResult.Updated
     }
 
     // Fetch the update binary
