@@ -1,6 +1,6 @@
 {
   "name": "aibrow",
-  "version": "1.0.53",
+  "version": "1.0.54",
   "type": "module",
   "scripts": {
     "postinstall": "node ./build/generate_eslint.js && patch-package",
