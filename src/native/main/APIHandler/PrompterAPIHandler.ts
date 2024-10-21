@@ -152,6 +152,7 @@ class PrompterAPIHandler {
 
         nextPromptSession.context = await nextPromptSession.model.createContext({
           contextSize,
+          flashAttention: true,
           lora: manifest.adapter
             ? { adapters: [{ filePath: AIModelFileSystem.getAssetPath(manifest.adapter) }] }
             : undefined
