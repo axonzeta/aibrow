@@ -22,6 +22,7 @@ type PromptSessionOptions = {
   gpuEngine: AICapabilityGpuEngine | undefined
   contextSize: number
   grammar?: any
+  flashAttention: boolean
 }
 
 type PromptSession = {
@@ -116,11 +117,20 @@ class PrompterAPIHandler {
       const gpuEngine = payload.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
       const sessionId = payload.getNonEmptyString('sessionId', nanoid())
       const prompt = payload.getNonEmptyString('prompt')
-      const topK = clamp(payload.getNumber('topK', manifest.config.defaultTopK), 0, manifest.config.maxTopK)
-      const temperature = clamp(payload.getNumber('temperature', manifest.config.defaultTemperature), 0, manifest.config.maxTemperature)
+      const topK = payload.getRange('topK', manifest.config.topK)
+      const topP = payload.getRange('topP', manifest.config.topP)
+      const temperature = payload.getRange('temperature', manifest.config.temperature)
+      const repeatPenalty = payload.getRange('repeatPenalty', manifest.config.repeatPenalty)
+      const flashAttention = payload.getBool('flashAttention', manifest.config.flashAttention)
       const grammar = payload.getAny('grammar')
-      const contextSize = clamp(payload.getNumber('contextSize', manifest.tokens.default), 0, manifest.tokens.max)
-      const sessionOptions: PromptSessionOptions = { gpuEngine, modelId, grammar, contextSize }
+      const contextSize = clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
+      const sessionOptions: PromptSessionOptions = {
+        gpuEngine,
+        modelId,
+        grammar,
+        contextSize,
+        flashAttention
+      }
 
       // Create or re-use the session
       if (deepEqual(this.#promptSession?.options, sessionOptions)) {
@@ -152,7 +162,7 @@ class PrompterAPIHandler {
 
         nextPromptSession.context = await nextPromptSession.model.createContext({
           contextSize,
-          flashAttention: true,
+          flashAttention,
           lora: manifest.adapter
             ? { adapters: [{ filePath: AIModelFileSystem.getAssetPath(manifest.adapter) }] }
             : undefined
@@ -175,6 +185,8 @@ class PrompterAPIHandler {
       const output = await this.#promptSession.session.prompt(prompt, {
         signal: channel.abortSignal,
         topK,
+        topP,
+        repeatPenalty: { penalty: repeatPenalty },
         temperature,
         onTextChunk: (chunk) => {
           channel.emit(chunk)

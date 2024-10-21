@@ -47,14 +47,16 @@ export type AIRewriterCloneOptions = AIRootCloneOptions
 // MARK: Rewriter
 /* **************************************************************************/
 
-export type AIRewriterProps = {
+type RewriterProps = {
   sharedContext?: string
   tone?: AIRewriterTone
   format?: AIRewriterFormat
   length?: AIRewriterLength
-} & AIRootModelProps
+}
 
-export type AIRewriterCreateOptions = AIRootCreateOptions & Partial<AIRewriterProps>
+export type AIRewriterProps = RewriterProps & AIRootModelProps
+
+export type AIRewriterCreateOptions = AIRootCreateOptions & Partial<RewriterProps>
 
 export type AIRewriterData = {
   props: AIRewriterProps

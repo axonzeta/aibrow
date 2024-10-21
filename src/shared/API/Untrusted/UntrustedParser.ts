@@ -26,12 +26,21 @@ export function getEnum (val: any, enumType: any, defaultVal?: any): any {
   return Object.values(enumType).includes(val) ? val : defaultVal
 }
 
+export function getBool (val: any, defaultVal: boolean): boolean {
+  return typeof val === 'boolean' ? val : defaultVal
+}
+
 export function getAny (val: any, defaultVal?: any): any {
   return val ?? defaultVal
 }
 
 export function clamp (val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max)
+}
+
+export function getRange (val: any, range: [number, number, number]) {
+  const [min, max, defaultVal] = range
+  return clamp(getNumber(val, defaultVal), min, max)
 }
 
 /* **************************************************************************/

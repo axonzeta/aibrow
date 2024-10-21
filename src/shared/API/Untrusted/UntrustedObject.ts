@@ -4,7 +4,9 @@ import {
   getNonEmptyString,
   getNumber,
   getEnum,
+  getBool,
   getAny,
+  getRange,
   getAIModelId,
   getAILanguageModelInitialPrompts,
   getAILanguageModelPrompts
@@ -53,8 +55,16 @@ class UntrustedParser {
     return getEnum(this.#get(path), enumType, defaultVal)
   }
 
+  getBool (path: string, defaultVal: boolean): boolean {
+    return getBool(this.#get(path), defaultVal)
+  }
+
   getAny (path: string, defaultVal?: any): any {
     return getAny(this.#get(path), defaultVal)
+  }
+
+  getRange (path: string, range: [number, number, number]) {
+    return getRange(this.#get(path), range)
   }
 
   /* **************************************************************************/

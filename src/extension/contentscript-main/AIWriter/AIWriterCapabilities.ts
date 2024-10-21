@@ -5,29 +5,16 @@ import {
   AIWriterLength,
   AIWriterCapabilitiesData
 } from '#Shared/API/AIWriter/AIWriterTypes'
+import AIRootModelCapabilities from '../AIRootModelCapabilities'
 
-class AIWriterCapabilities {
-  /* **************************************************************************/
-  // MARK: Private
-  /* **************************************************************************/
-
-  #data: AIWriterCapabilitiesData
-
+class AIWriterCapabilities extends AIRootModelCapabilities {
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AIWriterCapabilitiesData) {
-    this.#data = data
+  constructor (data: AIWriterCapabilitiesData) { // eslint-disable-line no-useless-constructor
+    super(data)
   }
-
-  /* **************************************************************************/
-  // MARK: Properties
-  /* **************************************************************************/
-
-  get available () { return this.#data.available }
-
-  get aibrow () { return true }
 
   /* **************************************************************************/
   // MARK: Features
@@ -48,19 +35,6 @@ class AIWriterCapabilities {
   supportsLength = (length: AIWriterLength) => {
     return Object.values(AIWriterLength).includes(length)
       ? this.available
-      : AICapabilityAvailability.No
-  }
-
-  /* **************************************************************************/
-  // MARK: Language
-  /* **************************************************************************/
-
-  supportsInputLanguage = (language: string) => {
-    const supports = this.#data.supportedLanguages
-      ? this.#data.supportedLanguages.includes(language)
-      : true
-    return supports
-      ? AICapabilityAvailability.Readily
       : AICapabilityAvailability.No
   }
 }

@@ -60,13 +60,12 @@ class AIRewriterHandler {
     return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.Rewriter, async (
       manifest,
       payload,
-      { modelId, gpuEngine }
+      props
     ) => {
       return {
         sessionId: nanoid(),
         props: {
-          model: modelId,
-          gpuEngine,
+          ...props,
           sharedContext: payload.getNonEmptyString('sharedContext'),
           tone: payload.getEnum('tone', AIRewriterTone, AIRewriterTone.AsIs),
           format: payload.getEnum('format', AIRewriterFormat, AIRewriterFormat.AsIs),
@@ -88,7 +87,7 @@ class AIRewriterHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      { sessionId, modelId, gpuEngine }
+      options
     ) => {
       const sharedContext = payload.getString('props.sharedContext')
       const tone = payload.getEnum('props.tone', AIRewriterTone, AIRewriterTone.AsIs)
@@ -99,7 +98,7 @@ class AIRewriterHandler {
       const prompt = this.#getPrompt(manifest, tone, format, length, sharedContext, context, input)
 
       await AIPrompter.prompt(
-        { sessionId, modelId, gpuEngine, prompt },
+        { ...options, prompt },
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

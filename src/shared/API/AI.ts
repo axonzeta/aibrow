@@ -2,6 +2,8 @@
 // MARK: Enums
 /* **************************************************************************/
 
+import { AIModelManifestConfigRange } from '#Shared/AIModelManifest'
+
 export enum AICapabilityAvailability {
   Readily = 'readily',
   AfterDownload = 'after-download',
@@ -39,6 +41,12 @@ export type AIRootModelCapabilitiesData = {
   available: AICapabilityAvailability
   gpuEngines: AICapabilityGpuEngine[]
   supportedLanguages?: string[]
+  topK?: AIModelManifestConfigRange
+  temperature?: AIModelManifestConfigRange
+  topP?: AIModelManifestConfigRange
+  repeatPenalty?: AIModelManifestConfigRange
+  flashAttention?: boolean
+  contextSize?: AIModelManifestConfigRange
 }
 
 /* **************************************************************************/
@@ -54,6 +62,14 @@ export type AIRootCloneOptions = {
 /* **************************************************************************/
 
 export type AIRootCreateOptions = {
+  model?: string
+  gpuEngine?: AICapabilityGpuEngine
+  topK?: number
+  topP?: number
+  temperature?: number
+  repeatPenalty?: number
+  flashAttention?: boolean
+  contextSize?: number
   signal?: AbortSignal
   monitor?: (m: EventTarget) => void
 }
@@ -61,6 +77,12 @@ export type AIRootCreateOptions = {
 export type AIRootModelProps = {
   model: string
   gpuEngine: AICapabilityGpuEngine
+  topK: number
+  topP: number
+  temperature: number
+  repeatPenalty: number
+  flashAttention: boolean
+  contextSize: number
 }
 
 export type AIRootModelData = {

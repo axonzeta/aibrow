@@ -10,6 +10,10 @@ export type PromptOptions = {
   gpuEngine?: AICapabilityGpuEngine
   prompt: string
   topK?: number
+  topP?: number
   temperature?: number
+  repeatPenalty?: number
+  flashAttention?: boolean
   grammar?: any
+  contextSize?: number
 }

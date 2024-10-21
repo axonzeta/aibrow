@@ -16,8 +16,9 @@ import {
 import IPC from '../IPC'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
+import AIRootModel from '../AIRootModel'
 
-export class AILanguageModel {
+export class AILanguageModel extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -33,6 +34,7 @@ export class AILanguageModel {
   /* **************************************************************************/
 
   constructor (data: AILanguageModelData, signal?: AbortSignal) {
+    super(data.props)
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#state = data.state
@@ -66,10 +68,6 @@ export class AILanguageModel {
   /* **************************************************************************/
   // MARK: Properties
   /* **************************************************************************/
-
-  get topK () { return this.#props.topK }
-
-  get temperature () { return this.#props.temperature }
 
   get grammar () { return this.#props.grammar }
 

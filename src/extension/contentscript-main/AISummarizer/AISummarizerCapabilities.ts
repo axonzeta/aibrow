@@ -5,29 +5,16 @@ import {
   AISummarizerLength,
   AISummarizerCapabilitiesData
 } from '#Shared/API/AISummarizer/AISummarizerTypes'
+import AIRootModelCapabilities from '../AIRootModelCapabilities'
 
-class AISummarizerCapabilities {
-  /* **************************************************************************/
-  // MARK: Private
-  /* **************************************************************************/
-
-  #data: AISummarizerCapabilitiesData
-
+class AISummarizerCapabilities extends AIRootModelCapabilities {
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AISummarizerCapabilitiesData) {
-    this.#data = data
+  constructor (data: AISummarizerCapabilitiesData) { // eslint-disable-line no-useless-constructor
+    super(data)
   }
-
-  /* **************************************************************************/
-  // MARK: Properties
-  /* **************************************************************************/
-
-  get available () { return this.#data.available }
-
-  get aibrow () { return true }
 
   /* **************************************************************************/
   // MARK: Features
@@ -48,19 +35,6 @@ class AISummarizerCapabilities {
   supportsLength = (length: AISummarizerLength) => {
     return Object.values(AISummarizerLength).includes(length)
       ? this.available
-      : AICapabilityAvailability.No
-  }
-
-  /* **************************************************************************/
-  // MARK: Language
-  /* **************************************************************************/
-
-  supportsInputLanguage = (language: string) => {
-    const supports = this.#data.supportedLanguages
-      ? this.#data.supportedLanguages.includes(language)
-      : true
-    return supports
-      ? AICapabilityAvailability.Readily
       : AICapabilityAvailability.No
   }
 }

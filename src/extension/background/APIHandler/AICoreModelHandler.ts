@@ -43,7 +43,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.CoreModel, (manifest) => manifest.config)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.CoreModel)
   }
 
   /* **************************************************************************/
@@ -54,15 +54,12 @@ class AICoreModelHandler {
     return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.CoreModel, async (
       manifest,
       payload,
-      { modelId, gpuEngine }
+      props
     ) => {
       return {
         sessionId: nanoid(),
         props: {
-          model: modelId,
-          gpuEngine,
-          topK: payload.getNumber('topK', manifest.config.defaultTopK),
-          temperature: payload.getNumber('temperature', manifest.config.defaultTemperature),
+          ...props,
           grammar: payload.getAny('grammar')
         }
       } as AICoreModelData
@@ -81,21 +78,12 @@ class AICoreModelHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      { sessionId, modelId, gpuEngine }
+      options
     ) => {
-      const topK = payload.getNumber('props.topK', manifest.config.defaultTopK)
-      const temperature = payload.getNumber('props.temperature', manifest.config.defaultTemperature)
       const prompt = payload.getString('prompt')
 
       await AIPrompter.prompt(
-        {
-          sessionId,
-          modelId,
-          gpuEngine,
-          prompt,
-          topK,
-          temperature
-        },
+        { ...options, prompt },
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

@@ -5,29 +5,16 @@ import {
   AIRewriterLength,
   AIRewriterCapabilitiesData
 } from '#Shared/API/AIRewriter/AIRewriterTypes'
+import AIRootModelCapabilities from '../AIRootModelCapabilities'
 
-class AIRewriterCapabilities {
-  /* **************************************************************************/
-  // MARK: Private
-  /* **************************************************************************/
-
-  #data: AIRewriterCapabilitiesData
-
+class AIRewriterCapabilities extends AIRootModelCapabilities {
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AIRewriterCapabilitiesData) {
-    this.#data = data
+  constructor (data: AIRewriterCapabilitiesData) { // eslint-disable-line no-useless-constructor
+    super(data)
   }
-
-  /* **************************************************************************/
-  // MARK: Properties
-  /* **************************************************************************/
-
-  get available () { return this.#data.available }
-
-  get aibrow () { return true }
 
   /* **************************************************************************/
   // MARK: Features
@@ -48,19 +35,6 @@ class AIRewriterCapabilities {
   supportsLength = (length: AIRewriterLength) => {
     return Object.values(AIRewriterLength).includes(length)
       ? this.available
-      : AICapabilityAvailability.No
-  }
-
-  /* **************************************************************************/
-  // MARK: Language
-  /* **************************************************************************/
-
-  supportsInputLanguage = (language: string) => {
-    const supports = this.#data.supportedLanguages
-      ? this.#data.supportedLanguages.includes(language)
-      : true
-    return supports
-      ? AICapabilityAvailability.Readily
       : AICapabilityAvailability.No
   }
 }

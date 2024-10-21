@@ -47,14 +47,16 @@ export type AISummarizerCloneOptions = AIRootCloneOptions
 // MARK: Summarizer
 /* **************************************************************************/
 
-export type AISummarizerProps = {
+type SummarizerProps = {
   sharedContext?: string
   type?: AISummarizerType
   format?: AISummarizerFormat
   length?: AISummarizerLength
-} & AIRootModelProps
+}
 
-export type AISummarizerCreateOptions = AIRootCreateOptions & Partial<AISummarizerProps>
+export type AISummarizerProps = SummarizerProps & AIRootModelProps
+
+export type AISummarizerCreateOptions = AIRootCreateOptions & Partial<SummarizerProps>
 
 export type AISummarizerData = {
   props: AISummarizerProps

@@ -46,14 +46,16 @@ export type AIWriterCloneOptions = AIRootCloneOptions
 // MARK: Writer
 /* **************************************************************************/
 
-export type AIWriterProps = {
+type WriterProps = {
   sharedContext?: string
   tone?: AIWriterTone
   format?: AIWriterFormat
   length?: AIWriterLength
-} & AIRootModelProps
+}
 
-export type AIWriterCreateOptions = AIRootCreateOptions & Partial<AIWriterProps>
+export type AIWriterProps = WriterProps & AIRootModelProps
+
+export type AIWriterCreateOptions = AIRootCreateOptions & Partial<WriterProps>
 
 export type AIWriterData = {
   props: AIWriterProps

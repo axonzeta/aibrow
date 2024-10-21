@@ -60,13 +60,12 @@ class AISummarizerHandler {
     return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.Summarizer, async (
       manifest,
       payload,
-      { modelId, gpuEngine }
+      props
     ) => {
       return {
         sessionId: nanoid(),
         props: {
-          model: modelId,
-          gpuEngine,
+          ...props,
           sharedContext: payload.getNonEmptyString('sharedContext'),
           type: payload.getEnum('type', AISummarizerType, AISummarizerType.Tldr),
           format: payload.getEnum('format', AISummarizerFormat, AISummarizerFormat.Markdown),
@@ -88,7 +87,7 @@ class AISummarizerHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      { sessionId, modelId, gpuEngine }
+      options
     ) => {
       const sharedContext = payload.getString('props.sharedContext')
       const type = payload.getEnum('props.type', AISummarizerType, AISummarizerType.Tldr)
@@ -99,7 +98,7 @@ class AISummarizerHandler {
       const prompt = this.#getPrompt(manifest, type, format, length, sharedContext, context, input)
 
       await AIPrompter.prompt(
-        { sessionId, modelId, gpuEngine, prompt },
+        { ...options, prompt },
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

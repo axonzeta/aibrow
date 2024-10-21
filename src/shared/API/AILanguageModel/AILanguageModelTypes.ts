@@ -28,12 +28,7 @@ export enum AILanguageModelPromptRole {
 
 export type AILanguageModelCapabilitiesOptions = AIRootCapabilitiesOptions
 
-export type AILanguageModelCapabilitiesData = {
-  defaultTopK?: number
-  maxTopK?: number
-  defaultTemperature?: number
-  maxTemperature?: number
-} & AIRootModelCapabilitiesData
+export type AILanguageModelCapabilitiesData = AIRootModelCapabilitiesData
 
 /* **************************************************************************/
 // MARK: Clone
@@ -55,16 +50,17 @@ export type AILanguageModelPrompt = {
   content: string
 }
 
-export type AILanguageModelProps = {
+type LanguageModelProps = {
   systemPrompt: string
   initialPrompts: AILanguageModelInitialPrompt[]
-  topK: number
-  temperature: number
-  maxTokens: number
   grammar: any
-} & AIRootModelProps
+}
 
-export type AILanguageModelCreateOptions = AIRootCreateOptions & Partial<Omit<AILanguageModelProps, 'maxTokens'>>
+export type AILanguageModelProps = {
+  maxTokens: number
+} & LanguageModelProps & AIRootModelProps
+
+export type AILanguageModelCreateOptions = AIRootCreateOptions & Partial<LanguageModelProps>
 
 export type AILanguageModelState = {
   tokensSoFar: number

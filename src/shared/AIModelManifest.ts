@@ -14,11 +14,14 @@ export type AIModelAsset = {
   url: string
 }
 
+export type AIModelManifestConfigRange = [number, number, number]
+
 export type AIModelManifestConfig = {
-  defaultTopK: number
-  maxTopK: number
-  defaultTemperature: number
-  maxTemperature: number
+  topK: AIModelManifestConfigRange
+  topP: AIModelManifestConfigRange
+  temperature: AIModelManifestConfigRange
+  repeatPenalty: AIModelManifestConfigRange
+  flashAttention: boolean
 }
 
 export type AIModelPromptConfig = {

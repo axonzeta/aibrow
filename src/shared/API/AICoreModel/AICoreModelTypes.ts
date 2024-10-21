@@ -13,12 +13,7 @@ import {
 
 export type AICoreModelCapabilitiesOptions = AIRootCapabilitiesOptions
 
-export type AICoreModelCapabilitiesData = {
-  defaultTopK?: number
-  maxTopK?: number
-  defaultTemperature?: number
-  maxTemperature?: number
-} & AIRootModelCapabilitiesData
+export type AICoreModelCapabilitiesData = AIRootModelCapabilitiesData
 
 /* **************************************************************************/
 // MARK: Clone
@@ -30,13 +25,13 @@ export type AICoreModelCloneOptions = AIRootCloneOptions
 // MARK: Core model
 /* **************************************************************************/
 
-export type AICoreModelProps = {
+type CoreModelProps = {
   grammar: any
-  topK: number
-  temperature: number
-} & AIRootModelProps
+}
 
-export type AICoreModelCreateOptions = AIRootCreateOptions & Partial<AICoreModelProps>
+export type AICoreModelProps = CoreModelProps & AIRootModelProps
+
+export type AICoreModelCreateOptions = AIRootCreateOptions & Partial<CoreModelProps>
 
 export type AICoreModelData = {
   props: AICoreModelProps

@@ -8,8 +8,9 @@ import IPC from '../IPC'
 import { kRewriterCreate, kRewriterRewrite } from '#Shared/API/AIRewriter/AIRewriterIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
+import AIRootModel from '../AIRootModel'
 
-class AIRewriter {
+class AIRewriter extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -24,6 +25,7 @@ class AIRewriter {
   /* **************************************************************************/
 
   constructor (data: AIRewriterData, signal?: AbortSignal) {
+    super(data.props)
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal

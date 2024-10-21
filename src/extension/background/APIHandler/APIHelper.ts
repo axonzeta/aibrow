@@ -1,4 +1,4 @@
-import { getAIModelId, getEnum } from '#Shared/API/Untrusted/UntrustedParser'
+import { clamp, getAIModelId, getEnum } from '#Shared/API/Untrusted/UntrustedParser'
 import {
   getDefaultModel,
   getDefaultModelEngine,
@@ -19,13 +19,19 @@ import { NativeInstallHelper, NativeInstallHelperShowReason } from '../NativeIns
 import { kNativeMessagingHostNotFound } from '#Shared/BrowserErrors'
 import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
-import { AICapabilityAvailability, AICapabilityPromptType } from '#Shared/API/AI'
+import {
+  AICapabilityAvailability,
+  AIRootModelCapabilitiesData,
+  AICapabilityPromptType,
+  AIRootModelProps
+} from '#Shared/API/AI'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import PermissionProvider from '../PermissionProvider'
 import AIPrompter from '../AI/AIPrompter'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
 import AIModelManager from '../AI/AIModelManager'
+import { PromptOptions } from '#Shared/NativeAPI/PrompterIPC'
 
 class APIHelper {
   /* **************************************************************************/
@@ -141,7 +147,7 @@ class APIHelper {
     channel: IPCInflightChannel,
     promptType: AICapabilityPromptType,
     configFn?: (manifest: AIModelManifest) => object
-  ) {
+  ): Promise<AIRootModelCapabilitiesData> {
     return await this.captureCommonErrorsForResponse(async () => {
       const modelId = await this.getModelId(channel.payload?.model)
 
@@ -155,7 +161,16 @@ class APIHelper {
           if (available === AICapabilityAvailability.Readily) {
             if (configFn) {
               const manifest = await AIModelFileSystem.readModelManifest(modelId)
-              return { ...configFn(manifest), available: AICapabilityAvailability.Readily }
+              return {
+                ...configFn(manifest),
+                available: AICapabilityAvailability.Readily,
+                topK: manifest.config.topK,
+                topP: manifest.config.topP,
+                temperature: manifest.config.temperature,
+                repeatPenalty: manifest.config.repeatPenalty,
+                flashAttention: manifest.config.flashAttention,
+                contextSize: [1, manifest.tokens.max, manifest.tokens.default]
+              }
             } else {
               return { available }
             }
@@ -183,7 +198,7 @@ class APIHelper {
     postflightFn: (
       manifest: AIModelManifest,
       payload: UntrustedParser,
-      options: { modelId: string, gpuEngine: AICapabilityGpuEngine }
+      props: AIRootModelProps
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
@@ -234,7 +249,16 @@ class APIHelper {
       }
 
       // Return builder
-      return await postflightFn(manifest, payload, { modelId, gpuEngine })
+      return await postflightFn(manifest, payload, {
+        model: modelId,
+        gpuEngine,
+        topK: payload.getRange('topK', manifest.config.topK),
+        topP: payload.getRange('topP', manifest.config.topP),
+        temperature: payload.getRange('temperature', manifest.config.temperature),
+        repeatPenalty: payload.getRange('repeatPenalty', manifest.config.repeatPenalty),
+        flashAttention: payload.getBool('flashAttention', manifest.config.flashAttention),
+        contextSize: clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
+      })
     })
   }
 
@@ -249,7 +273,7 @@ class APIHelper {
     postflightFn: (
       manifest: AIModelManifest,
       payload: UntrustedParser,
-      options: { sessionId: string, modelId: string, gpuEngine: AICapabilityGpuEngine }
+      options: Omit<PromptOptions, 'prompt'>
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
@@ -266,9 +290,18 @@ class APIHelper {
 
     // Get the values
     const manifest = await AIModelFileSystem.readModelManifest(modelId)
-    const sessionId = payload.getNonEmptyString('sessionId')
 
-    return await postflightFn(manifest, payload, { modelId, gpuEngine, sessionId })
+    return await postflightFn(manifest, payload, {
+      modelId,
+      gpuEngine,
+      sessionId: payload.getNonEmptyString('sessionId'),
+      topK: payload.getRange('props.topK', manifest.config.topK),
+      topP: payload.getRange('props.topP', manifest.config.topP),
+      temperature: payload.getRange('props.temperature', manifest.config.temperature),
+      repeatPenalty: payload.getRange('props.repeatPenalty', manifest.config.repeatPenalty),
+      flashAttention: payload.getBool('props.flashAttention', manifest.config.flashAttention),
+      contextSize: clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
+    })
   }
 }
 

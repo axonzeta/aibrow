@@ -8,8 +8,9 @@ import IPC from '../IPC'
 import { kCoreModelCreate, kCoreModelPrompt } from '#Shared/API/AICoreModel/AICoreModelIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
+import AIRootModel from '../AIRootModel'
 
-class AICoreModel {
+class AICoreModel extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -24,6 +25,7 @@ class AICoreModel {
   /* **************************************************************************/
 
   constructor (data: AICoreModelData, signal?: AbortSignal) {
+    super(data.props)
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -55,10 +57,6 @@ class AICoreModel {
   /* **************************************************************************/
   // MARK: Properties
   /* **************************************************************************/
-
-  get topK () { return this.#props.topK }
-
-  get temperature () { return this.#props.temperature }
 
   get grammar () { return this.#props.grammar }
 

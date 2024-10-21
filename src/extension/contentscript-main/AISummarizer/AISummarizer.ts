@@ -8,8 +8,9 @@ import { kSummarizerCreate, kSummarizerSummarize } from '#Shared/API/AISummarize
 import IPC from '../IPC'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
+import AIRootModel from '../AIRootModel'
 
-class AISummarizer {
+class AISummarizer extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -24,6 +25,7 @@ class AISummarizer {
   /* **************************************************************************/
 
   constructor (data: AISummarizerData, signal?: AbortSignal) {
+    super(data.props)
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal

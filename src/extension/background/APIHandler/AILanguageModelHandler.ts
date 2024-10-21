@@ -107,7 +107,7 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.LanguageModel, (manifest) => manifest.config)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.LanguageModel)
   }
 
   /* **************************************************************************/
@@ -118,7 +118,7 @@ class AILanguageModelHandler {
     return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.LanguageModel, async (
       manifest,
       payload,
-      { modelId, gpuEngine }
+      props
     ) => {
       const systemPrompt = payload.getString('systemPrompt')
       const initialPrompts = payload.getAILanguageModelInitialPrompts('initialPrompts')
@@ -130,13 +130,10 @@ class AILanguageModelHandler {
       return {
         sessionId: nanoid(),
         props: {
-          model: modelId,
-          gpuEngine,
+          ...props,
           systemPrompt,
           initialPrompts,
           grammar: payload.getAny('grammar'),
-          topK: payload.getNumber('topK', manifest.config.defaultTopK),
-          temperature: payload.getNumber('temperature', manifest.config.defaultTemperature),
           maxTokens: manifest.tokens.max
         },
         state: {
@@ -178,12 +175,10 @@ class AILanguageModelHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      { sessionId, modelId, gpuEngine }
+      options
     ) => {
       const systemPrompt = payload.getString('props.systemPrompt')
       const initialPrompts = payload.getAILanguageModelInitialPrompts('props.initialPrompts')
-      const topK = payload.getNumber('props.topK', manifest.config.defaultTopK)
-      const temperature = payload.getNumber('props.temperature', manifest.config.defaultTemperature)
       const messages = payload.getAILanguageModelPrompts('messages')
       const prompt = await this.#buildPrompt(manifest, systemPrompt, initialPrompts, messages)
       const grammar = payload.getAny('props.grammar')
@@ -191,12 +186,8 @@ class AILanguageModelHandler {
 
       const reply = (await AIPrompter.prompt(
         {
-          sessionId,
-          modelId,
-          gpuEngine,
+          ...options,
           prompt,
-          topK,
-          temperature,
           grammar
         },
         {

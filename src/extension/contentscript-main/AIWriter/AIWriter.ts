@@ -8,8 +8,9 @@ import IPC from '../IPC'
 import { kWriterCreate, kWriterWrite } from '#Shared/API/AIWriter/AIWriterIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
+import AIRootModel from '../AIRootModel'
 
-class AIWriter {
+class AIWriter extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -24,6 +25,7 @@ class AIWriter {
   /* **************************************************************************/
 
   constructor (data: AIWriterData, signal?: AbortSignal) {
+    super(data.props)
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
