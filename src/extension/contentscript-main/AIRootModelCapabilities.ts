@@ -40,8 +40,6 @@ class AIRootModelCapabilities {
 
   get defaultFlashAttention () { return this.#data.flashAttention ?? null }
 
-  get defaultUseMmap () { return this.#data.useMmap ?? null }
-
   get defaultContextSize () { return this.#data.contextSize?.[2] ?? null }
   get maxContextSize () { return this.#data.contextSize?.[1] ?? null }
 

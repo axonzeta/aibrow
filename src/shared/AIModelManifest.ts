@@ -22,7 +22,6 @@ export type AIModelManifestConfig = {
   temperature: AIModelManifestConfigRange
   repeatPenalty: AIModelManifestConfigRange
   flashAttention: boolean
-  useMmap: boolean
 }
 
 export type AIModelPromptConfig = {

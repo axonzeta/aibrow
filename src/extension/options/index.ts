@@ -28,7 +28,9 @@ import {
   getDefaultModelEngine,
   setModelUpdatePeriod,
   ModelUpdatePeriod,
-  getModelUpdatePeriod
+  getModelUpdatePeriod,
+  getUseMmap,
+  setUseMmap
 } from '#Shared/Prefs'
 import Config from '#Shared/Config'
 import { AICapabilityGpuEngine } from '#Shared/API/AICapability'
@@ -153,6 +155,13 @@ async function renderSettings () {
       $opt.selected = $opt.value === period
     }
   })()
+
+  // Mmap
+  const $useMmapOpt = document.getElementById('opt-use-mmap') as HTMLInputElement
+  $useMmapOpt.addEventListener('change', async () => {
+    await setUseMmap($useMmapOpt.checked)
+  })
+  $useMmapOpt.checked = await getUseMmap()
 }
 
 /* **************************************************************************/

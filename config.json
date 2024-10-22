@@ -16,8 +16,7 @@
       "{048a4901-3fbf-4fcd-b6cd-adb9c419d3c1}"
     ],
     "installHelperUrl": "https://aibrow.ai/install",
-    "installHelperOrigins": ["https://aibrow.ai"],
-    "browserActionUrl": "https://aibrow.ai/extension"
+    "installHelperOrigins": ["https://aibrow.ai"]
   },
   "extensionLibrary": {
     "name": "aibrow-extension"

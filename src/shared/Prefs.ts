@@ -65,3 +65,11 @@ export const ModelUpdateMillis = {
 }
 export async function getModelUpdatePeriod () { return getEnumPref(kModelUpdatePeriodKey, ModelUpdatePeriod, ModelUpdatePeriod.Daily) }
 export async function setModelUpdatePeriod (period: ModelUpdatePeriod) { return setPref(kModelUpdatePeriodKey, period) }
+
+/* **************************************************************************/
+// MARK: Prompting
+/* **************************************************************************/
+
+const kUseMmapKey = `${kPrefKeyPrefix}:useMmap`
+export async function getUseMmap () { return getPref(kUseMmapKey, true) }
+export async function setUseMmap (use: boolean) { return setPref(kUseMmapKey, use) }

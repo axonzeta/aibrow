@@ -31,8 +31,6 @@ class AIRootModel {
 
   get flashAttention () { return this.#props.flashAttention }
 
-  get useMmap () { return this.#props.useMmap }
-
   get contextSize () { return this.#props.contextSize }
 }
 
