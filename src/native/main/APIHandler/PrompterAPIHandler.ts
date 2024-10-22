@@ -115,6 +115,7 @@ class PrompterAPIHandler {
       const modelId = payload.getAIModelId('modelId')
       const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
+      // Extract prompt options
       const gpuEngine = payload.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
       const sessionId = payload.getNonEmptyString('sessionId', nanoid())
       const prompt = payload.getNonEmptyString('prompt')
@@ -123,9 +124,10 @@ class PrompterAPIHandler {
       const temperature = payload.getRange('temperature', manifest.config.temperature)
       const repeatPenalty = payload.getRange('repeatPenalty', manifest.config.repeatPenalty)
       const flashAttention = payload.getBool('flashAttention', manifest.config.flashAttention)
-      const useMmap = payload.getBool('useMmap', manifest.config.useMmap)
       const grammar = payload.getAny('grammar')
+      const useMmap = payload.getBool('useMmap', true)
       const contextSize = clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
+
       const sessionOptions: PromptSessionOptions = {
         gpuEngine,
         modelId,

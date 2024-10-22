@@ -46,7 +46,6 @@ export type AIRootModelCapabilitiesData = {
   topP?: AIModelManifestConfigRange
   repeatPenalty?: AIModelManifestConfigRange
   flashAttention?: boolean
-  useMmap?: boolean
   contextSize?: AIModelManifestConfigRange
 }
 
@@ -70,7 +69,6 @@ export type AIRootCreateOptions = {
   temperature?: number
   repeatPenalty?: number
   flashAttention?: boolean
-  useMmap?: boolean
   contextSize?: number
   signal?: AbortSignal
   monitor?: (m: EventTarget) => void
@@ -84,7 +82,6 @@ export type AIRootModelProps = {
   temperature: number
   repeatPenalty: number
   flashAttention: boolean
-  useMmap: boolean
   contextSize: number
 }
 
