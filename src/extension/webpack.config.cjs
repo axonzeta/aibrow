@@ -67,6 +67,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
             }
           },
           { from: path.join(srcDir, 'permission-popup/index.html'), to: 'permission-popup.html', force: true },
+          { from: path.join(srcDir, 'model-install-popup/index.html'), to: 'model-install-popup.html', force: true },
           { from: path.join(srcDir, 'options/index.html'), to: 'options.html', force: true },
           { from: path.join(srcDir, 'icons'), to: 'icons', force: true }
         ]
