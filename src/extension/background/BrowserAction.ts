@@ -84,9 +84,11 @@ class BrowserAction {
     } else if (this.#permissionRequestTabs.includes(tabId)) {
       await chrome.action.setPopup({ tabId, popup: `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}` })
       await chrome.action.openPopup({ windowId })
+      await chrome.action.setPopup({ tabId, popup: '' })
     } else if (this.#installTask?.running && this.#installTask?.type === AIModelManagerTaskType.Install) {
       await chrome.action.setPopup({ tabId, popup: 'model-install-popup.html' })
       await chrome.action.openPopup({ windowId })
+      await chrome.action.setPopup({ tabId, popup: '' })
     } else {
       const url = chrome.runtime.getURL(chrome.runtime.getManifest().options_page)
       const contexts = await chrome.runtime.getContexts({ contextTypes: [chrome.runtime.ContextType.TAB] })
@@ -154,6 +156,7 @@ class BrowserAction {
       case 'crx':
         // Chrome allows us to open the popup directly
         chrome.action.openPopup({ windowId })
+        await chrome.action.setPopup({ popup: '' })
         break
       case 'moz':
         // Firefox has a flag (extensions.openPopupWithoutUserGesture.enabled) that
@@ -161,7 +164,11 @@ class BrowserAction {
         // firefox 128 it is disabled by default. So we have to try and provide
         // the best experience we can
         try {
-          await chrome.action.openPopup({ windowId })
+          try {
+            await chrome.action.openPopup({ windowId })
+          } finally {
+            await chrome.action.setPopup({ popup: '' })
+          }
         } catch (ex) {
           const win = await chrome.windows.get(windowId)
           await chrome.windows.create({
