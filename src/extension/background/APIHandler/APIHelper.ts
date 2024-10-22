@@ -169,6 +169,7 @@ class APIHelper {
                 temperature: manifest.config.temperature,
                 repeatPenalty: manifest.config.repeatPenalty,
                 flashAttention: manifest.config.flashAttention,
+                useMmap: manifest.config.useMmap,
                 contextSize: [1, manifest.tokens.max, manifest.tokens.default]
               }
             } else {
@@ -257,6 +258,7 @@ class APIHelper {
         temperature: payload.getRange('temperature', manifest.config.temperature),
         repeatPenalty: payload.getRange('repeatPenalty', manifest.config.repeatPenalty),
         flashAttention: payload.getBool('flashAttention', manifest.config.flashAttention),
+        useMmap: payload.getBool('useMmap', manifest.config.useMmap),
         contextSize: clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
       })
     })
@@ -300,6 +302,7 @@ class APIHelper {
       temperature: payload.getRange('props.temperature', manifest.config.temperature),
       repeatPenalty: payload.getRange('props.repeatPenalty', manifest.config.repeatPenalty),
       flashAttention: payload.getBool('props.flashAttention', manifest.config.flashAttention),
+      useMmap: payload.getBool('props.useMmap', manifest.config.useMmap),
       contextSize: clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
     })
   }
