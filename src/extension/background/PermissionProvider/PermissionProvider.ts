@@ -1,5 +1,6 @@
 import {
-  getSiteModelPermission as getSiteModelPermissionPref
+  getSiteModelPermission as getSiteModelPermissionPref,
+  SiteModelPermissionRequest
 } from '#Shared/Permissions/AISitePermissions'
 import { PermissionRequests } from './PermissionRequests'
 import config from '#Shared/Config'
@@ -8,6 +9,7 @@ import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
+import BrowserAction from '../BrowserAction'
 
 class PermissionProvider {
   /* **************************************************************************/
@@ -16,12 +18,6 @@ class PermissionProvider {
 
   #tabListenersBound = false
   #permissionRequests = new PermissionRequests()
-
-  /* **************************************************************************/
-  // MARK: Properties
-  /* **************************************************************************/
-
-  get requests () { return this.#permissionRequests }
 
   /* **************************************************************************/
   // MARK: Permission checks
@@ -122,10 +118,13 @@ class PermissionProvider {
       modelName: manifest.name,
       modelLicenseUrl: manifest.licenseUrl
     }
-    const popupUrl = `permission-popup.html?${new URLSearchParams({ tabId: `${channel.port.sender.tab.id}` }).toString()}`
-    chrome.action.setPopup({ popup: popupUrl, tabId: channel.port.sender.tab.id })
-    chrome.action.setBadgeText({ text: '!', tabId: channel.port.sender.tab.id })
     this.#bindTabListeners()
+
+    await BrowserAction.openPermissionPopup(
+      request.windowId,
+      request.tabId,
+      permission !== false
+    )
 
     if (permission === false) {
       this.#permissionRequests.add(request)
@@ -133,33 +132,30 @@ class PermissionProvider {
     } else {
       return new Promise((resolve, reject) => {
         this.#permissionRequests.add({ ...request, resolve, reject })
-
-        switch (process.env.BROWSER) {
-          case 'crx':
-            // Chrome allows us to open the popup directly
-            chrome.action.openPopup({ windowId: channel.port.sender.tab.windowId })
-            break
-          case 'moz':
-            // Firefox has a flag (extensions.openPopupWithoutUserGesture.enabled) that
-            // allows extensions to open the popup without a user gesture, but as of
-            // firefox 128 it is disabled by default. So we have to try and provide
-            // the best experience we can
-            chrome.action.openPopup({ windowId: channel.port.sender.tab.windowId }).catch(() => {
-              chrome.windows.get(channel.port.sender.tab.windowId, (window) => {
-                chrome.windows.create({
-                  type: 'popup',
-                  url: `permission-popup.html?${new URLSearchParams({ tabId: `${channel.port.sender.tab.id}` }).toString()}`,
-                  width: 448,
-                  height: 220,
-                  left: window.left + window.width - 448,
-                  top: window.top
-                })
-              })
-            })
-            break
-        }
       })
     }
+  }
+
+  /**
+   * Resolves the requests for an origin
+   * @param tabId: the id of the tab to resolve for
+   * @param origin: the origin to resolve for
+   * @param modelId: the id of the model to resolve for
+   * @param permission: the permission to resolve with
+   */
+  resolveForOrigin (tabId: number, origin: string, modelId: string, permission: boolean) {
+    this.#permissionRequests.resolveForOrigin(origin, modelId, permission)
+  }
+
+  /**
+   * Queries the requests
+   * @param tabId: the id of the tab to get requests for
+   * @returns an array of pending requests
+   */
+  getForTab (tabId: number) {
+    return this.#permissionRequests
+      .queryForTab(tabId)
+      .map(({ resolve, reject, ...rest }) => rest as SiteModelPermissionRequest)
   }
 
   /* **************************************************************************/
@@ -168,8 +164,7 @@ class PermissionProvider {
 
   #clearBrowserActionPermissionPopup = (tabId: number) => {
     if (!this.#permissionRequests.hasForTab(tabId)) {
-      chrome.action.setPopup({ popup: '', tabId })
-      chrome.action.setBadgeText({ text: '', tabId })
+      BrowserAction.clearPermissionPopup(tabId)
     }
   }
 

@@ -7,6 +7,7 @@ import {
   getModelUpdatePeriod,
   ModelUpdateMillis
 } from '#Shared/Prefs'
+import BrowserAction from '../BrowserAction'
 
 type Task = () => Promise<any>
 
@@ -117,7 +118,17 @@ class AIModelManager {
     return this.#queueTask(async () => {
       console.log(`Installing model ${modelId}`)
       const manifest = await AIModelDownload.fetchModelManifest(modelId, origin)
-      await this.#installManifest(manifest, progressFn)
+      try {
+        BrowserAction.setInstallProgress(0)
+        await this.#installManifest(manifest, (modelId, loaded, total) => {
+          BrowserAction.setInstallProgress(Math.round((loaded / total) * 100))
+          if (progressFn) {
+            progressFn(modelId, loaded, total)
+          }
+        })
+      } finally {
+        BrowserAction.setInstallProgress(null)
+      }
     })
   }
 

@@ -1,4 +1,5 @@
 import APIHandlerFactory from './APIHandler/APIHandlerFactory'
+import BrowserAction from './BrowserAction'
 import IPCHandler from './IPCHandler/IPCHandler'
 import { NativeInstallHelper } from './NativeInstallHelper'
 import System from './System'
@@ -11,8 +12,9 @@ apiHandlerFactory.start()
 const ipcHandler = new IPCHandler()
 ipcHandler.start()
 
-// Install helpers
+// Components
 NativeInstallHelper.start()
+BrowserAction.start()
 
 // Updates
 System.backgroundCheckForNativeUpdates()

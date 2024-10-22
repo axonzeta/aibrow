@@ -48,6 +48,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
           'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
           'contentscript-main': path.join(srcDir, 'contentscript-main/index.ts'),
           'permission-popup': path.join(srcDir, 'permission-popup/index.ts'),
+          'model-install-popup': path.join(srcDir, 'model-install-popup/index.ts'),
           options: path.join(srcDir, 'options/index.ts')
         }
         output = {

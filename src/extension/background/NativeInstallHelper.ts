@@ -26,10 +26,6 @@ class NativeInstallHelperImpl {
         }
       }
     })
-
-    chrome.action.onClicked.addListener(() => {
-      chrome.tabs.create({ url: Config.extension.installHelperUrl })
-    })
   }
 
   /* **************************************************************************/

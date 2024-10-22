@@ -6,7 +6,7 @@ import './index.less'
 
 function clearPopup (tabId: number) {
   chrome.action.setPopup({ popup: '', tabId })
-  chrome.action.setBadgeText({ text: '', tabId })
+  chrome.action.setBadgeText({ text: null, tabId })
 }
 
 async function main () {
