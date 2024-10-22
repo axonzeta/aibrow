@@ -14,6 +14,7 @@ export type PromptOptions = {
   temperature?: number
   repeatPenalty?: number
   flashAttention?: boolean
+  useMmap?: boolean
   grammar?: any
   contextSize?: number
 }

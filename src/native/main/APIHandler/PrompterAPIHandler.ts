@@ -23,6 +23,7 @@ type PromptSessionOptions = {
   contextSize: number
   grammar?: any
   flashAttention: boolean
+  useMmap: boolean
 }
 
 type PromptSession = {
@@ -122,6 +123,7 @@ class PrompterAPIHandler {
       const temperature = payload.getRange('temperature', manifest.config.temperature)
       const repeatPenalty = payload.getRange('repeatPenalty', manifest.config.repeatPenalty)
       const flashAttention = payload.getBool('flashAttention', manifest.config.flashAttention)
+      const useMmap = payload.getBool('useMmap', manifest.config.useMmap)
       const grammar = payload.getAny('grammar')
       const contextSize = clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
       const sessionOptions: PromptSessionOptions = {
@@ -129,7 +131,8 @@ class PrompterAPIHandler {
         modelId,
         grammar,
         contextSize,
-        flashAttention
+        flashAttention,
+        useMmap
       }
 
       // Create or re-use the session
@@ -157,7 +160,8 @@ class PrompterAPIHandler {
               : gpuEngine
         })
         nextPromptSession.model = await llama.loadModel({
-          modelPath: AIModelFileSystem.getAssetPath(manifest.model)
+          modelPath: AIModelFileSystem.getAssetPath(manifest.model),
+          useMmap
         })
 
         nextPromptSession.context = await nextPromptSession.model.createContext({
