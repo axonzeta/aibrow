@@ -7,19 +7,55 @@ import {
   getModelUpdatePeriod,
   ModelUpdateMillis
 } from '#Shared/Prefs'
-import BrowserAction from '../BrowserAction'
+import { nanoid } from 'nanoid'
+import { EventEmitter } from 'events'
 
-type Task = () => Promise<any>
+export enum TaskType {
+  Install = 'install',
+  Uninstall = 'uninstall',
+  Update = 'update'
+}
+
+type TaskExecutor = (taskId: string) => Promise<any>
+
+type Task = [TaskType, TaskExecutor]
+
+type InflightTask = {
+  id: string
+  type: TaskType
+  progress: number | null
+  state: any
+}
+
+export type InflightTaskProgressEvent = {
+  running: boolean
+  type?: TaskType
+  progress: number | null
+  state: any
+}
 
 type DownloadProgressFn = (modelId: string, loaded: number, total: number) => void
 
-class AIModelManager {
+class AIModelManagerImpl extends EventEmitter {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
   #tasks: Task[] = []
-  #taskInflight = false
+  #taskInflight: InflightTask | undefined
+
+  /* **************************************************************************/
+  // MARK: Properties
+  /* **************************************************************************/
+
+  get inflightTask () {
+    return {
+      running: Boolean(this.#taskInflight),
+      type: this.#taskInflight?.type ?? undefined,
+      progress: this.#taskInflight?.progress ?? null,
+      state: this.#taskInflight?.state ?? null
+    } as InflightTaskProgressEvent
+  }
 
   /* **************************************************************************/
   // MARK: Task queue
@@ -29,15 +65,15 @@ class AIModelManager {
    * Adds a task to the queue and immediately tries to dequeue the next task
    * @param task
    */
-  #queueTask (task: Task): Promise<any> {
+  #queueTask (type: TaskType, task: TaskExecutor): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.#tasks.push(async () => {
+      this.#tasks.push([type, async (taskId: string) => {
         try {
-          resolve(await task())
+          resolve(await task(taskId))
         } catch (ex) {
           reject(ex)
         }
-      })
+      }])
 
       setTimeout(() => {
         this.#dequeueNextTask()
@@ -54,16 +90,64 @@ class AIModelManager {
     if (this.#tasks.length === 0) { return }
 
     try {
-      this.#taskInflight = true
-      const task = this.#tasks.shift()
-      await task()
+      const taskId = nanoid()
+      this.#emitTaskChangedEvent()
+      const [type, taskExec] = this.#tasks.shift()
+      this.#taskInflight = {
+        id: taskId,
+        type,
+        progress: null,
+        state: null
+      }
+      await taskExec(taskId)
     } finally {
-      this.#taskInflight = false
+      this.#taskInflight = undefined
+      this.#emitTaskChangedEvent()
       setTimeout(() => {
         this.#dequeueNextTask()
       }, 1)
     }
   }
+
+  /**
+   * Updates the state of a task
+   * @param taskId: the id of the task
+   * @param state: the current state
+   */
+  #updateTaskState (taskId: string, state: any) {
+    if (this.#taskInflight.id === taskId) {
+      this.#taskInflight.state = state
+      this.#emitTaskChangedEvent()
+    }
+  }
+
+  /**
+   * Updates the progress of a task
+   * @param taskId: the id of the task
+   * @param progress: the new progress
+   */
+  #updateTaskProgress (taskId: string, progress: number | null) {
+    if (this.#taskInflight.id === taskId) {
+      this.#taskInflight.progress = progress
+      this.#emitTaskChangedEvent()
+    }
+  }
+
+  /**
+   * Emits a task changed event
+   */
+  #emitTaskChangedEvent () {
+    this.emit('task-changed', {
+      running: Boolean(this.#taskInflight),
+      type: this.#taskInflight?.type ?? undefined,
+      progress: this.#taskInflight?.progress ?? null,
+      state: this.#taskInflight?.state ?? null
+    } as InflightTaskProgressEvent)
+  }
+
+  /* **************************************************************************/
+  // MARK: Model install lifecycle
+  /* **************************************************************************/
 
   /**
    * Installs a model with a provided manifest
@@ -103,10 +187,6 @@ class AIModelManager {
     await AIModelFileSystem.updateModelStats(manifest.id, { updateTS: Date.now() })
   }
 
-  /* **************************************************************************/
-  // MARK: Model install lifecycle
-  /* **************************************************************************/
-
   /**
    * Downloads and installs a model
    * @param channel: the channel the request came from
@@ -115,20 +195,16 @@ class AIModelManager {
    */
   install (channel: IPCInflightChannel, modelId: string, progressFn?: DownloadProgressFn) {
     const origin = channel.origin
-    return this.#queueTask(async () => {
+    return this.#queueTask(TaskType.Install, async (taskId: string) => {
       console.log(`Installing model ${modelId}`)
       const manifest = await AIModelDownload.fetchModelManifest(modelId, origin)
-      try {
-        BrowserAction.setInstallProgress(0)
-        await this.#installManifest(manifest, (modelId, loaded, total) => {
-          BrowserAction.setInstallProgress(Math.round((loaded / total) * 100))
-          if (progressFn) {
-            progressFn(modelId, loaded, total)
-          }
-        })
-      } finally {
-        BrowserAction.setInstallProgress(null)
-      }
+      this.#updateTaskState(taskId, { id: manifest.id, name: manifest.name })
+      await this.#installManifest(manifest, (modelId, loaded, total) => {
+        this.#updateTaskProgress(taskId, Math.round((loaded / total) * 100))
+        if (progressFn) {
+          progressFn(modelId, loaded, total)
+        }
+      })
     })
   }
 
@@ -137,7 +213,7 @@ class AIModelManager {
    * @param modelId: the id of the model
    */
   uninstall (modelId: string) {
-    return this.#queueTask(async () => {
+    return this.#queueTask(TaskType.Uninstall, async () => {
       console.log(`Uninstalling model ${modelId}`)
       await AIModelFileSystem.removeModelRepo(modelId)
       await AIModelFileSystem.removeUnusedAssets()
@@ -153,7 +229,7 @@ class AIModelManager {
    */
   update (channel: IPCInflightChannel, modelId: string, force = false): Promise<boolean> {
     const origin = channel.origin
-    return this.#queueTask(async (): Promise<boolean> => {
+    return this.#queueTask(TaskType.Update, async (): Promise<boolean> => {
       try {
         console.log(`Updating model ${modelId}`)
 
@@ -191,4 +267,5 @@ class AIModelManager {
   }
 }
 
-export default new AIModelManager()
+export const AIModelManager = new AIModelManagerImpl()
+export default AIModelManager

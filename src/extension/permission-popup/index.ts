@@ -4,11 +4,6 @@ import IPCBackgroundMessager from '#Shared/IPC/IPCBackgroundMessager'
 
 import './index.less'
 
-function clearPopup (tabId: number) {
-  chrome.action.setPopup({ popup: '', tabId })
-  chrome.action.setBadgeText({ text: null, tabId })
-}
-
 async function main () {
   const qs = new URLSearchParams(window.location.search)
   const tabId = parseInt(qs.get('tabId'))
@@ -19,7 +14,6 @@ async function main () {
 
   const requests = await IPCBackgroundMessager.request(kGetPermissionRequests, { tabId }) as SiteModelPermissionRequest[]
   if (!requests.length) {
-    clearPopup(tabId)
     window.close()
     return
   }
@@ -38,20 +32,22 @@ async function main () {
   document.getElementById('action-allow').addEventListener('click', async () => {
     await setSiteModelPermission(request.origin, request.modelId, true)
     IPCBackgroundMessager.send(kResolvePermissionRequest, request)
-    clearPopup(tabId)
     window.close()
   })
   document.getElementById('action-deny').addEventListener('click', async () => {
     await setSiteModelPermission(request.origin, request.modelId, false)
     IPCBackgroundMessager.send(kResolvePermissionRequest, request)
-    clearPopup(tabId)
     window.close()
   })
   document.getElementById('action-close').addEventListener('click', () => {
-    IPCBackgroundMessager.send(kResolvePermissionRequest, request)
-    clearPopup(tabId)
     window.close()
   })
+
+  if (await chrome.tabs.getCurrent()) {
+    await chrome.windows.update(chrome.windows.WINDOW_ID_CURRENT, {
+      height: document.documentElement.scrollHeight + (window.outerHeight - window.innerHeight)
+    })
+  }
 }
 
 main()

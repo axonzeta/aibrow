@@ -1,6 +1,5 @@
 import {
-  getSiteModelPermission as getSiteModelPermissionPref,
-  SiteModelPermissionRequest
+  getSiteModelPermission as getSiteModelPermissionPref
 } from '#Shared/Permissions/AISitePermissions'
 import { PermissionRequests } from './PermissionRequests'
 import config from '#Shared/Config'
@@ -9,7 +8,6 @@ import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
-import BrowserAction from '../BrowserAction'
 
 class PermissionProvider {
   /* **************************************************************************/
@@ -18,6 +16,12 @@ class PermissionProvider {
 
   #tabListenersBound = false
   #permissionRequests = new PermissionRequests()
+
+  /* **************************************************************************/
+  // MARK: Properties
+  /* **************************************************************************/
+
+  get requests () { return this.#permissionRequests }
 
   /* **************************************************************************/
   // MARK: Permission checks
@@ -120,12 +124,6 @@ class PermissionProvider {
     }
     this.#bindTabListeners()
 
-    await BrowserAction.openPermissionPopup(
-      request.windowId,
-      request.tabId,
-      permission !== false
-    )
-
     if (permission === false) {
       this.#permissionRequests.add(request)
       return false
@@ -133,38 +131,6 @@ class PermissionProvider {
       return new Promise((resolve, reject) => {
         this.#permissionRequests.add({ ...request, resolve, reject })
       })
-    }
-  }
-
-  /**
-   * Resolves the requests for an origin
-   * @param tabId: the id of the tab to resolve for
-   * @param origin: the origin to resolve for
-   * @param modelId: the id of the model to resolve for
-   * @param permission: the permission to resolve with
-   */
-  resolveForOrigin (tabId: number, origin: string, modelId: string, permission: boolean) {
-    this.#permissionRequests.resolveForOrigin(origin, modelId, permission)
-  }
-
-  /**
-   * Queries the requests
-   * @param tabId: the id of the tab to get requests for
-   * @returns an array of pending requests
-   */
-  getForTab (tabId: number) {
-    return this.#permissionRequests
-      .queryForTab(tabId)
-      .map(({ resolve, reject, ...rest }) => rest as SiteModelPermissionRequest)
-  }
-
-  /* **************************************************************************/
-  // MARK: Permission handler
-  /* **************************************************************************/
-
-  #clearBrowserActionPermissionPopup = (tabId: number) => {
-    if (!this.#permissionRequests.hasForTab(tabId)) {
-      BrowserAction.clearPermissionPopup(tabId)
     }
   }
 
@@ -198,8 +164,6 @@ class PermissionProvider {
 
   #handleTabReplaced = (addedTabId: number, removedTabId: number) => {
     if (this.#permissionRequests.deleteForTab(removedTabId)) {
-      this.#clearBrowserActionPermissionPopup(removedTabId)
-
       if (!this.#permissionRequests.hasRequests()) {
         this.#unbindTabListeners()
       }
@@ -208,8 +172,6 @@ class PermissionProvider {
 
   #handleTabRemoved = (tabId: number) => {
     if (this.#permissionRequests.deleteForTab(tabId)) {
-      this.#clearBrowserActionPermissionPopup(tabId)
-
       if (!this.#permissionRequests.hasRequests()) {
         this.#unbindTabListeners()
       }
@@ -218,8 +180,6 @@ class PermissionProvider {
 
   #handleBeforeNavigate = (details: chrome.webNavigation.WebNavigationParentedCallbackDetails) => {
     if (this.#permissionRequests.deleteForTabAndFrame(details.tabId, details.frameId)) {
-      this.#clearBrowserActionPermissionPopup(details.tabId)
-
       if (!this.#permissionRequests.hasRequests()) {
         this.#unbindTabListeners()
       }

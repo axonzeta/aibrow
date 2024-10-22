@@ -1,25 +1,51 @@
+import { IPCBackgroundMessager, IPCSendResponseFn } from '#Shared/IPC/IPCBackgroundMessager'
 import {
-  getSiteModelPermission as getSiteModelPermissionPref
-} from '#Shared/Permissions/AISitePermissions'
-import { kGetPermissionRequests, kResolvePermissionRequest } from '#Shared/BackgroundAPI/PermissionIPC'
-import IPCBackgroundMessager from '#Shared/IPC/IPCBackgroundMessager'
-import PermissionProvider from '../PermissionProvider'
+  kGetInstalledModels,
+  kUninstallModel,
+  kUpdateNativeBinary,
+  kGetInfo,
+  kGetSupportedGpuEngines,
+  kGetInflightInstallProgress
+} from '#Shared/BackgroundAPI/ManagementIPC'
+import AIPrompter from '../AI/AIPrompter'
+import { AIModelManager, TaskType as AIModelManagerTaskType } from '../AI/AIModelManager'
+import AIModelFileSystem from '../AI/AIModelFileSystem'
+import System from '../System'
 
 class IPCManagementHandler {
   constructor () {
     IPCBackgroundMessager
-      .addHandler(kGetPermissionRequests, ({ tabId }, sender, sendResponse) => {
-        const requests = PermissionProvider.getForTab(tabId)
-        sendResponse(requests)
+      .addHandler(kGetInstalledModels, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
+        AIModelFileSystem.getInstalledModels(message.stats === true).then((res) => sendResponse(res))
         return true
       })
-      .addHandler(kResolvePermissionRequest, ({ origin, modelId }, sender, sendResponse) => {
-        getSiteModelPermissionPref(origin, modelId).then((permission) => {
-          permission = permission ?? false
-          PermissionProvider.resolveForOrigin(sender?.tab?.id, origin, modelId, permission)
+      .addHandler(kUninstallModel, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
+        AIModelManager.uninstall(message.model).then(() => sendResponse(undefined))
+        return true
+      })
+      .addHandler(kUpdateNativeBinary, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
+        System.checkForNativeUpdates().then((res) => sendResponse(res))
+        return true
+      })
+      .addHandler(kGetInfo, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
+        System.getNativeInfo().then((res) => sendResponse(res))
+        return true
+      })
+      .addHandler(kGetSupportedGpuEngines, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
+        AIPrompter.getSupportedGpuEngines().then((gpuEngines) => sendResponse(gpuEngines))
+        return true
+      })
+      .addHandler(kGetInflightInstallProgress, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
+        const task = AIModelManager.inflightTask
+        if (task.running && task.type === AIModelManagerTaskType.Install) {
+          sendResponse({
+            running: true,
+            progress: task.progress,
+            name: task.state?.name
+          })
+        } else {
           sendResponse(null)
-        })
-
+        }
         return true
       })
   }

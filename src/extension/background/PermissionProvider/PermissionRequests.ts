@@ -1,6 +1,7 @@
+import { EventEmitter } from 'events'
 import { SiteModelPermissionRequest } from '#Shared/Permissions/AISitePermissions'
 
-export class PermissionRequests {
+export class PermissionRequests extends EventEmitter {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -17,6 +18,7 @@ export class PermissionRequests {
    */
   add (request: SiteModelPermissionRequest) {
     this.#requests.push(request)
+    this.emit('changed')
   }
 
   /**
@@ -34,6 +36,9 @@ export class PermissionRequests {
       }
       return true
     })
+    if (didDelete) {
+      this.emit('changed')
+    }
     return didDelete
   }
 
@@ -53,6 +58,9 @@ export class PermissionRequests {
       }
       return true
     })
+    if (didDelete) {
+      this.emit('changed')
+    }
     return didDelete
   }
 
@@ -63,13 +71,19 @@ export class PermissionRequests {
    * @param permission: the permission to resolve with
    */
   resolveForOrigin (origin: string, modelId: string, permission: boolean) {
+    let didResolve = false
     this.#requests = this.#requests.filter((request) => {
       if (request.origin === origin && request.modelId === modelId) {
+        didResolve = true
         request.resolve?.(permission)
         return false
       }
       return true
     })
+
+    if (didResolve) {
+      this.emit('changed')
+    }
   }
 
   /* **************************************************************************/
@@ -92,6 +106,13 @@ export class PermissionRequests {
    */
   hasForTab (tabId: number) {
     return this.#requests.some((request) => request.tabId === tabId)
+  }
+
+  /**
+   * @returns an array of tab ids with permission requests
+   */
+  getTabIdsWithPermissionRequests () {
+    return this.#requests.map((request) => request.tabId)
   }
 
   /**

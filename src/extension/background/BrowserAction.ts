@@ -1,114 +1,182 @@
 import Config from '#Shared/Config'
 import System, { NativeInstalledResult } from './System'
+import {
+  AIModelManager,
+  TaskType as AIModelManagerTaskType,
+  InflightTaskProgressEvent as AIModelManagerProgressEvent
+} from './AI/AIModelManager'
+import PermissionProvider from './PermissionProvider'
 
 class BrowserAction {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
-  #installProgress: number | null = null
+  #installTask: AIModelManagerProgressEvent | undefined
+  #permissionRequestTabs: number[] = []
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
   start () {
-    chrome.action.onClicked.addListener(async () => {
-      if (await System.isNativeInstalled() !== NativeInstalledResult.Responded) {
-        chrome.tabs.create({ url: Config.extension.installHelperUrl })
-      }
-    })
+    AIModelManager.on('task-changed', this.#handleModelTaskChanged)
+    PermissionProvider.requests.on('changed', this.#handlePermissionRequestsChanged)
+    chrome.action.onClicked.addListener(this.#handleBrowserActionClicked)
   }
 
   /* **************************************************************************/
-  // MARK: Installs
+  // MARK: Event handlers
   /* **************************************************************************/
 
-  /**
-   * Sets the install progress
-   * @param progress: the current progress
-   */
-  async setInstallProgress (progress: number | null) {
-    const shouldOpen = progress !== null && this.#installProgress === null
-    this.#installProgress = progress
+  #handleModelTaskChanged = async (task: AIModelManagerProgressEvent) => {
+    const prevTask = this.#installTask
+    this.#installTask = task
 
-    if (progress === null) {
-      await chrome.action.setBadgeText({ text: null })
-      console.log("setpopup null")
-      await chrome.action.setPopup({ popup: '' })
+    // Update the badge
+    await chrome.action.setBadgeText({ text: this.#renderGlobalBadgeText() })
+
+    // Open the install popup
+    const prevOpen = prevTask?.running && prevTask?.type === AIModelManagerTaskType.Install
+    const nextOpen = task.running && task.type === AIModelManagerTaskType.Install
+    if (prevOpen !== nextOpen && nextOpen) {
+      const window = await chrome.windows.getLastFocused()
+      await this.#openPopupWithoutUserInteraction(
+        window.id,
+        'model-install-popup.html',
+        { width: 448, height: 220 }
+      )
+    }
+  }
+
+  #handlePermissionRequestsChanged = async () => {
+    // Update the badges
+    const prevTabIds = this.#permissionRequestTabs
+    const nextTabIds = PermissionProvider.requests.getTabIdsWithPermissionRequests()
+    this.#permissionRequestTabs = nextTabIds
+    for (const tabId of new Set([...prevTabIds, ...nextTabIds])) {
+      await chrome.action.setBadgeText({ tabId, text: this.#renderTabBadgeText(tabId) })
+    }
+
+    // Open the permission popup
+    if (nextTabIds.length) {
+      const addedTabId = nextTabIds.find((tabId) => !prevTabIds.includes(tabId))
+      if (addedTabId) {
+        const tab = await chrome.tabs.get(addedTabId)
+        await this.#openPopupWithoutUserInteraction(
+          tab.windowId,
+          `permission-popup.html?${new URLSearchParams({ tabId: `${addedTabId}` }).toString()}`,
+          { width: 448, height: 200 }
+        )
+      }
+    }
+  }
+
+  /* **************************************************************************/
+  // MARK: UI Event handlers
+  /* **************************************************************************/
+
+  #handleBrowserActionClicked = async (currentTab: chrome.tabs.Tab) => {
+    const { id: tabId, windowId } = currentTab
+
+    if (await System.isNativeInstalled() !== NativeInstalledResult.Responded) {
+      await chrome.tabs.create({ url: Config.extension.installHelperUrl })
+    } else if (this.#permissionRequestTabs.includes(tabId)) {
+      await chrome.action.setPopup({ tabId, popup: `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}` })
+      await chrome.action.openPopup({ windowId })
+    } else if (this.#installTask?.running && this.#installTask?.type === AIModelManagerTaskType.Install) {
+      await chrome.action.setPopup({ tabId, popup: 'model-install-popup.html' })
+      await chrome.action.openPopup({ windowId })
     } else {
-      await chrome.action.setBadgeText({ text: `${progress}%` })
-      console.log("setpopup progress")
-      await chrome.action.setPopup({ popup: 'install-progress-popup.html' })
-
-      if (shouldOpen) {
-        //todo firefox
-        //todo - timing issue here
-        const win = await chrome.windows.getLastFocused()
-        console.log(">>>", win)
-        switch (process.env.BROWSER) {
-          case 'crx':
-            // Chrome allows us to open the popup directly
-            console.log("openPopup")
-            chrome.action.openPopup({ windowId: win.id })//todo
-            break
+      const url = chrome.runtime.getURL(chrome.runtime.getManifest().options_page)
+      const contexts = await chrome.runtime.getContexts({ contextTypes: [chrome.runtime.ContextType.TAB] })
+      let hasOpen = false
+      for (const context of contexts) {
+        if (context.windowId === windowId && context.documentUrl && context.documentUrl.startsWith(url)) {
+          hasOpen = true
+          await chrome.tabs.update(context.tabId, { active: true })
+          break
         }
       }
-    }
-  }
 
-  /* **************************************************************************/
-  // MARK: Permissions
-  /* **************************************************************************/
-
-  /**
-   * Opens the permission popup for a tab
-   * @param windowId: the id of the window
-   * @param tabId: the id of the tab
-   * @param askPermission: true to prompt for permission
-   */
-  async openPermissionPopup (windowId: number, tabId: number, askPermission: boolean) {
-    await chrome.action.setPopup({ tabId, popup: `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}` })
-    await chrome.action.setBadgeText({ tabId, text: '!' })
-
-    if (askPermission) {
-      switch (process.env.BROWSER) {
-        case 'crx':
-          // Chrome allows us to open the popup directly
-          chrome.action.openPopup({ windowId })
-          break
-        case 'moz':
-          // Firefox has a flag (extensions.openPopupWithoutUserGesture.enabled) that
-          // allows extensions to open the popup without a user gesture, but as of
-          // firefox 128 it is disabled by default. So we have to try and provide
-          // the best experience we can
-          chrome.action.openPopup({ windowId }).catch(() => {
-            chrome.windows.get(windowId, (window) => {
-              chrome.windows.create({
-                type: 'popup',
-                url: `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}`,
-                width: 448,
-                height: 220,
-                left: window.left && window.width
-                  ? window.left + window.width - 448
-                  : undefined,
-                top: window.top ?? undefined
-              })
-            })
-          })
-          break
+      if (!hasOpen) {
+        await chrome.tabs.create({ url })
       }
     }
   }
 
+  /* **************************************************************************/
+  // MARK: Rendering
+  /* **************************************************************************/
+
   /**
-   * Clears a permission popup for a tab
-   * @param tabId: the id of the tab
+   * Renders the text for the badge from the current state
+   * @returns the text for the badge
    */
-  async clearPermissionPopup (tabId: number) {
-    console.log("clearPermissionPopup")
-    await chrome.action.setPopup({ tabId, popup: '' })
-    await chrome.action.setBadgeText({ tabId, text: null })
+  #renderGlobalBadgeText () {
+    if (this.#installTask?.running && this.#installTask?.type === AIModelManagerTaskType.Install) {
+      if (this.#installTask.progress === null) {
+        return null
+      } else {
+        return `${this.#installTask.progress}%`
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Renders the badge text for a specific tab
+   * @param tabId: the id of the tab
+   * @return the text for the badge
+   */
+  #renderTabBadgeText (tabId: number) {
+    if (this.#permissionRequestTabs.includes(tabId)) {
+      return '!'
+    }
+
+    return null
+  }
+
+  /* **************************************************************************/
+  // MARK: Popup opening
+  /* **************************************************************************/
+
+  /**
+   * Opens a popup without user interaction
+   * @param windowId: the id of the window to open it on
+   * @param popup: the popup url to open
+   */
+  async #openPopupWithoutUserInteraction (windowId: number, popup: string, size: { width: number, height: number }) {
+    await chrome.action.setPopup({ popup })
+
+    switch (process.env.BROWSER) {
+      case 'crx':
+        // Chrome allows us to open the popup directly
+        chrome.action.openPopup({ windowId })
+        break
+      case 'moz':
+        // Firefox has a flag (extensions.openPopupWithoutUserGesture.enabled) that
+        // allows extensions to open the popup without a user gesture, but as of
+        // firefox 128 it is disabled by default. So we have to try and provide
+        // the best experience we can
+        try {
+          await chrome.action.openPopup({ windowId })
+        } catch (ex) {
+          const win = await chrome.windows.get(windowId)
+          await chrome.windows.create({
+            type: 'popup',
+            url: popup,
+            width: size.width,
+            height: size.height,
+            left: win.left && win.width
+              ? win.left + win.width - size.width
+              : undefined,
+            top: win.top ?? undefined
+          })
+        }
+        break
+    }
   }
 }
 
