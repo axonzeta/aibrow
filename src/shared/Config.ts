@@ -15,7 +15,6 @@ type Config = {
     mozExtensionIds: string[]
     installHelperUrl: string
     installHelperOrigins: string[]
-    browserActionUrl: string
   }
 
   defaultAiModel: string
