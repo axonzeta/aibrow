@@ -160,20 +160,16 @@ class APIHelper {
         (async () => {
           const available = await this.getAIModelAvailability(channel, modelId, promptType)
           if (available === AICapabilityAvailability.Readily) {
-            if (configFn) {
-              const manifest = await AIModelFileSystem.readModelManifest(modelId)
-              return {
-                ...configFn(manifest),
-                available: AICapabilityAvailability.Readily,
-                topK: manifest.config.topK,
-                topP: manifest.config.topP,
-                temperature: manifest.config.temperature,
-                repeatPenalty: manifest.config.repeatPenalty,
-                flashAttention: manifest.config.flashAttention,
-                contextSize: [1, manifest.tokens.max, manifest.tokens.default]
-              }
-            } else {
-              return { available }
+            const manifest = await AIModelFileSystem.readModelManifest(modelId)
+            return {
+              ...configFn ? configFn(manifest) : undefined,
+              available: AICapabilityAvailability.Readily,
+              topK: manifest.config.topK,
+              topP: manifest.config.topP,
+              temperature: manifest.config.temperature,
+              repeatPenalty: manifest.config.repeatPenalty,
+              flashAttention: manifest.config.flashAttention,
+              contextSize: [1, manifest.tokens.max, manifest.tokens.default]
             }
           } else {
             return { available }

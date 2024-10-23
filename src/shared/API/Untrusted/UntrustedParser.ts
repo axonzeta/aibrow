@@ -39,7 +39,7 @@ export function clamp (val: number, min: number, max: number) {
 }
 
 export function getRange (val: any, range: [number, number, number]) {
-  const [min, max, defaultVal] = range
+  const [min, defaultVal, max] = range
   return clamp(getNumber(val, defaultVal), min, max)
 }
 

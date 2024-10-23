@@ -30,9 +30,7 @@ AiBrow embeds itself to the page using the `window.ai` namespace. Check out our 
 4. Logs from the native binary are available in `out/native/aibrow.log`
 
 
-## Demo
+## Examples
 
-1. `cd demo`
-1. `npm run watch`
-2. `http-server . -c-1`
-3. Open http://localhost:8080/out/demo in a browser
+1. `cd examples`
+1. `npm start`

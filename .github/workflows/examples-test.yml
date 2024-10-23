@@ -1,4 +1,4 @@
-name: Test CI
+name: Test Examples CI
 
 on:
   push:
@@ -9,7 +9,9 @@ on:
 
 jobs:
   build:
-
+    defaults:
+      run:
+        working-directory: examples
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,5 +26,6 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+        cache-dependency-path: './examples/package-lock.json'
     - run: npm ci
     - run: npm test

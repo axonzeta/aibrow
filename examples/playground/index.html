@@ -1,0 +1,302 @@
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AiBrow playground</title>
+  </head>
+  <body>
+    <nav class="navbar bg-body-tertiary mb-3">
+      <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">AiBrow playground</span>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <form id="controls">
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Tool</label>
+                  <select name="tool" data-group="create" class="form-control">
+                    <option value="coreModel">Core Model</option>
+                    <option value="languageModel">Language Model</option>
+                    <option value="summarizer">Summarizer</option>
+                    <option value="rewriter">Rewriter</option>
+                    <option value="writer">Writer</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Model</label>
+                  <select name="model" data-group="create" class="form-control">
+                    <option value="">Default</option>
+                    <option value="phi-3-5-mini-instruct-q4-k-m">Phi 3.5 Mini Instruct Q4_K_M</option>
+                    <option value="qwen2-5-1-5b-instruct-q4-k-m">Qwen2.5 1.5b Instruct Q4_K_M</option>
+                    <option value="gemma-2b-instruct-q4-k-m">Gemma 2b Instruct Q4_K_M</option>
+                    <option value="qwen2-5-coder-1-5b-instruct-q4-k-m">Qwen2.5 Coder 1.5B Instruct Q4_K_M</option>
+                    <option value="llama-3-2-1b-instruct-q4-k-m">Llama 3.2 1B Instruct Q4_K_M</option>
+                    <option value="llama-3-2-3b-instruct-q4-k-m">Llama 3.2 3B Instruct Q4_K_M</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Model options -->
+            <div class="mb-3">
+              <button
+                class="btn btn-primary btn-sm"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#model-options"
+              >
+                Model options
+              </button>
+            </div>
+            <div class="collapse py-2" id="model-options">
+              <div class="card card-body mb-3">
+                <div class="row">
+                  <div class="col">
+                    <div class="mb-3" data-form-group="true">
+                      <label class="form-label">GPU Engine</label>
+                      <select name="gpu-engine" data-group="create" class="form-control">
+                        <option value="default">Default</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="mb-3" data-form-group="true">
+                      <label class="form-label">Temperature</label>
+                      <input type="number" name="temperature" data-group="create" min="0" class="form-control" />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="mb-3" data-form-group="true">
+                      <label class="form-label">Top K</label>
+                      <input type="number" name="top-k" data-group="create" min="0" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="mb-3" data-form-group="true">
+                      <label class="form-label">Top P</label>
+                      <input type="number" name="top-p" data-group="create" min="0" class="form-control" />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div class="mb-3" data-form-group="true">
+                      <label class="form-label">Repeat penalty</label>
+                      <input type="number" name="repeat-penalty" data-group="create" min="0" class="form-control" />
+                    </div>
+                  </div>
+                  <div class="col">
+                    <div class="mb-3" data-form-group="true">
+                      <label class="form-label">Context size</label>
+                      <input type="number" name="context-size" data-group="create" min="1" class="form-control" />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <div data-form-group="true">
+                      <input type="checkbox" class="form-check-input" name="flash-attention" data-group="create" checked>
+                      <label class="form-check-label">Flash attention</label>
+                    </div>
+                  </div>
+                  <div class="col">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3" data-form-group="true">
+              <label class="form-label">System prompt</label>
+              <textarea rows="3" name="system-prompt" data-group="create" data-tool="languageModel" class="form-control">Talk like a pirate!</textarea>
+            </div>
+            <div class="mb-3" data-form-group="true">
+              <label class="form-label">Context</label>
+              <textarea rows="3" name="context" data-group="prompt" data-tool="summarizer rewriter writer" class="form-control"></textarea>
+            </div>
+
+            <!-- Summarizer options -->
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Type</label>
+                  <select name="type" data-group="prompt" data-tool="summarizer" class="form-control">
+                    <option value="tl;dr">tl;dr</option>
+                    <option value="key-points">key-points</option>
+                    <option value="teaser">teaser</option>
+                    <option value="headline">headline</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Format</label>
+                  <select name="format" data-group="prompt" data-tool="summarizer" class="form-control">
+                    <option value="plain-text">Plain text</option>
+                    <option value="markdown">Markdown</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Length</label>
+                  <select name="length" data-group="prompt" data-tool="summarizer" class="form-control">
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col"></div>
+            </div>
+
+            <!-- Writer options -->
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Tone</label>
+                  <select name="tone" data-group="prompt" data-tool="writer" class="form-control">
+                    <option value="formal">Formal</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="casual">Casual</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Format</label>
+                  <select name="format" data-group="prompt" data-tool="writer" class="form-control">
+                    <option value="plain-text">Plain text</option>
+                    <option value="markdown">Markdown</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Length</label>
+                  <select name="length" data-group="prompt" data-tool="writer" class="form-control">
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col"></div>
+            </div>
+
+            <!-- Rewriter options -->
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Tone</label>
+                  <select name="tone" data-group="prompt" data-tool="rewriter" class="form-control">
+                    <option value="as-is">As is</option>
+                    <option value="more-formal">More formal</option>
+                    <option value="more-casual">More casual</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Format</label>
+                  <select name="format" data-group="prompt" data-tool="rewriter" class="form-control">
+                    <option value="plain-text">Plain text</option>
+                    <option value="markdown">Markdown</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="mb-3" data-form-group="true">
+                  <label class="form-label">Length</label>
+                  <select name="length" data-group="prompt" data-tool="rewriter" class="form-control">
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col"></div>
+            </div>
+
+            <!-- Input -->
+            <div class="mb-3" data-form-group="true">
+              <label class="form-label">Input</label>
+              <textarea rows="6" name="input" data-group="prompt" class="form-control">Write a story about AI in the browser</textarea>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <button type="button" data-action="submit" class="btn btn-primary">Go</button>
+              <button type="button" data-action="reset" class="btn btn-secondary">Reset</button>
+            </div>
+          </form>
+        </div>
+        <div class="col">
+          <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button
+                id="airesult-tab"
+                class="nav-link"
+                data-bs-toggle="tab"
+                data-bs-target="#airesult-tab-pane"
+                type="button"
+                role="tab"
+              >
+                Output
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button
+                id="logger-tab"
+                class="nav-link active"
+                data-bs-toggle="tab"
+                data-bs-target="#logger-tab-pane"
+                type="button"
+                role="tab"
+              >
+                Logs
+                <span id="logger-tab-count" class="badge bg-secondary"></span>
+              </button>
+            </li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane" id="airesult-tab-pane" role="tabpanel">
+              <div id="airesult">
+              </div>
+            </div>
+            <div class="tab-pane show active p-2" id="logger-tab-pane" role="tabpanel">
+              <div id="logger" style="font-size: 11px">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="model-download-toast" class="toast align-items-center text-white bg-primary border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          <div><span class='fw-bold'>Downloading model</span> <span data-render="model-name"></span></div>
+          <div class="progress mt-3" role="progressbar">
+            <div class="progress-bar" style="width: 0%" data-render="progress"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
