@@ -4,6 +4,10 @@ The development API follows the current proposal for the browser [Prompt API](ht
 
 The extension works on all Chromium based browsers as well as Firefox.
 
+* [Docs](https://docs.aibrow.ai/)
+* [Playground](https://demo.aibrow.ai/playground/)
+
+---
 
 ## How can I try AiBrow?
 
@@ -18,7 +22,7 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 
 ## How can I use AiBrow in my site/extension?
 
-AiBrow embeds itself to the page using the `window.aibrow` namespace. Check out our developer docs on how to get started!
+AiBrow embeds itself to the page using the `window.aibrow` namespace. Check out our [developer docs](https://docs.aibrow.ai/) on how to get started!
 
 ---
 
