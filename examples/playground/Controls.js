@@ -38,7 +38,7 @@ class Controls {
     this.#$resetButton = this.#$root.querySelector('[data-action="reset"]')
 
     this.#$toolField.addEventListener('change', this.#handleToolChanged)
-    this.#showTool(this.getTool())
+    this.showTool(this.getTool())
   }
 
   /* **************************************************************************/
@@ -46,7 +46,7 @@ class Controls {
   /* **************************************************************************/
 
   #handleToolChanged = () => {
-    this.#showTool(this.getTool())
+    this.showTool(this.getTool())
   }
 
   /* **************************************************************************/
@@ -79,7 +79,7 @@ class Controls {
    * Renders the fields for a given tool
    * @param tool: the name of the tool
    */
-  #showTool (tool) {
+  showTool (tool) {
     for (const [type, $form] of Object.entries(this.#$forms.tools)) {
       if (type === tool) {
         $form.classList.remove('d-none')

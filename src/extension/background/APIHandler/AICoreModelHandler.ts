@@ -81,9 +81,14 @@ class AICoreModelHandler {
       options
     ) => {
       const prompt = payload.getString('prompt')
+      const grammar = payload.getAny('props.grammar')
 
       await AIPrompter.prompt(
-        { ...options, prompt },
+        {
+          ...options,
+          prompt,
+          grammar
+        },
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

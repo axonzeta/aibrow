@@ -4,6 +4,7 @@ import AIResult from './AIResult.js'
 import ModelDownload from './ModelDownload.js'
 import Controls from './Controls.js'
 import deepEqual from 'fast-deep-equal'
+import Samples from './Samples.js'
 
 let aiSession
 
@@ -227,3 +228,23 @@ Controls.onResetClicked(async () => {
     log(true)
   })
 })
+
+/* **************************************************************************/
+// MARK: Samples
+/* **************************************************************************/
+
+for (const [key, config] of Object.entries(Samples)) {
+  const $menu = document.querySelector(`[data-action="sample-${key}"]`)
+  $menu.addEventListener('click', async (evt) => {
+    evt.preventDefault()
+
+    AIResult.clear()
+    Controls.getField('tool').value = config.tool
+    Controls.showTool(config.tool)
+    await updateCapabilities()
+
+    for (const [name, value] of Object.entries(config.forms.tool)) {
+      Controls.getField(name, config.tool).value = value
+    }
+  })
+}
