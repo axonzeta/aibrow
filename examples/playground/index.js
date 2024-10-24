@@ -3,14 +3,19 @@ import Logger from './Logger.js'
 import AIResult from './AIResult.js'
 import ModelDownload from './ModelDownload.js'
 import Controls from './Controls.js'
+import deepEqual from 'fast-deep-equal'
 
-let session
+let aiSession
 
 Logger.logTask('Checking for window.ai...', (log) => {
   log(!!window.ai)
 })
 Logger.logTask('Checking for window.aibrow...', (log) => {
   log(!!window.aibrow)
+
+  if (!window.aibrow) {
+    document.getElementById('not-installed').classList.remove('d-none')
+  }
 })
 
 /* **************************************************************************/
@@ -23,14 +28,7 @@ Logger.logTask('Checking for window.aibrow...', (log) => {
 async function updateCapabilities () {
   const tool = Controls.getTool()
 
-  // Create a new session
-  if (session) {
-    await Logger.logTask('Destroying session...', async (log) => {
-      session.destroy()
-      session = undefined
-      log(true)
-    })
-  }
+  AIResult.clear()
 
   // Update the dom with default values and bounds
   if (window.aibrow?.[tool]?.capabilities) {
@@ -39,17 +37,42 @@ async function updateCapabilities () {
       '': 'Default',
       ...capabilities.gpuEngines.reduce((acc, v) => ({ ...acc, [v]: v }), {})
     }, '')
-    Controls.getField('top-k').value = capabilities.defaultTopK ?? 3
-    Controls.getField('top-k').setAttribute('max', capabilities.maxTopK ?? 8)
-    Controls.getField('top-p').value = capabilities.defaultTopP ?? 3
-    Controls.getField('top-p').setAttribute('max', capabilities.maxTopP ?? 8)
-    Controls.getField('temperature').value = capabilities.defaultTemperature ?? 1
-    Controls.getField('temperature').setAttribute('max', capabilities.maxTemperature ?? 1)
-    Controls.getField('repeat-penalty').value = capabilities.defaultRepeatPenalty ?? 1
-    Controls.getField('repeat-penalty').setAttribute('max', capabilities.maxRepeatPenalty ?? 3)
+    const $topK = Controls.getField('top-k')
+    const defaultTopK = capabilities.defaultTopK ?? 3
+    const maxTopK = capabilities.maxTopK ?? 8
+    $topK.value = defaultTopK
+    $topK.setAttribute('max', maxTopK)
+    Controls.setTooltip($topK, `${0} - ${maxTopK}`)
+
+    const $topP = Controls.getField('top-p')
+    const defaultTopP = capabilities.defaultTopP ?? 0.9
+    const maxTopP = capabilities.maxTopP ?? 3
+    $topP.value = defaultTopP
+    $topP.setAttribute('max', maxTopP)
+    Controls.setTooltip($topP, `${0} - ${maxTopP}`)
+
+    const $temperature = Controls.getField('temperature')
+    const defaultTemperature = capabilities.defaultTemperature ?? 0.5
+    const maxTemperature = capabilities.maxTemperature ?? 1
+    $temperature.value = defaultTemperature
+    $temperature.setAttribute('max', maxTemperature)
+    Controls.setTooltip($temperature, `${0} - ${maxTemperature}`)
+
+    const $repeatPenalty = Controls.getField('repeat-penalty')
+    const defaultRepeatPenalty = capabilities.defaultRepeatPenalty ?? 1
+    const maxRepeatPenalty = capabilities.maxRepeatPenalty ?? 3
+    $repeatPenalty.value = defaultRepeatPenalty
+    $repeatPenalty.setAttribute('max', maxRepeatPenalty)
+    Controls.setTooltip($repeatPenalty, `${0} - ${maxRepeatPenalty}`)
+
+    const $contextSize = Controls.getField('context-size')
+    const defaultContextSize = capabilities.defaultContextSize ?? 1024
+    const maxContextSize = capabilities.maxContextSize ?? 2048
+    $contextSize.value = defaultContextSize
+    $contextSize.setAttribute('max', maxContextSize)
+    Controls.setTooltip($contextSize, `${0} - ${maxContextSize}`)
+
     Controls.getField('flash-attention').checked = capabilities.defaultFlashAttention ?? true
-    Controls.getField('context-size').value = capabilities.defaultContextSize ?? 1024
-    Controls.getField('context-size').setAttribute('max', capabilities.maxContextSize ?? 2048)
   }
 }
 Controls.onCapabilitiesChanged(updateCapabilities)
@@ -63,14 +86,56 @@ updateCapabilities()
  * Handles the user clicking submit
  */
 Controls.onSubmitClicked(async () => {
-  const createOpts = Controls.getData('create')
-  const promptOpts = Controls.getData('prompt')
   const tool = Controls.getTool()
+  const modelData = Controls.getData()
+  const toolData = Controls.getData(tool)
+
+  // Build the create & prompt options
+  const createOptions = {
+    ...modelData,
+    model: Controls.getModel()
+  }
+  const promptOptions = {}
+
+  switch (tool) {
+    case 'coreModel': {
+      Controls.clearError(Controls.getField('grammar', tool))
+      if (toolData.grammar) {
+        try {
+          createOptions.grammar = JSON.parse(toolData.grammar)
+        } catch (ex) {
+          Controls.showError(Controls.getField('grammar', tool), 'Invalid JSON')
+          return
+        }
+      }
+      break
+    }
+    case 'languageModel': {
+      createOptions.systemPrompt = toolData.systemPrompt
+      break
+    }
+    case 'summarizer': {
+      createOptions.type = toolData.type
+      createOptions.format = toolData.format
+      createOptions.length = toolData.length
+      promptOptions.context = toolData.context
+      break
+    }
+    case 'rewriter':
+    case 'writer': {
+      createOptions.tone = toolData.tone
+      createOptions.format = toolData.format
+      createOptions.length = toolData.length
+      promptOptions.context = toolData.context
+      break
+    }
+  }
+
   Controls.disable()
 
   try {
     // Add the user message
-    AIResult.addMessage('User', promptOpts.input)
+    AIResult.addMessage('User', toolData.input)
 
     // Check if the model is available
     Logger.logTask('Check model availability...', async (log) => {
@@ -83,17 +148,21 @@ Controls.onSubmitClicked(async () => {
     })
 
     // Create the session
-    if (session) {
+    if (aiSession?.session && deepEqual(aiSession.createOptions, createOptions)) {
       await Logger.logTask('Reusing session...', async (log) => log(true))
     } else {
-      session = await Logger.logTask('Creating session...', async (log) => {
-        log(createOpts)
-        const res = await ModelDownload.createMonitor(async (monitor) => {
-          return await window.ai[tool].create({ ...createOpts, monitor })
+      aiSession?.session?.destroy?.()
+      aiSession = {
+        createOptions,
+        session: await Logger.logTask('Creating session...', async (log) => {
+          log(createOptions)
+          const res = await ModelDownload.createMonitor(async (monitor) => {
+            return await window.ai[tool].create({ ...createOptions, monitor })
+          })
+          log(true)
+          return res
         })
-        log(true)
-        return res
-      })
+      }
     }
 
     // Prompt the model
@@ -103,8 +172,8 @@ Controls.onSubmitClicked(async () => {
       case 'languageModel':
       case 'coreModel': {
         stream = await Logger.logTask('Start streaming...', async (log) => {
-          log(promptOpts)
-          const stream = await session.promptStreaming(promptOpts.input, promptOpts)
+          log(promptOptions)
+          const stream = await aiSession.session.promptStreaming(toolData.input, promptOptions)
           log(true)
           return stream
         })
@@ -112,8 +181,8 @@ Controls.onSubmitClicked(async () => {
       }
       case 'summarizer': {
         stream = await Logger.logTask('Start streaming...', async (log) => {
-          log(promptOpts)
-          const stream = await session.summarizeStreaming(promptOpts.input, promptOpts)
+          log(promptOptions)
+          const stream = await aiSession.session.summarizeStreaming(toolData.input, promptOptions)
           log(true)
           return stream
         })
@@ -121,8 +190,8 @@ Controls.onSubmitClicked(async () => {
       }
       case 'rewriter': {
         stream = await Logger.logTask('Start streaming...', async (log) => {
-          log(promptOpts)
-          const stream = await session.rewriteStreaming(promptOpts.input, promptOpts)
+          log(promptOptions)
+          const stream = await aiSession.session.rewriteStreaming(toolData.input, promptOptions)
           log(true)
           return stream
         })
@@ -130,8 +199,8 @@ Controls.onSubmitClicked(async () => {
       }
       case 'writer': {
         stream = await Logger.logTask('Start streaming...', async (log) => {
-          log(promptOpts)
-          const stream = await session.writeStreaming(promptOpts.input, promptOpts)
+          log(promptOptions)
+          const stream = await aiSession.session.writeStreaming(toolData.input, promptOptions)
           log(true)
           return stream
         })
@@ -151,9 +220,9 @@ Controls.onResetClicked(async () => {
   if (!window.confirm('Are you sure?')) { return }
   AIResult.clear()
   await Logger.logTask('Destroying session...', async (log) => {
-    if (session) {
-      session.destroy()
-      session = undefined
+    if (aiSession.session) {
+      aiSession.session.destroy()
+      aiSession.session = undefined
     }
     log(true)
   })

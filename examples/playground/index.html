@@ -13,15 +13,27 @@
       </div>
     </nav>
 
+    <div class="position-fixed top-0 start-0 end-0 p-3 d-none" style="z-index: 11;" id="not-installed">
+      <div class="alert alert-primary d-flex align-items-center" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+        </svg>
+        <div>
+          AiBrow isn't installed! Please follow the <a href="https://aibrow.ai/install">install instructions</a>
+        </div>
+      </div>
+    </div>
+
     <div class="container">
       <div class="row">
-        <div class="col">
-          <form id="controls">
+        <div class="col" id="controls">
+          <!-- Tool selection -->
+          <form name="model">
             <div class="row">
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Tool</label>
-                  <select name="tool" data-group="create" class="form-control">
+                  <select name="tool" class="form-control">
                     <option value="coreModel">Core Model</option>
                     <option value="languageModel">Language Model</option>
                     <option value="summarizer">Summarizer</option>
@@ -31,9 +43,9 @@
                 </div>
               </div>
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Model</label>
-                  <select name="model" data-group="create" class="form-control">
+                  <select name="model" class="form-control">
                     <option value="">Default</option>
                     <option value="phi-3-5-mini-instruct-q4-k-m">Phi 3.5 Mini Instruct Q4_K_M</option>
                     <option value="qwen2-5-1-5b-instruct-q4-k-m">Qwen2.5 1.5b Instruct Q4_K_M</option>
@@ -61,52 +73,52 @@
               <div class="card card-body mb-3">
                 <div class="row">
                   <div class="col">
-                    <div class="mb-3" data-form-group="true">
+                    <div class="mb-3">
                       <label class="form-label">GPU Engine</label>
-                      <select name="gpu-engine" data-group="create" class="form-control">
+                      <select name="gpu-engine" class="form-control">
                         <option value="default">Default</option>
                       </select>
                     </div>
                   </div>
                   <div class="col">
-                    <div class="mb-3" data-form-group="true">
+                    <div class="mb-3">
                       <label class="form-label">Temperature</label>
-                      <input type="number" name="temperature" data-group="create" min="0" class="form-control" />
+                      <input type="number" name="temperature" min="0" class="form-control" />
                     </div>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <div class="mb-3" data-form-group="true">
+                    <div class="mb-3">
                       <label class="form-label">Top K</label>
-                      <input type="number" name="top-k" data-group="create" min="0" class="form-control" />
+                      <input type="number" name="top-k" min="0" class="form-control" />
                     </div>
                   </div>
                   <div class="col">
-                    <div class="mb-3" data-form-group="true">
+                    <div class="mb-3">
                       <label class="form-label">Top P</label>
-                      <input type="number" name="top-p" data-group="create" min="0" class="form-control" />
+                      <input type="number" name="top-p" min="0" class="form-control" />
                     </div>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <div class="mb-3" data-form-group="true">
+                    <div class="mb-3">
                       <label class="form-label">Repeat penalty</label>
-                      <input type="number" name="repeat-penalty" data-group="create" min="0" class="form-control" />
+                      <input type="number" name="repeat-penalty" min="0" class="form-control" />
                     </div>
                   </div>
                   <div class="col">
-                    <div class="mb-3" data-form-group="true">
+                    <div class="mb-3">
                       <label class="form-label">Context size</label>
-                      <input type="number" name="context-size" data-group="create" min="1" class="form-control" />
+                      <input type="number" name="context-size" min="1" class="form-control" />
                     </div>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col">
-                    <div data-form-group="true">
-                      <input type="checkbox" class="form-check-input" name="flash-attention" data-group="create" checked>
+                    <div>
+                      <input type="checkbox" class="form-check-input" name="flash-attention" checked>
                       <label class="form-check-label">Flash attention</label>
                     </div>
                   </div>
@@ -115,22 +127,43 @@
                 </div>
               </div>
             </div>
+          </form>
 
-            <div class="mb-3" data-form-group="true">
+          <!-- LanguageModel -->
+          <form name="tool-languageModel">
+            <div class="mb-3">
               <label class="form-label">System prompt</label>
-              <textarea rows="3" name="system-prompt" data-group="create" data-tool="languageModel" class="form-control">Talk like a pirate!</textarea>
+              <textarea rows="3" name="system-prompt" class="form-control"></textarea>
             </div>
-            <div class="mb-3" data-form-group="true">
-              <label class="form-label">Context</label>
-              <textarea rows="3" name="context" data-group="prompt" data-tool="summarizer rewriter writer" class="form-control"></textarea>
+            <div class="mb-3">
+              <label class="form-label">Input</label>
+              <textarea rows="6" name="input" class="form-control">Write a story about AI in the browser</textarea>
             </div>
+          </form>
 
-            <!-- Summarizer options -->
+          <!-- CoreModel -->
+          <form name="tool-coreModel">
+            <div class="mb-3">
+              <label class="form-label">Grammar</label>
+              <textarea rows="3" name="grammar" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Input</label>
+              <textarea rows="6" name="input" class="form-control">Write a story about AI in the browser</textarea>
+            </div>
+          </form>
+
+          <!-- Summarizer -->
+          <form name="tool-summarizer">
+            <div class="mb-3">
+              <label class="form-label">Context</label>
+              <textarea rows="3" name="context" class="form-control"></textarea>
+            </div>
             <div class="row">
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Type</label>
-                  <select name="type" data-group="prompt" data-tool="summarizer" class="form-control">
+                  <select name="type" class="form-control">
                     <option value="tl;dr">tl;dr</option>
                     <option value="key-points">key-points</option>
                     <option value="teaser">teaser</option>
@@ -139,9 +172,9 @@
                 </div>
               </div>
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Format</label>
-                  <select name="format" data-group="prompt" data-tool="summarizer" class="form-control">
+                  <select name="format" class="form-control">
                     <option value="plain-text">Plain text</option>
                     <option value="markdown">Markdown</option>
                   </select>
@@ -150,9 +183,9 @@
             </div>
             <div class="row">
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Length</label>
-                  <select name="length" data-group="prompt" data-tool="summarizer" class="form-control">
+                  <select name="length" class="form-control">
                     <option value="short">Short</option>
                     <option value="medium">Medium</option>
                     <option value="long">Long</option>
@@ -161,49 +194,23 @@
               </div>
               <div class="col"></div>
             </div>
+            <div class="mb-3">
+              <label class="form-label">Input</label>
+              <textarea rows="6" name="input" class="form-control">Write a story about AI in the browser</textarea>
+            </div>
+          </form>
 
-            <!-- Writer options -->
-            <div class="row">
-              <div class="col">
-                <div class="mb-3" data-form-group="true">
-                  <label class="form-label">Tone</label>
-                  <select name="tone" data-group="prompt" data-tool="writer" class="form-control">
-                    <option value="formal">Formal</option>
-                    <option value="neutral">Neutral</option>
-                    <option value="casual">Casual</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col">
-                <div class="mb-3" data-form-group="true">
-                  <label class="form-label">Format</label>
-                  <select name="format" data-group="prompt" data-tool="writer" class="form-control">
-                    <option value="plain-text">Plain text</option>
-                    <option value="markdown">Markdown</option>
-                  </select>
-                </div>
-              </div>
+          <!-- Rewriter -->
+          <form name="tool-rewriter">
+            <div class="mb-3">
+              <label class="form-label">Context</label>
+              <textarea rows="3" name="context" class="form-control"></textarea>
             </div>
             <div class="row">
               <div class="col">
-                <div class="mb-3" data-form-group="true">
-                  <label class="form-label">Length</label>
-                  <select name="length" data-group="prompt" data-tool="writer" class="form-control">
-                    <option value="short">Short</option>
-                    <option value="medium">Medium</option>
-                    <option value="long">Long</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col"></div>
-            </div>
-
-            <!-- Rewriter options -->
-            <div class="row">
-              <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Tone</label>
-                  <select name="tone" data-group="prompt" data-tool="rewriter" class="form-control">
+                  <select name="tone" class="form-control">
                     <option value="as-is">As is</option>
                     <option value="more-formal">More formal</option>
                     <option value="more-casual">More casual</option>
@@ -211,9 +218,9 @@
                 </div>
               </div>
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Format</label>
-                  <select name="format" data-group="prompt" data-tool="rewriter" class="form-control">
+                  <select name="format" class="form-control">
                     <option value="plain-text">Plain text</option>
                     <option value="markdown">Markdown</option>
                   </select>
@@ -222,9 +229,9 @@
             </div>
             <div class="row">
               <div class="col">
-                <div class="mb-3" data-form-group="true">
+                <div class="mb-3">
                   <label class="form-label">Length</label>
-                  <select name="length" data-group="prompt" data-tool="rewriter" class="form-control">
+                  <select name="length" class="form-control">
                     <option value="short">Short</option>
                     <option value="medium">Medium</option>
                     <option value="long">Long</option>
@@ -233,18 +240,62 @@
               </div>
               <div class="col"></div>
             </div>
-
-            <!-- Input -->
-            <div class="mb-3" data-form-group="true">
+            <div class="mb-3">
               <label class="form-label">Input</label>
-              <textarea rows="6" name="input" data-group="prompt" class="form-control">Write a story about AI in the browser</textarea>
-            </div>
-
-            <div class="d-flex justify-content-between">
-              <button type="button" data-action="submit" class="btn btn-primary">Go</button>
-              <button type="button" data-action="reset" class="btn btn-secondary">Reset</button>
+              <textarea rows="6" name="input" class="form-control">Write a story about AI in the browser</textarea>
             </div>
           </form>
+
+          <!-- Writer -->
+          <form name="tool-writer">
+            <div class="mb-3">
+              <label class="form-label">Context</label>
+              <textarea rows="3" name="context" class="form-control"></textarea>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="mb-3">
+                  <label class="form-label">Tone</label>
+                  <select name="tone" class="form-control">
+                    <option value="formal">Formal</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="casual">Casual</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col">
+                <div class="mb-3">
+                  <label class="form-label">Format</label>
+                  <select name="format" class="form-control">
+                    <option value="plain-text">Plain text</option>
+                    <option value="markdown">Markdown</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="mb-3">
+                  <label class="form-label">Length</label>
+                  <select name="length" class="form-control">
+                    <option value="short">Short</option>
+                    <option value="medium">Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col"></div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Input</label>
+              <textarea rows="6" name="input" class="form-control">Write a story about AI in the browser</textarea>
+            </div>
+          </form>
+
+          <div class="d-flex justify-content-between">
+            <button type="button" data-action="submit" class="btn btn-primary">Go</button>
+            <button type="button" data-action="reset" class="btn btn-secondary">Reset</button>
+          </div>
         </div>
         <div class="col">
           <ul class="nav nav-tabs" role="tablist">

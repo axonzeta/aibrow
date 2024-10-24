@@ -1,4 +1,5 @@
 import camelCase from 'camelcase'
+import { Tooltip } from 'bootstrap'
 
 class Controls {
   /* **************************************************************************/
@@ -6,11 +7,12 @@ class Controls {
   /* **************************************************************************/
 
   #$root
-  #$tool
-  #$model
-  #$fields
-  #$submit
-  #$reset
+  #$forms
+  #$allFields
+  #$toolField
+  #$modelField
+  #$submitButton
+  #$resetButton
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -18,14 +20,25 @@ class Controls {
 
   constructor () {
     this.#$root = document.getElementById('controls')
-    this.#$model = this.#$root.querySelector('[name="model"]')
-    this.#$tool = this.#$root.querySelector('[name="tool"]')
-    this.#$fields = this.#$root.querySelectorAll('input, button, textarea, select')
-    this.#$submit = this.#$root.querySelector('[data-action="submit"]')
-    this.#$reset = this.#$root.querySelector('[data-action="reset"]')
+    this.#$forms = {
+      model: this.#$root.querySelector('form[name="model"]'),
+      tools: {
+        coreModel: this.#$root.querySelector('form[name="tool-coreModel"]'),
+        languageModel: this.#$root.querySelector('form[name="tool-languageModel"]'),
+        summarizer: this.#$root.querySelector('form[name="tool-summarizer"]'),
+        rewriter: this.#$root.querySelector('form[name="tool-rewriter"]'),
+        writer: this.#$root.querySelector('form[name="tool-writer"]')
+      }
+    }
+    this.#$allFields = this.#$root.querySelectorAll('input, select, textarea')
 
-    this.#$tool.addEventListener('change', this.#handleToolChanged)
-    this.#renderTool(this.getTool())
+    this.#$modelField = this.#$forms.model.querySelector('[name="model"]')
+    this.#$toolField = this.#$forms.model.querySelector('[name="tool"]')
+    this.#$submitButton = this.#$root.querySelector('[data-action="submit"]')
+    this.#$resetButton = this.#$root.querySelector('[data-action="reset"]')
+
+    this.#$toolField.addEventListener('change', this.#handleToolChanged)
+    this.#showTool(this.getTool())
   }
 
   /* **************************************************************************/
@@ -33,7 +46,7 @@ class Controls {
   /* **************************************************************************/
 
   #handleToolChanged = () => {
-    this.#renderTool(this.getTool())
+    this.#showTool(this.getTool())
   }
 
   /* **************************************************************************/
@@ -44,7 +57,7 @@ class Controls {
    * Enables all the controls
    */
   enable () {
-    for (const $el of this.#$fields) {
+    for (const $el of this.#$allFields) {
       $el.removeAttribute('disabled')
     }
   }
@@ -53,7 +66,7 @@ class Controls {
    * Disables all the controls
    */
   disable () {
-    for (const $el of this.#$fields) {
+    for (const $el of this.#$allFields) {
       $el.setAttribute('disabled', 'disabled')
     }
   }
@@ -62,24 +75,16 @@ class Controls {
   // MARK: Tool filtering
   /* **************************************************************************/
 
-  #fieldIsForTool (tool, $el) {
-    if ($el.hasAttribute('data-tool')) {
-      const validTools = $el.getAttribute('data-tool').split(' ')
-      return validTools.includes(tool)
-    }
-    return true
-  }
-
   /**
    * Renders the fields for a given tool
    * @param tool: the name of the tool
    */
-  #renderTool (tool) {
-    for (const $el of this.#$root.querySelectorAll('[data-tool]')) {
-      if (this.#fieldIsForTool(tool, $el)) {
-        $el.closest('[data-form-group="true"]').classList.remove('d-none')
+  #showTool (tool) {
+    for (const [type, $form] of Object.entries(this.#$forms.tools)) {
+      if (type === tool) {
+        $form.classList.remove('d-none')
       } else {
-        $el.closest('[data-form-group="true"]').classList.add('d-none')
+        $form.classList.add('d-none')
       }
     }
   }
@@ -92,7 +97,7 @@ class Controls {
    * @returns the selected tool
    */
   getTool () {
-    return this.#$tool.value
+    return this.#$toolField.value
   }
 
   /**
@@ -104,19 +109,15 @@ class Controls {
 
   /**
    * Serializes the data in the form to json
-   * @param group=undefined: the group of fields to serialize
+   * @param form=undefined: the name of the form or just the model form
    * @returns the form data
    */
-  getData (group = undefined) {
+  getData (form = undefined) {
     const data = {}
-    const tool = this.getTool()
-    for (const $el of this.#$fields) {
+    const $form = form ? this.#$forms.tools[form] : this.#$forms.model
+    for (const $el of $form.querySelectorAll('input, select, textarea')) {
       const name = $el.getAttribute('name')
-      if (
-        name &&
-        this.#fieldIsForTool(tool, $el) &&
-        (group && $el.getAttribute('data-group') === group)
-      ) {
+      if (name) {
         let val = $el.value
         if ($el.tagName === 'INPUT') {
           switch ($el.type) {
@@ -139,10 +140,12 @@ class Controls {
   /**
    * Gets the field
    * @param name: the name of the field
+   * @param form=undefined: the group of fields to search
    * @return the field
    */
-  getField (name) {
-    return this.#$root.querySelector(`[name="${name}"]`)
+  getField (name, form = undefined) {
+    const $form = form ? this.#$forms.tools[form] : this.#$forms.model
+    return $form.querySelector(`[name="${name}"]`)
   }
 
   /**
@@ -172,20 +175,70 @@ class Controls {
   }
 
   /* **************************************************************************/
+  // MARK: Validation
+  /* **************************************************************************/
+
+  /**
+   * Shows an error on a field
+   * @param $field: the field dom element
+   * @param error: the error string
+   */
+  showError ($field, error) {
+    const $formGroup = $field.parentElement
+    for (const $el of $formGroup.querySelectorAll('.invalid-feedback')) {
+      $el.parentElement.removeChild($el)
+    }
+
+    $field.classList.add('is-invalid')
+    const $error = document.createElement('div')
+    $error.className = 'invalid-feedback'
+    $error.innerText = error
+    $formGroup.appendChild($error)
+  }
+
+  /**
+   * Clears an error on a field
+   * @param $field: the field dom element
+   */
+  clearError ($field) {
+    $field.classList.remove('is-invalid')
+    for (const $el of $field.parentElement.querySelectorAll('.invalid-feedback')) {
+      $el.parentElement.removeChild($el)
+    }
+  }
+
+  /* **************************************************************************/
+  // MARK: Helpers
+  /* **************************************************************************/
+
+  /**
+   * Sets a form helper for a field
+   * @param $field: the dom field
+   * @param helper: the helper text
+   */
+  setTooltip ($field, title) {
+    Tooltip.getInstance($field)?.dispose?.()
+
+    if (title) {
+      new Tooltip($field, { title }) // eslint-disable-line no-new
+    }
+  }
+
+  /* **************************************************************************/
   // MARK: Change events
   /* **************************************************************************/
 
   onSubmitClicked (fn) {
-    this.#$submit.addEventListener('click', fn)
+    this.#$submitButton.addEventListener('click', fn)
   }
 
   onResetClicked (fn) {
-    this.#$reset.addEventListener('click', fn)
+    this.#$resetButton.addEventListener('click', fn)
   }
 
   onCapabilitiesChanged (fn) {
-    this.#$tool.addEventListener('change', fn)
-    this.#$model.addEventListener('change', fn)
+    this.#$toolField.addEventListener('change', fn)
+    this.#$modelField.addEventListener('change', fn)
   }
 }
 
