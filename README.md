@@ -7,8 +7,6 @@ The extension works on all Chromium based browsers as well as Firefox.
 * [Docs](https://docs.aibrow.ai/)
 * [Playground](https://demo.aibrow.ai/playground/)
 
----
-
 ## How can I try AiBrow?
 
 The easiest way is to download through the Chrome Web Store or Mozilla add-on store. If you want to try the latest version, you can also install the developer version of the extension
@@ -18,13 +16,9 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 3. Click the `Load unpacked` button and locate extracted folder
 4. [Try out the playground](https://demo.aibrow.ai/playground/)
 
----
-
 ## How can I use AiBrow in my site/extension?
 
 AiBrow embeds itself to the page using the `window.aibrow` namespace. Check out our [developer docs](https://docs.aibrow.ai/) on how to get started!
-
----
 
 ## How can I build AiBrow myself?
 
