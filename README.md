@@ -18,7 +18,7 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 
 ## How can I use AiBrow in my site/extension?
 
-AiBrow embeds itself to the page using the `window.ai` namespace. Check out our developer docs on how to get started!
+AiBrow embeds itself to the page using the `window.aibrow` namespace. Check out our developer docs on how to get started!
 
 ---
 
