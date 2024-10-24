@@ -1,5 +1,4 @@
 const ai = require('aibrow-extension').default
-window.__ai=ai
 
 const $model = document.getElementById('model')
 const $streaming = document.getElementById('streaming')

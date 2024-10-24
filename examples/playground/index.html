@@ -288,12 +288,14 @@
       </div>
     </div>
 
-    <div id="model-download-toast" class="toast align-items-center text-white bg-primary border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body">
-          <div><span class='fw-bold'>Downloading model</span> <span data-render="model-name"></span></div>
-          <div class="progress mt-3" role="progressbar">
-            <div class="progress-bar" style="width: 0%" data-render="progress"></div>
+    <div class="position-fixed bottom-0 start-0 p-3" style="z-index: 11">
+      <div id="model-download-toast" class="toast hide align-items-center text-white bg-primary border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body w-100">
+            <div><span class='fw-bold'>Downloading model</span> <span data-render="model-name"></span></div>
+            <div class="progress mt-3" role="progressbar">
+              <div class="progress-bar" style="width: 0%" data-render="progress"></div>
+            </div>
           </div>
         </div>
       </div>
