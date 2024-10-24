@@ -243,6 +243,12 @@ for (const [key, config] of Object.entries(Samples)) {
     Controls.showTool(config.tool)
     await updateCapabilities()
 
+    if (config.forms.model) {
+      for (const [name, value] of Object.entries(config.forms.model)) {
+        Controls.getField(name).value = value
+      }
+    }
+
     for (const [name, value] of Object.entries(config.forms.tool)) {
       Controls.getField(name, config.tool).value = value
     }

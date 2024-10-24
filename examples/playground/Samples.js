@@ -2,6 +2,9 @@ export default {
   json: {
     tool: 'coreModel',
     forms: {
+      model: {
+        temperature: 0.1
+      },
       tool: {
         grammar: JSON.stringify({
           type: 'object',
