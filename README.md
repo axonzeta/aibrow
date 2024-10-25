@@ -30,7 +30,7 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 
 ### Website
 
-AiBrow embeds itself to the page using the `window.aibrow` namespace (also `window.ai` if it's not already available). Check out our [developer docs](https://docs.aibrow.ai/) on how to get started!
+AiBrow embeds itself into all pages using the `window.aibrow` namespace (also `window.ai` is polyfilled if it's not available natively in the browser). Check out our [developer docs](https://docs.aibrow.ai/) on how to get started!
 
 ```js
 if (window.aibrow) {
