@@ -17,14 +17,16 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest `crx.zip`, then extract it on disk
 2. Open `chrome://extensions` in a new tab and turn on the developer tools
 3. Click the `Load unpacked` button and locate extracted folder
-4. [Try out the playground](https://demo.aibrow.ai/playground/)
+4. [Install the native helper](https://aibrow.ai/install.html)
+5. [Try out the playground](https://demo.aibrow.ai/playground/)
 
 ### Firefox
 
 1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest `moz.zip`, then extract it on disk
 2. Open `about:debugging#/runtime/this-firefox`
 3. Click the `Load temporary Add-on`
-4. [Try out the playground](https://demo.aibrow.ai/playground/)
+4. [Install the native helper](https://aibrow.ai/install.html)
+5. [Try out the playground](https://demo.aibrow.ai/playground/)
 
 ## How can I use the AiBrow API?
 
