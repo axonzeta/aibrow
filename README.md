@@ -11,9 +11,18 @@ The extension works on all Chromium based browsers as well as Firefox.
 
 The easiest way is to download through the Chrome Web Store or Mozilla add-on store. If you want to try the latest version, you can also install the developer version of the extension
 
-1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest zip of the extension and extract it on disk
-2. Open chrome://extensions in a new tab and turn on the developer tools
+### Chrome & Chromium based browsers
+
+1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest `crx.zip`, then extract it on disk
+2. Open `chrome://extensions` in a new tab and turn on the developer tools
 3. Click the `Load unpacked` button and locate extracted folder
+4. [Try out the playground](https://demo.aibrow.ai/playground/)
+
+### Firefox
+
+1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest `moz.zip`, then extract it on disk
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click the `Load temporary Add-on`
 4. [Try out the playground](https://demo.aibrow.ai/playground/)
 
 ## How can I use AiBrow in my site/extension?
