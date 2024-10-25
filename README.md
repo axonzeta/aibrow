@@ -5,6 +5,7 @@ The development API follows the current proposal for the browser [Prompt API](ht
 The extension works on all Chromium based browsers as well as Firefox.
 
 * [Docs](https://docs.aibrow.ai/)
+* [API Reference](https://docs.aibrow.ai/api-reference/aibrow)
 * [Playground](https://demo.aibrow.ai/playground/)
 
 ## How can I try AiBrow?
@@ -25,9 +26,51 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 3. Click the `Load temporary Add-on`
 4. [Try out the playground](https://demo.aibrow.ai/playground/)
 
-## How can I use AiBrow in my site/extension?
+## How can I use the AiBrow API?
 
-AiBrow embeds itself to the page using the `window.aibrow` namespace. Check out our [developer docs](https://docs.aibrow.ai/) on how to get started!
+### Website
+
+AiBrow embeds itself to the page using the `window.aibrow` namespace (also `window.ai` if it's not already available). Check out our [developer docs](https://docs.aibrow.ai/) on how to get started!
+
+```js
+if (window.aibrow) {
+  const { helper } = await window.aibrow.capabilities()
+  if (helper) {
+    const session = await window.aibrow.languageModel.create()
+    const stream = await sess.promptStreaming('Write a poem about AI in the browser')
+    for await (const chunk of stream) {
+      console.log(chunk)
+    }
+  } else {
+    console.log('Aibrow helper not installed')
+  }
+} else {
+  console.log('Aibrow not installed')
+}
+```
+
+### Extension
+
+Install the library using `npm install @aibrow/extension`
+
+```js
+import aibrow from '@aibrow/extension'
+
+const { helper, extension } = await window.aibrow.capabilities()
+if (extension) {
+  if (helper) {
+    const session = await window.aibrow.languageModel.create()
+    const stream = await sess.promptStreaming('Write a poem about AI in the browser')
+    for await (const chunk of stream) {
+      console.log(chunk)
+    }
+  } else {
+    console.log('Aibrow helper not installed')
+  }
+} else {
+  console.log('Aibrow not installed')
+}
+```
 
 ## How can I build AiBrow myself?
 
