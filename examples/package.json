@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "webpack serve --open --mode=development",
+    "watch": "webpack watch --mode=development",
     "test": "npx standard",
     "dev": "webpack --mode=development",
     "prod": "webpack --mode=production"

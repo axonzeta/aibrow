@@ -30,6 +30,7 @@ export enum AICapabilityPromptType {
 /* **************************************************************************/
 
 export type AICapabilities = {
+  extension: boolean
   helper: boolean
 }
 

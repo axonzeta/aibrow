@@ -7,6 +7,7 @@ import IPC from './IPC'
 import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import { AICapabilities } from '#Shared/API/AI'
+import { kExtensionNotFound } from '#Shared/BrowserErrors'
 
 class AI extends EventTarget {
   /* **************************************************************************/
@@ -60,10 +61,23 @@ class AI extends EventTarget {
   /* **************************************************************************/
 
   capabilities = async () => {
-    const capabilities = throwIPCErrorResponse(
-      await IPC.request(kAIGetCapabilities, {})
-    ) as AICapabilities
-    return capabilities
+    if (process.env.BROWSER !== 'extlib') {
+      const capabilities = throwIPCErrorResponse(
+        await IPC.request(kAIGetCapabilities, {})
+      ) as AICapabilities
+      return capabilities
+    } else {
+      try {
+        const capabilities = await IPC.request(kAIGetCapabilities, {})
+        return capabilities as AICapabilities
+      } catch (ex) {
+        if (ex.message === kExtensionNotFound) {
+          return { extension: false, helper: false } as AICapabilities
+        } else {
+          throw ex
+        }
+      }
+    }
   }
 }
 

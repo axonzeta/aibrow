@@ -62,8 +62,9 @@ const createMessage = (header) => {
   return { $message, $messageBody }
 }
 
-logTask('Checking for ai...', (log) => {
-  log(!!ai)
+logTask('Checking for ai...', async (log) => {
+  const capabilities = await ai.capabilities()
+  log(capabilities.extension === true)
 })
 
 $go.addEventListener('click', async () => {

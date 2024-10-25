@@ -16,6 +16,7 @@ module.exports = function (env, args) {
     let entry
     let plugins
     let devServer
+    let optimization
     switch (target) {
       case 'playground':
         entry = { index: path.join(srcDir, 'index.js') }
@@ -25,6 +26,9 @@ module.exports = function (env, args) {
         devServer = {
           static: targetOutDir,
           hot: true
+        }
+        optimization = {
+          runtimeChunk: 'single'
         }
         break
       case 'extension':
@@ -94,9 +98,7 @@ module.exports = function (env, args) {
           '.json'
         ]
       },
-      optimization: {
-        runtimeChunk: 'single'
-      }
+      optimization
     }
   })
 }
