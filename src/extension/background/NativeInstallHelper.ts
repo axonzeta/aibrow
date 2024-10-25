@@ -43,12 +43,7 @@ class NativeInstallHelperImpl {
 
     const url = new URL(Config.extension.installHelperUrl)
     url.searchParams.set('reason', reason)
-    chrome.windows.create({
-      url: url.toString(),
-      type: 'popup',
-      width: 400,
-      height: 600
-    })
+    chrome.tabs.create({ url: url.toString() })
   }
 }
 

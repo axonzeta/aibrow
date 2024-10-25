@@ -55,6 +55,7 @@ class APIHandler {
 
   #handleGetCapabilities = async () => {
     return {
+      extension: true,
       helper: (await System.isNativeInstalled()) === NativeInstalledResult.Responded
     } as AICapabilities
   }
