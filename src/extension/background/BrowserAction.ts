@@ -150,39 +150,32 @@ class BrowserAction {
    * @param popup: the popup url to open
    */
   async #openPopupWithoutUserInteraction (windowId: number, popup: string, size: { width: number, height: number }) {
-    await chrome.action.setPopup({ popup })
-
-    switch (process.env.BROWSER) {
-      case 'crx':
-        // Chrome allows us to open the popup directly
-        chrome.action.openPopup({ windowId })
+    // Firefox has a flag (extensions.openPopupWithoutUserGesture.enabled) that
+    // allows extensions to open the popup without a user gesture, but as of
+    // firefox 128 it is disabled by default. So we have to try and provide
+    // the best experience we can
+    //
+    // Chrome can sometimes fail to open the popup, so fallback to creating a new window
+    // in these cases
+    try {
+      try {
+        await chrome.action.setPopup({ popup })
+        await chrome.action.openPopup({ windowId })
+      } finally {
         await chrome.action.setPopup({ popup: '' })
-        break
-      case 'moz':
-        // Firefox has a flag (extensions.openPopupWithoutUserGesture.enabled) that
-        // allows extensions to open the popup without a user gesture, but as of
-        // firefox 128 it is disabled by default. So we have to try and provide
-        // the best experience we can
-        try {
-          try {
-            await chrome.action.openPopup({ windowId })
-          } finally {
-            await chrome.action.setPopup({ popup: '' })
-          }
-        } catch (ex) {
-          const win = await chrome.windows.get(windowId)
-          await chrome.windows.create({
-            type: 'popup',
-            url: popup,
-            width: size.width,
-            height: size.height,
-            left: win.left && win.width
-              ? win.left + win.width - size.width
-              : undefined,
-            top: win.top ?? undefined
-          })
-        }
-        break
+      }
+    } catch (ex) {
+      const win = await chrome.windows.get(windowId)
+      await chrome.windows.create({
+        type: 'popup',
+        url: popup,
+        width: size.width,
+        height: size.height,
+        left: win.left && win.width
+          ? win.left + win.width - size.width
+          : undefined,
+        top: win.top ?? undefined
+      })
     }
   }
 }
