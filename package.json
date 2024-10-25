@@ -16,7 +16,8 @@
   },
   "author": "Thomas Beverley<tom@aibrow.ai>",
   "license": "MPL-2.0",
-  "description": "",
+  "description": "A browser extension that brings AI to your device",
+  "repository": "https://github.com/axonzeta/aibrow",
   "devDependencies": {
     "@babel/core": "^7.25.9",
     "@babel/eslint-parser": "^7.25.9",

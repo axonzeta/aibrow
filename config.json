@@ -19,7 +19,7 @@
     "installHelperOrigins": ["https://aibrow.ai"]
   },
   "extensionLibrary": {
-    "name": "aibrow-extension"
+    "name": "@aibrow/extension"
   },
 
   "defaultAiModel": "gemma-2b-instruct-q4-k-m",

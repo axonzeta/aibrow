@@ -21,7 +21,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
         }
         output = {
           filename: '[name].js',
-          path: path.join(outDir, config.extensionLibrary.name),
+          path: path.join(outDir, 'extlib'),
           library: config.extensionLibrary.name,
           libraryTarget: 'umd',
           umdNamedDefine: true
@@ -34,7 +34,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
             transform: (content) => {
               const manifest = JSON.parse(content.toString())
               manifest.name = config.extensionLibrary.name
-              for (const key of ['version', 'author', 'license']) {
+              for (const key of ['version', 'author', 'license', 'description', 'repository']) {
                 manifest[key] = pkg[key]
               }
               return JSON.stringify(manifest, null, 2)
