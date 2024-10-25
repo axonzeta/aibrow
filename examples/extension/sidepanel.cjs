@@ -1,4 +1,4 @@
-const ai = require('aibrow-extension').default
+const ai = require('@aibrow/extension').default
 
 const $model = document.getElementById('model')
 const $streaming = document.getElementById('streaming')
