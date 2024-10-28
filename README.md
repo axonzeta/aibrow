@@ -28,6 +28,10 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 4. [Install the native helper](https://aibrow.ai/install.html)
 5. [Try out the playground](https://demo.aibrow.ai/playground/)
 
+### Step by step installation guide
+
+[![Step by step install](https://img.youtube.com/vi/JJVVwhgo3VA/0.jpg)](https://www.youtube.com/watch?v=JJVVwhgo3VA)
+
 ## How can I use the AiBrow API?
 
 ### Website
