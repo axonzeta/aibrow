@@ -14,6 +14,8 @@ The easiest way is to download through the Chrome Web Store or Mozilla add-on st
 
 ### Chrome & Chromium based browsers
 
+(Chrome, Chrome Beta, Edge, Vivaldi, Opera, Wavebox, Arc, Chromium)
+
 1. Open the [Releases](https://github.com/axonzeta/aibrow/releases/new) page, download the latest `crx.zip`, then extract it on disk
 2. Open `chrome://extensions` in a new tab and turn on the developer tools
 3. Click the `Load unpacked` button and locate extracted folder
