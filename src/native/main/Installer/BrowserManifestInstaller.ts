@@ -56,6 +56,9 @@ export async function install () {
 
     const crxRegistryKeys = [
       `\\Software\\Google\\Chrome\\NativeMessagingHosts\\${config.native.identifier}`,
+      `\\Software\\Google\\Chrome Beta\\NativeMessagingHosts\\${config.native.identifier}`,
+      `\\Software\\Google\\Chrome Dev\\NativeMessagingHosts\\${config.native.identifier}`,
+      `\\Software\\Google\\Chrome SxS\\NativeMessagingHosts\\${config.native.identifier}`,
       `\\Software\\Chromium\\NativeMessagingHosts\\${config.native.identifier}`,
       `\\Software\\Vivaldi\\NativeMessagingHosts\\${config.native.identifier}`,
       `\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\${config.native.identifier}`,
@@ -93,6 +96,8 @@ export async function install () {
         crxHostPaths = [
           path.join(homedir, 'Library/Application Support/Google/Chrome/NativeMessagingHosts/'),
           path.join(homedir, 'Library/Application Support/Google/Chrome Beta/NativeMessagingHosts/'),
+          path.join(homedir, 'Library/Application Support/Google/Chrome Dev/NativeMessagingHosts/'),
+          path.join(homedir, 'Library/Application Support/Google/Chrome Canary/NativeMessagingHosts/'),
           path.join(homedir, 'Library/Application Support/Chromium/NativeMessagingHosts/'),
           path.join(homedir, 'Library/Application Support/Vivaldi/NativeMessagingHosts/'),
           path.join(homedir, 'Library/Application Support/Microsoft Edge/NativeMessagingHosts/'),
@@ -107,6 +112,7 @@ export async function install () {
         crxHostPaths = [
           path.join(homedir, '.config/google-chrome/NativeMessagingHosts/'),
           path.join(homedir, '.config/google-chrome-beta/NativeMessagingHosts/'),
+          path.join(homedir, '.config/google-chrome-unstable/NativeMessagingHosts/'),
           path.join(homedir, '.config/chromium/NativeMessagingHosts/'),
           path.join(homedir, '.config/vivaldi/NativeMessagingHosts/'),
           path.join(homedir, '.config/wavebox/NativeMessagingHosts/')
