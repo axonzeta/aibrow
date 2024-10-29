@@ -75,22 +75,22 @@ class AILanguageModelHandler {
     let tokenCount = systemPrompt
       ? await AIPrompter.countTokens(systemPrompt, manifest.tokens.method)
       : 0
-    const messagesWindow = [
-      ...systemPrompt
-        ? [{ content: systemPrompt, role: 'system' }]
-        : []
-    ]
 
     const history = [...initialPrompts, ...messages]
+    const countedMessages=[]
     for (let i = history.length - 1; i >= 0; i--) {
       const message = history[i]
       tokenCount += await AIPrompter.countTokens(message.content, manifest.tokens.method)
       if (tokenCount > manifest.tokens.max) {
         break
       }
-      messagesWindow.unshift(message)
+      countedMessages.unshift(message)
     }
-    messagesWindow.reverse()
+    const messagesWindow = [
+      ...systemPrompt
+        ? [{ content: systemPrompt, role: 'system' }, ...countedMessages]
+        : countedMessages
+    ]
 
     // Send to the template
     const template = new Template(promptConfig.template)
