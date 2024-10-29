@@ -77,7 +77,7 @@ class AILanguageModelHandler {
       : 0
 
     const history = [...initialPrompts, ...messages]
-    const countedMessages=[]
+    const countedMessages = []
     for (let i = history.length - 1; i >= 0; i--) {
       const message = history[i]
       tokenCount += await AIPrompter.countTokens(message.content, manifest.tokens.method)
