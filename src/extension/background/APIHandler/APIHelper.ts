@@ -169,7 +169,7 @@ class APIHelper {
               temperature: manifest.config.temperature,
               repeatPenalty: manifest.config.repeatPenalty,
               flashAttention: manifest.config.flashAttention,
-              contextSize: [1, manifest.tokens.max, manifest.tokens.default]
+              contextSize: [1, manifest.tokens.default, manifest.tokens.max]
             }
           } else {
             return { available }
