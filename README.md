@@ -2,19 +2,19 @@
 <sub>
 <img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/aibrow-icon.png?raw=true" height="38" width="38">
 </sub>
-AiBrow: Bringing Local AI to your Browser.
+AiBrow
 </h1>
 
-***
-
 <p align="center">
-<a href="https://chromewebstore.google.com/detail/aibrow/bbkbjiehfkggfkbampigbbakecijicdm"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" alt="Get AiBrow for Chrome" /></a><br/>
-<a href="#firefox"><img src="" alt="Get AiBrow for Firefox"></a>
+<a href="https://chromewebstore.google.com/detail/aibrow/bbkbjiehfkggfkbampigbbakecijicdm"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" width="228" height="64" alt="Get AiBrow for Chrome" /></a><br/>
+<a href="#firefox"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/firefox-addon.png?raw=true" width="183" height="64"alt="Get AiBrow for Firefox"></a>
 </p>
 
 ***
 
-[![Step by step install](https://img.youtube.com/vi/sbcCsT9Ab9U/0.jpg?1)](https://www.youtube.com/watch?v=sbcCsT9Ab9U)
+<p align="center">
+<a href="https://www.youtube.com/watch?v=sbcCsT9Ab9U"><img src="https://img.youtube.com/vi/sbcCsT9Ab9U/0.jpg?1" alt="Step by step install" /></a>
+</p>
 
 ***
 
