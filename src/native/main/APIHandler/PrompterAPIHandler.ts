@@ -137,6 +137,9 @@ class PrompterAPIHandler {
         useMmap
       }
 
+      // Clear the auto-dispose timer
+      clearTimeout(this.#promptSession?.autoDispose)
+
       // Create or re-use the session
       if (deepEqual(this.#promptSession?.options, sessionOptions)) {
         Logger.log(`Reusing AI instance ${modelId}`)
@@ -146,7 +149,6 @@ class PrompterAPIHandler {
         Logger.log(`Loading new AI instance ${modelId}`)
 
         this.#disposePromptSession()
-        clearTimeout(this.#promptSession?.autoDispose)
         const nextPromptSession: Partial<PromptSession> = {
           sessionIds: [sessionId],
           options: sessionOptions
