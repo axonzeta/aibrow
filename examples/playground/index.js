@@ -140,7 +140,7 @@ Controls.onSubmitClicked(async () => {
 
     // Check if the model is available
     Logger.logTask('Check model availability...', async (log) => {
-      const capabilities = await window.ai[tool].capabilities({ model: Controls.getModel() })
+      const capabilities = await window.aibrow[tool].capabilities({ model: Controls.getModel() })
       switch (capabilities.available) {
         case 'readily': log(true); break
         case 'after-download': log('Download required'); break
@@ -158,7 +158,7 @@ Controls.onSubmitClicked(async () => {
         session: await Logger.logTask('Creating session...', async (log) => {
           log(createOptions)
           const res = await ModelDownload.createMonitor(async (monitor) => {
-            return await window.ai[tool].create({ ...createOptions, monitor })
+            return await window.aibrow[tool].create({ ...createOptions, monitor })
           })
           log(true)
           return res
