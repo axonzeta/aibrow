@@ -107,7 +107,7 @@ export class IPCInflightRequest {
   }
 
   #handleDisconnect = () => {
-    const lastError = chrome.runtime.lastError
+    const lastError = chrome?.runtime?.lastError
     if (lastError && typeof (lastError.message) === 'string') {
       this.#reject(new Error(lastError.message))
     } else {

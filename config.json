@@ -22,11 +22,11 @@
     "name": "@aibrow/extension"
   },
 
-  "defaultAiModel": "gemma-2b-instruct-q4-k-m",
-  "permissionRequiredForDefaultModel": true,
+  "defaultAiModel": "smollm2-1-7b-instruct-q4-k-m",
+  "permissionRequiredForDefaultModel": false,
   "permissionAlwaysAllowedOrigins": ["https://aibrow.ai"],
 
-  "autoDisposeModelTimeout": 300000,
+  "autoDisposeModelTimeout": 60000,
   "autoShutdownNativeClientTimeout": 300000,
 
   "updateCheckInterval": 21600000
