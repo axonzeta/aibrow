@@ -2,23 +2,21 @@
 <sub>
 <img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/aibrow-icon.png?raw=true" height="38" width="38">
 </sub>
-AiBrow
+aiBrow
 </h1>
 
 <p align="center">
-<a href="https://chromewebstore.google.com/detail/aibrow/bbkbjiehfkggfkbampigbbakecijicdm"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" width="228" height="64" alt="Get AiBrow for Chrome" /></a><br/>
+<a href="https://chromewebstore.google.com/detail/aibrow/bbkbjiehfkggfkbampigbbakecijicdm"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" width="228" height="64" alt="Get AiBrow for Chrome" /></a>
 <a href="#firefox"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/firefox-addon.png?raw=true" width="183" height="64"alt="Get AiBrow for Firefox"></a>
 </p>
 
-***
-
 <p align="center">
-<a href="https://www.youtube.com/watch?v=sbcCsT9Ab9U"><img src="https://img.youtube.com/vi/sbcCsT9Ab9U/0.jpg?1" alt="Step by step install" /></a>
+<a href="https://www.youtube.com/watch?v=sbcCsT9Ab9U"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" width="400" height="300" alt="Step by step install" /></a>
 </p>
 
 ***
 
-AiBrow is a browser extension that brings AI to your device. It uses small language models on your machine, making it fast and keeping your data private. With AiBrow, you can complete sentences, improve your writing, rephrase text, or sum up complex information using the latest small LLMs such as Llama 3.2, Phi 3.5, Gemma 2 and Qwen 2.5.
+aiBrow is a browser extension that brings AI to your device. It uses small language models on your machine, making it fast and keeping your data private. With AiBrow, you can complete sentences, improve your writing, rephrase text, or sum up complex information using the latest small LLMs such as Llama 3.2, Phi 3.5, Gemma 2 and Qwen 2.5.
 
 The development API follows the current proposal for the browser [Prompt API](https://github.com/explainers-by-googlers/prompt-api?tab=readme-ov-file#stakeholder-feedback) in development within [Chrome](https://developer.chrome.com/docs/ai/built-in). It uses [llama.cpp](https://github.com/ggerganov/llama.cpp) as the inference engine and supports the use of grammar schemas and LoRA Adapters.
 
