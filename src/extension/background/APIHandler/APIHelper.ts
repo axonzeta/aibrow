@@ -272,7 +272,7 @@ class APIHelper {
       return await postflightFn(
         manifest,
         payload,
-        await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload?.props ?? {})
+        await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload)
       )
     })
   }
