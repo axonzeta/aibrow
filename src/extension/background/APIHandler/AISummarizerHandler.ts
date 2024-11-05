@@ -87,7 +87,7 @@ class AISummarizerHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      options
+      props
     ) => {
       const sharedContext = payload.getString('props.sharedContext')
       const type = payload.getEnum('props.type', AISummarizerType, AISummarizerType.Tldr)
@@ -96,9 +96,12 @@ class AISummarizerHandler {
       const context = payload.getString('context')
       const input = payload.getString('input')
       const prompt = this.#getPrompt(manifest, type, format, length, sharedContext, context, input)
+      const sessionId = payload.getNonEmptyString('sessionId')
 
       await AIPrompter.prompt(
-        { ...options, prompt },
+        sessionId,
+        prompt,
+        props,
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

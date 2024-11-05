@@ -32,7 +32,6 @@ import AIPrompter from '../AI/AIPrompter'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
 import AIModelManager from '../AI/AIModelManager'
-import { PromptOptions } from '#Shared/NativeAPI/PrompterIPC'
 
 class APIHelper {
   /* **************************************************************************/
@@ -183,6 +182,30 @@ class APIHelper {
   }
 
   /**
+   * Takes a AiModelProps from the API and converts it to the core llm prompt options
+   * @param modelId: the id of the model
+   * @param gpuEngine: the gpu engine to use
+   * @param manifest: the manifest of the model
+   * @param modelProps: the model props
+   * @returns the core llm prompt options
+   */
+  async #sanitizeModelProps (modelId: string, gpuEngine: AICapabilityGpuEngine, manifest: AIModelManifest, modelProps: any) {
+    const props = new UntrustedParser(modelProps)
+    return {
+      model: modelId,
+      gpuEngine,
+      topK: props.getRange('topK', manifest.config.topK),
+      topP: props.getRange('topP', manifest.config.topP),
+      temperature: props.getRange('temperature', manifest.config.temperature),
+      repeatPenalty: props.getRange('repeatPenalty', manifest.config.repeatPenalty),
+      flashAttention: props.getBool('flashAttention', manifest.config.flashAttention),
+      contextSize: clamp(props.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
+      useMmap: await getUseMmap(),
+      grammar: props.getAny('grammar')
+    } as AIRootModelProps
+  }
+
+  /**
    * Handles a bunch of preflight tasks before a create call
    * @param channel: the incoming IPC channel
    * @param promptType: the prompt type we should check support for
@@ -246,16 +269,11 @@ class APIHelper {
       }
 
       // Return builder
-      return await postflightFn(manifest, payload, {
-        model: modelId,
-        gpuEngine,
-        topK: payload.getRange('topK', manifest.config.topK),
-        topP: payload.getRange('topP', manifest.config.topP),
-        temperature: payload.getRange('temperature', manifest.config.temperature),
-        repeatPenalty: payload.getRange('repeatPenalty', manifest.config.repeatPenalty),
-        flashAttention: payload.getBool('flashAttention', manifest.config.flashAttention),
-        contextSize: clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max)
-      })
+      return await postflightFn(
+        manifest,
+        payload,
+        await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload?.props ?? {})
+      )
     })
   }
 
@@ -270,7 +288,7 @@ class APIHelper {
     postflightFn: (
       manifest: AIModelManifest,
       payload: UntrustedParser,
-      options: Omit<PromptOptions, 'prompt'>
+      props: AIRootModelProps
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
@@ -288,18 +306,10 @@ class APIHelper {
     // Get the values
     const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
-    return await postflightFn(manifest, payload, {
-      modelId,
-      gpuEngine,
-      sessionId: payload.getNonEmptyString('sessionId'),
-      topK: payload.getRange('props.topK', manifest.config.topK),
-      topP: payload.getRange('props.topP', manifest.config.topP),
-      temperature: payload.getRange('props.temperature', manifest.config.temperature),
-      repeatPenalty: payload.getRange('props.repeatPenalty', manifest.config.repeatPenalty),
-      flashAttention: payload.getBool('props.flashAttention', manifest.config.flashAttention),
-      contextSize: clamp(payload.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
-      useMmap: await getUseMmap()
-    })
+    return await postflightFn(
+      manifest,
+      payload,
+      await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload?.props ?? {}))
   }
 }
 

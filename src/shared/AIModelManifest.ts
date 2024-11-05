@@ -2,10 +2,6 @@
 // MARK: Types
 /* **************************************************************************/
 
-export enum AIModelTokenCountMethod {
-  Divide4 = 'divide4'
-}
-
 export type AIModelAssetId = string
 
 export type AIModelAsset = {
@@ -40,7 +36,7 @@ export type AIModelManifest = {
   tokens: {
     max: number
     default: number
-    method: AIModelTokenCountMethod[] | AIModelTokenCountMethod
+    stop?: string[]
   }
   prompts?: {
     languageModel?: AIModelPromptConfig

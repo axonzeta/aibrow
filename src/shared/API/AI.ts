@@ -84,6 +84,8 @@ export type AIRootModelProps = {
   repeatPenalty: number
   flashAttention: boolean
   contextSize: number
+  grammar?: any
+  useMmap: boolean
 }
 
 export type AIRootModelData = {

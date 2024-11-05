@@ -1,13 +1,11 @@
-import { AICapabilityGpuEngine } from '#Shared/API/AI'
+import { AICapabilityGpuEngine, AIRootModelProps } from '#Shared/API/AI'
 import NativeIPC from '../NativeIPC'
 import {
   kPrompterGetSupportedGpuEngines,
   kPrompterExecPromptSession,
-  kPrompterDisposePromptSession,
-
-  PromptOptions
+  kPrompterCountPromptTokens,
+  kPrompterDisposePromptSession
 } from '#Shared/NativeAPI/PrompterIPC'
-import { AIModelTokenCountMethod } from '#Shared/AIModelManifest'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
 
 type SupportedEngines = {
@@ -16,19 +14,13 @@ type SupportedEngines = {
   callbacks: Array<(engines: AICapabilityGpuEngine[]) => void>
 }
 
+type CountTokensRequestOptions = {
+  signal?: AbortSignal
+}
+
 type PromptStreamOptions = {
   signal?: AbortSignal
   stream: (chunk: string) => void
-}
-
-type PromptQueue = {
-  inflight: boolean
-  queue: Array<{
-    options: PromptOptions
-    streamOptions: PromptStreamOptions
-    resolve: (value: unknown) => void
-    reject: (ex: Error) => void
-  }>
 }
 
 class AIPrompter {
@@ -37,7 +29,6 @@ class AIPrompter {
   /* **************************************************************************/
 
   #supportedEngines: SupportedEngines
-  #promptQueue: PromptQueue = { inflight: false, queue: [] }
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -83,48 +74,23 @@ class AIPrompter {
 
   /**
    * Adds a new language model prompt to the queue
-   * @param options: the prompt options
+   * @param sessionId: the id of the session
+   * @param prompt: the prompt to execute
+   * @param props: the prompt model props
    * @param streamOptions: the options for the return stream
    */
-  async prompt (options: PromptOptions, streamOptions: PromptStreamOptions) {
-    if (options.gpuEngine && !(await this.getSupportedGpuEngines()).includes(options.gpuEngine)) {
+  async prompt (sessionId: string, prompt: string, props: AIRootModelProps, streamOptions: PromptStreamOptions) {
+    if (props.gpuEngine && !(await this.getSupportedGpuEngines()).includes(props.gpuEngine)) {
       throw new Error(kGpuEngineNotSupported)
     }
 
-    return new Promise((resolve, reject) => {
-      this.#promptQueue.queue.push({
-        options,
-        streamOptions,
-        resolve,
-        reject
-      })
-      setTimeout(this.#drainPromptQueue, 1)
-    })
-  }
-
-  /**
-   * Drains the next item in the prompt queue and executes it
-   */
-  #drainPromptQueue = async () => {
-    if (this.#promptQueue.inflight) { return }
-    if (this.#promptQueue.queue.length === 0) { return }
-
-    this.#promptQueue.inflight = true
-    const { options, streamOptions, resolve, reject } = this.#promptQueue.queue.pop()
-    try {
-      const res = await NativeIPC.stream(
-        kPrompterExecPromptSession,
-        options,
-        (chunk: string) => streamOptions.stream(chunk),
-        { signal: streamOptions.signal }
-      )
-      resolve(res)
-    } catch (ex) {
-      reject(ex)
-    } finally {
-      this.#promptQueue.inflight = false
-      setTimeout(this.#drainPromptQueue, 1)
-    }
+    const res = await NativeIPC.stream(
+      kPrompterExecPromptSession,
+      { props, prompt, sessionId },
+      (chunk: string) => streamOptions.stream(chunk),
+      { signal: streamOptions.signal }
+    )
+    return res
   }
 
   /**
@@ -141,20 +107,22 @@ class AIPrompter {
 
   /**
    * Counts the tokens in a string
-   * @param input: the string to count the tokens from
-   * @param method: the method to use for counting
+   * @param input: the input string
+   * @param props: the model props
+   * @param requestOptions: the request options
    * @return the token count
    */
-  async countTokens (input: string, method: AIModelTokenCountMethod | AIModelTokenCountMethod[]) {
-    for (const m of Array.isArray(method) ? method : [method]) {
-      switch (m) {
-        case AIModelTokenCountMethod.Divide4:
-          return Math.ceil(input.length / 4)
-      }
+  async countTokens (input: string, props: AIRootModelProps, requestOptions: CountTokensRequestOptions) {
+    if (props.gpuEngine && !(await this.getSupportedGpuEngines()).includes(props.gpuEngine)) {
+      throw new Error(kGpuEngineNotSupported)
     }
 
-    console.warn('Unknown token count method, defaulting to Divide4:', method)
-    return Math.ceil(input.length / 4)
+    const res = await NativeIPC.request(
+      kPrompterCountPromptTokens,
+      { input, props },
+      { signal: requestOptions.signal }
+    )
+    return res
   }
 }
 

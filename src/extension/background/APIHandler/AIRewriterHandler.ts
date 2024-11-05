@@ -87,7 +87,7 @@ class AIRewriterHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      options
+      props
     ) => {
       const sharedContext = payload.getString('props.sharedContext')
       const tone = payload.getEnum('props.tone', AIRewriterTone, AIRewriterTone.AsIs)
@@ -96,9 +96,12 @@ class AIRewriterHandler {
       const context = payload.getString('context')
       const input = payload.getString('input')
       const prompt = this.#getPrompt(manifest, tone, format, length, sharedContext, context, input)
+      const sessionId = payload.getNonEmptyString('sessionId')
 
       await AIPrompter.prompt(
-        { ...options, prompt },
+        sessionId,
+        prompt,
+        props,
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

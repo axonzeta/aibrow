@@ -14,8 +14,8 @@
   "license": "MPL-2.0",
   "description": "",
   "dependencies": {
-    "@popperjs/core": "^2.11.8",
     "@aibrow/extension": "file:../out/extlib",
+    "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "camelcase": "^8.0.0",
     "fast-deep-equal": "^3.1.3"

@@ -58,10 +58,7 @@ class AICoreModelHandler {
     ) => {
       return {
         sessionId: nanoid(),
-        props: {
-          ...props,
-          grammar: payload.getAny('grammar')
-        }
+        props
       } as AICoreModelData
     })
   }
@@ -78,17 +75,15 @@ class AICoreModelHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      options
+      props
     ) => {
+      const sessionId = payload.getNonEmptyString('sessionId')
       const prompt = payload.getString('prompt')
-      const grammar = payload.getAny('props.grammar')
 
       await AIPrompter.prompt(
-        {
-          ...options,
-          prompt,
-          grammar
-        },
+        sessionId,
+        prompt,
+        props,
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

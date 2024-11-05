@@ -15,16 +15,14 @@ import {
   AILanguageModelPrompt,
   AILanguageModelPromptRole
 } from '#Shared/API/AILanguageModel/AILanguageModelTypes'
-import PermissionProvider from '../PermissionProvider'
 import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
 import { kModelPromptAborted, kModelPromptTypeNotSupported } from '#Shared/Errors'
 import APIHelper from './APIHelper'
-import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIPrompter from '../AI/AIPrompter'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType } from '#Shared/API/AI'
+import { AICapabilityPromptType, AIRootModelProps } from '#Shared/API/AI'
 
 class AILanguageModelHandler {
   /* **************************************************************************/
@@ -55,6 +53,7 @@ class AILanguageModelHandler {
   /**
    * Builds the prompt from the users variables
    * @param manifest: the manifest object
+   * @param options: the prompt options
    * @param systemPrompt: the system prompt
    * @param initialPrompts: the array of initial prompts
    * @param messages: the array of messages
@@ -62,6 +61,7 @@ class AILanguageModelHandler {
    */
   async #buildPrompt (
     manifest: AIModelManifest,
+    props: AIRootModelProps,
     systemPrompt: string | undefined,
     initialPrompts: AILanguageModelInitialPrompt[],
     messages: AILanguageModelPrompt[]
@@ -71,35 +71,32 @@ class AILanguageModelHandler {
     }
     const promptConfig = manifest.prompts[AICapabilityPromptType.LanguageModel]
 
-    // Build the messages
-    let tokenCount = systemPrompt
-      ? await AIPrompter.countTokens(systemPrompt, manifest.tokens.method)
-      : 0
-
-    const history = [...initialPrompts, ...messages]
-    const countedMessages = []
-    for (let i = history.length - 1; i >= 0; i--) {
-      const message = history[i]
-      tokenCount += await AIPrompter.countTokens(message.content, manifest.tokens.method)
-      if (tokenCount > manifest.tokens.max) {
-        break
+    let droppedMessages = 0
+    while (true) {
+      const allMessages = [...initialPrompts, ...messages]
+      if (droppedMessages >= allMessages.length && droppedMessages > 0) {
+        throw new Error('Failed to build prompt. Context window overflow.')
       }
-      countedMessages.unshift(message)
-    }
-    const messagesWindow = [
-      ...systemPrompt
-        ? [{ content: systemPrompt, role: 'system' }, ...countedMessages]
-        : countedMessages
-    ]
+      const history = [
+        ...systemPrompt
+          ? [{ content: systemPrompt, role: 'system' }]
+          : [],
+        ...allMessages.slice(droppedMessages)
+      ]
+      const template = new Template(promptConfig.template)
+      const prompt = template.render({
+        messages: history,
+        bos_token: promptConfig.bosToken,
+        eos_token: promptConfig.eosToken
+      })
 
-    // Send to the template
-    const template = new Template(promptConfig.template)
-    const prompt = template.render({
-      messages: messagesWindow,
-      bos_token: promptConfig.bosToken,
-      eos_token: promptConfig.eosToken
-    })
-    return prompt
+      const tokenCount = await AIPrompter.countTokens(prompt, props, {})
+      if (tokenCount <= props.contextSize) {
+        return prompt
+      }
+
+      droppedMessages++
+    }
   }
 
   /* **************************************************************************/
@@ -123,8 +120,9 @@ class AILanguageModelHandler {
       const systemPrompt = payload.getString('systemPrompt')
       const initialPrompts = payload.getAILanguageModelInitialPrompts('initialPrompts')
       const tokensSoFar = await AIPrompter.countTokens(
-        await this.#buildPrompt(manifest, systemPrompt, initialPrompts, []),
-        manifest.tokens.method
+        await this.#buildPrompt(manifest, props, systemPrompt, initialPrompts, []),
+        props,
+        {}
       )
 
       return {
@@ -153,13 +151,29 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleCountTokens = async (channel: IPCInflightChannel) => {
-    const modelId = await APIHelper.getModelId(channel.payload?.props?.model)
-    const input = getNonEmptyString(channel.payload?.input)
+    return await APIHelper.handleStandardPromptPreflight(channel, async (
+      manifest,
+      payload,
+      props
+    ) => {
+      const input = payload.getString('input')
+      const prompt = await this.#buildPrompt(
+        manifest,
+        props,
+        undefined,
+        [],
+        [{ role: AILanguageModelPromptRole.User, content: input }]
+      )
+      if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
 
-    await PermissionProvider.ensureModelPermission(channel, modelId)
+      const count = (await AIPrompter.countTokens(
+        prompt,
+        props,
+        { signal: channel.abortSignal }
+      )) as number
 
-    const manifest = await AIModelFileSystem.readModelManifest(modelId)
-    return await AIPrompter.countTokens(input, manifest.tokens.method)
+      return count
+    })
   }
 
   /* **************************************************************************/
@@ -175,21 +189,19 @@ class AILanguageModelHandler {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
-      options
+      props
     ) => {
       const systemPrompt = payload.getString('props.systemPrompt')
       const initialPrompts = payload.getAILanguageModelInitialPrompts('props.initialPrompts')
       const messages = payload.getAILanguageModelPrompts('messages')
-      const prompt = await this.#buildPrompt(manifest, systemPrompt, initialPrompts, messages)
-      const grammar = payload.getAny('props.grammar')
+      const prompt = await this.#buildPrompt(manifest, props, systemPrompt, initialPrompts, messages)
+      const sessionId = payload.getNonEmptyString('sessionId')
       if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
 
       const reply = (await AIPrompter.prompt(
-        {
-          ...options,
-          prompt,
-          grammar
-        },
+        sessionId,
+        prompt,
+        props,
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)
@@ -200,11 +212,13 @@ class AILanguageModelHandler {
         tokensSoFar: await AIPrompter.countTokens(
           await this.#buildPrompt(
             manifest,
+            props,
             systemPrompt,
             initialPrompts,
             [...messages, { role: AILanguageModelPromptRole.Assistant, content: reply }]
           ),
-          manifest.tokens.method
+          props,
+          {}
         )
       }
     })
