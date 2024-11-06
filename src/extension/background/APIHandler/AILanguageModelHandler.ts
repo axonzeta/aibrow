@@ -86,8 +86,8 @@ class AILanguageModelHandler {
       const template = new Template(promptConfig.template)
       const prompt = template.render({
         messages: history,
-        bos_token: promptConfig.bosToken,
-        eos_token: promptConfig.eosToken
+        bos_token: manifest.tokens.bosToken,
+        eos_token: manifest.tokens.eosToken
       })
 
       const tokenCount = await AIPrompter.countTokens(prompt, props, {})

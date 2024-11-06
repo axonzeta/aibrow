@@ -22,8 +22,6 @@ export type AIModelManifestConfig = {
 
 export type AIModelPromptConfig = {
   template: string
-  bosToken?: string
-  eosToken?: string
 }
 
 export type AIModelManifest = {
@@ -37,6 +35,8 @@ export type AIModelManifest = {
     max: number
     default: number
     stop?: string[]
+    bosToken?: string
+    eosToken?: string
   }
   prompts?: {
     languageModel?: AIModelPromptConfig

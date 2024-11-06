@@ -134,8 +134,8 @@ class AIRewriterHandler {
       shared_context: sharedContext,
       context,
       input,
-      bos_token: config.bosToken,
-      eos_token: config.eosToken
+      bos_token: manifest.tokens.bosToken,
+      eos_token: manifest.tokens.eosToken
     })
   }
 }
