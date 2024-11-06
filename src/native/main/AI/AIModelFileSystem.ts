@@ -66,13 +66,9 @@ class AIModelFileSystem {
           } else {
             models.push(manifest)
           }
-        } catch (ex) {
-          Logger.log("EX",ex)
-          /* no-op */ }
+        } catch (ex) { /* no-op */ }
       }
-    } catch (ex) {
-      Logger.log("EX2",ex)
-      /* no-op */ }
+    } catch (ex) { /* no-op */ }
     return models
   }
 
