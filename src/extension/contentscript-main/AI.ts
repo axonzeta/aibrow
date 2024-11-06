@@ -4,7 +4,10 @@ import AIRewriterFactory from './AIRewriter/AIRewriterFactory'
 import AILanguageModelFactory from './AILanguageModel/AILanguageModelFactory'
 import AICoreModelFactory from './AICoreModel/AICoreModelFactory'
 import IPC from './IPC'
-import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
+import {
+  kAIGetCapabilities,
+  kAIGetNativeHelperDownloadUrl
+} from '#Shared/API/AIIPCTypes'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import { AICapabilities } from '#Shared/API/AI'
 import { kExtensionNotFound } from '#Shared/BrowserErrors'
@@ -78,6 +81,11 @@ class AI extends EventTarget {
         }
       }
     }
+  }
+
+  getHelperDownloadUrl = async () => {
+    const url = await IPC.request(kAIGetNativeHelperDownloadUrl, {})
+    return url
   }
 }
 

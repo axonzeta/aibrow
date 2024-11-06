@@ -6,6 +6,8 @@ const TerserPlugin = require('terser-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const { pathsToWebpackAlias } = require('../../build/tsconfig_util.cjs')
 const webpack = require('webpack')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
   const srcDir = __dirname
@@ -14,6 +16,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
     let entry
     let output
     let copyPatterns
+    let plugins
     switch (browser) {
       case 'extlib':
         entry = {
@@ -41,15 +44,18 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
             }
           }
         ]
+        plugins = []
         break
-      default:
+      default: {
+        const uiEntryPoints = ['permission-popup', 'model-install-popup', 'options']
         entry = {
           background: path.join(srcDir, 'background/index.ts'),
           'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
           'contentscript-main': path.join(srcDir, 'contentscript-main/index.ts'),
-          'permission-popup': path.join(srcDir, 'permission-popup/index.ts'),
-          'model-install-popup': path.join(srcDir, 'model-install-popup/index.ts'),
-          options: path.join(srcDir, 'options/index.ts')
+          ...uiEntryPoints.reduce((acc, key) => {
+            acc[key] = path.join(srcDir, `${key}/index.ts`)
+            return acc
+          }, {})
         }
         output = {
           filename: '[name].js',
@@ -66,12 +72,21 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
               return JSON.stringify(manifest, null, 2)
             }
           },
-          { from: path.join(srcDir, 'permission-popup/index.html'), to: 'permission-popup.html', force: true },
-          { from: path.join(srcDir, 'model-install-popup/index.html'), to: 'model-install-popup.html', force: true },
-          { from: path.join(srcDir, 'options/index.html'), to: 'options.html', force: true },
           { from: path.join(srcDir, 'icons'), to: 'icons', force: true }
         ]
+        plugins = [
+          ...uiEntryPoints.map((key) => new HtmlWebpackPlugin({
+            chunks: [key],
+            filename: `${key}.html`,
+            template: path.join(srcDir, `${key}/index.html`),
+            title: 'AiBrow',
+            meta: {
+              viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no'
+            }
+          }))
+        ]
         break
+      }
     }
 
     return {
@@ -79,11 +94,13 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
       output,
       devtool: mode === 'development' ? 'inline-cheap-source-map' : undefined,
       plugins: [
+        ...plugins,
         new webpack.DefinePlugin({ 'process.env.BROWSER': JSON.stringify(browser) }),
         new CleanWebpackPlugin(),
         new CaseSensitivePathsPlugin(),
         new CircularDependencyPlugin({ exclude: /node_modules/, failOnError: true, allowAsyncCycles: false }),
-        new CopyWebpackPlugin({ patterns: copyPatterns })
+        new CopyWebpackPlugin({ patterns: copyPatterns }),
+        new MiniCssExtractPlugin()
       ],
       module: {
         rules: [
@@ -99,14 +116,17 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
           {
             test: /\.less$/i,
             use: [
-              'style-loader',
+              MiniCssExtractPlugin.loader,
               'css-loader',
               'less-loader'
             ]
           },
           {
             test: /\.css$/,
-            use: ['style-loader', 'css-loader']
+            use: [
+              MiniCssExtractPlugin.loader,
+              'css-loader'
+            ]
           }
         ]
       },

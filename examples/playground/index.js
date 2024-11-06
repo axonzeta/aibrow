@@ -11,11 +11,16 @@ let aiSession
 Logger.logTask('Checking for window.ai...', (log) => {
   log(!!window.ai)
 })
-Logger.logTask('Checking for window.aibrow...', (log) => {
+Logger.logTask('Checking for window.aibrow...', async (log) => {
   log(!!window.aibrow)
 
   if (!window.aibrow) {
     document.getElementById('not-installed').classList.remove('d-none')
+  } else {
+    const { helper } = await window.aibrow.capabilities()
+    if (!helper) {
+      document.getElementById('not-installed').classList.remove('d-none')
+    }
   }
 })
 

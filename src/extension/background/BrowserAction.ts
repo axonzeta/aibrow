@@ -1,4 +1,3 @@
-import Config from '#Shared/Config'
 import System, { NativeInstalledResult } from './System'
 import {
   AIModelManager,
@@ -6,6 +5,7 @@ import {
   InflightTaskProgressEvent as AIModelManagerProgressEvent
 } from './AI/AIModelManager'
 import PermissionProvider from './PermissionProvider'
+import NativeInstallHelper, { NativeInstallHelperShowReason } from './NativeInstallHelper'
 
 class BrowserAction {
   /* **************************************************************************/
@@ -80,15 +80,11 @@ class BrowserAction {
     const { id: tabId, windowId } = currentTab
 
     if (await System.isNativeInstalled() !== NativeInstalledResult.Responded) {
-      await chrome.tabs.create({ url: Config.extension.installHelperUrl })
+      NativeInstallHelper.show(NativeInstallHelperShowReason.UserInteraction)
     } else if (this.#permissionRequestTabs.includes(tabId)) {
-      await chrome.action.setPopup({ tabId, popup: `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}` })
-      await chrome.action.openPopup({ windowId })
-      await chrome.action.setPopup({ tabId, popup: '' })
+      await this.#openPopupWithUserInteraction(windowId, tabId, `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}`)
     } else if (this.#installTask?.running && this.#installTask?.type === AIModelManagerTaskType.Install) {
-      await chrome.action.setPopup({ tabId, popup: 'model-install-popup.html' })
-      await chrome.action.openPopup({ windowId })
-      await chrome.action.setPopup({ tabId, popup: '' })
+      await this.#openPopupWithUserInteraction(windowId, tabId, 'model-install-popup.html')
     } else {
       const url = chrome.runtime.getURL(chrome.runtime.getManifest().options_page)
       const contexts = await chrome.runtime.getContexts({ contextTypes: [chrome.runtime.ContextType.TAB] })
@@ -177,6 +173,18 @@ class BrowserAction {
         top: win.top ?? undefined
       })
     }
+  }
+
+  /**
+   * Opens a popup in a user interaction loop
+   * @param windowId: the id of the window
+   * @param tabId: the id of the tab
+   * @param popup: the popup url
+   */
+  async #openPopupWithUserInteraction (windowId: number, tabId: number, popup: string) {
+    await chrome.action.setPopup({ tabId, popup })
+    await chrome.action.openPopup({ windowId })
+    await chrome.action.setPopup({ tabId, popup: '' })
   }
 }
 

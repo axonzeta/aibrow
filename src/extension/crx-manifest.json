@@ -44,5 +44,9 @@
     "nativeMessaging",
     "storage",
     "webNavigation"
+  ],
+  "optional_permissions": [
+    "downloads",
+    "downloads.open"
   ]
 }

@@ -1,10 +1,15 @@
-import Config from '#Shared/Config'
 import System, { NativeInstalledResult } from './System'
+import config from '#Shared/Config'
 
 export enum NativeInstallHelperShowReason {
   Install = 'install',
-  ApiUsage = 'api-usage'
+  ApiUsage = 'api-usage',
+  UserInteraction = 'user-interaction'
 }
+const singletonShowReasons = new Set([
+  NativeInstallHelperShowReason.Install,
+  NativeInstallHelperShowReason.ApiUsage
+])
 
 class NativeInstallHelperImpl {
   /* **************************************************************************/
@@ -37,11 +42,11 @@ class NativeInstallHelperImpl {
    * @param reason
    * @returns
    */
-  show (reason: NativeInstallHelperShowReason) {
-    if (this.#shown.has(reason)) { return }
+  async show (reason: NativeInstallHelperShowReason) {
+    if (singletonShowReasons.has(reason) && this.#shown.has(reason)) { return }
     this.#shown.add(reason)
 
-    const url = new URL(Config.extension.installHelperUrl)
+    const url = new URL(config.extension.installHelperUrl)
     url.searchParams.set('reason', reason)
     chrome.tabs.create({ url: url.toString() })
   }

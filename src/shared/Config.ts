@@ -15,7 +15,6 @@ type Config = {
     crxExtensionIds: string[]
     mozExtensionIds: string[]
     installHelperUrl: string
-    installHelperOrigins: string[]
   }
 
   defaultAiModel: string

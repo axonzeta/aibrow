@@ -6,9 +6,11 @@ import AILanguageModelHandler from './AILanguageModelHandler'
 import AICoreModelHandler from './AICoreModelHandler'
 import { kPrefGetUseBrowserAI } from '#Shared/API/PrefIPCMessageTypes'
 import { getUseBrowserAI } from '#Shared/Prefs'
-import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
+import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
 import System, { NativeInstalledResult } from '../System'
 import { AICapabilities } from '#Shared/API/AI'
+import urlJoin from 'url-join'
+import config from '#Shared/Config'
 
 class APIHandler {
   /* **************************************************************************/
@@ -39,6 +41,7 @@ class APIHandler {
     this.#server
       .addRequestHandler(kPrefGetUseBrowserAI, this.#handleGetUseBrowserAI)
       .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
+      .addRequestHandler(kAIGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)
   }
 
   /* **************************************************************************/
@@ -58,6 +61,28 @@ class APIHandler {
       extension: true,
       helper: (await System.isNativeInstalled()) === NativeInstalledResult.Responded
     } as AICapabilities
+  }
+
+  #handleGetNativeHelperDownloadUrl = async () => {
+    const platformInfo = await chrome.runtime.getPlatformInfo()
+
+    let platform: string
+    switch (platformInfo.os) {
+      case 'mac': platform = 'darwin'; break
+      case 'win': platform = 'win32'; break
+      default: platform = platformInfo.os; break
+    }
+    let arch: string
+    switch (platformInfo.arch) {
+      case 'arm64': arch = 'arm64'; break
+      case 'x86-64': arch = 'x86'; break
+    }
+
+    const latestUrl = urlJoin(config.native.updateUrl, platform, arch, `latest_${config.native.apiVersion}.json`)
+    const latestRes = await fetch(latestUrl)
+    if (!latestRes.ok) { throw new Error(`Failed to fetch latest.json: ${latestRes.status}`) }
+    const latest = await latestRes.json()
+    return latest.download
   }
 }
 
