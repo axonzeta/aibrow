@@ -66,9 +66,13 @@ class AIModelFileSystem {
           } else {
             models.push(manifest)
           }
-        } catch (ex) { /* no-op */ }
+        } catch (ex) {
+          Logger.log("EX",ex)
+          /* no-op */ }
       }
-    } catch (ex) { /* no-op */ }
+    } catch (ex) {
+      Logger.log("EX2",ex)
+      /* no-op */ }
     return models
   }
 
@@ -152,8 +156,11 @@ class AIModelFileSystem {
    */
   async readModelStats (modelId: string) {
     const repoPath = this.getModelRepoPath(modelId)
-    const stats = await fs.readJSON(path.join(repoPath, 'stats.json'), { throws: false }) ?? { id: modelId }
-    return stats as AIModelStats
+    try {
+      return await fs.readJSON(path.join(repoPath, 'stats.json')) as AIModelStats
+    } catch (ex) {
+      return { id: modelId } as AIModelStats
+    }
   }
 
   /* **************************************************************************/
