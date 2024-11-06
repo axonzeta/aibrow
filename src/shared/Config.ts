@@ -7,6 +7,7 @@ type Config = {
     name: string
     description: string
     updateUrl: string
+    apiVersion: string
     useModelDownloader: boolean
   }
 

@@ -5,6 +5,7 @@ import {
 } from '#Shared/NativeAPI/SystemIPC'
 import * as Installer from '../Installer/Updater'
 import config from '#Shared/Config'
+import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 
 class SystemAPIHandler {
   /* **************************************************************************/
@@ -21,12 +22,15 @@ class SystemAPIHandler {
   // MARK: Request handlers
   /* **************************************************************************/
 
-  #handleUpdateNativeBinary = async () => {
-    return await Installer.update()
+  #handleUpdateNativeBinary = async (channel: IPCInflightChannel) => {
+    return await Installer.update(channel.payload as string | undefined)
   }
 
   #handleGetInfo = async () => {
-    return { version: config.version }
+    return {
+      version: config.version,
+      apiVersion: config.native.apiVersion
+    }
   }
 }
 

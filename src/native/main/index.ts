@@ -82,7 +82,7 @@ async function main () {
   } else if (Argv.check) {
     Logger.log('Starting: check')
     Logger.logToConsole = true
-    const updateResult = await Updater.update(/* dry */ true)
+    const updateResult = await Updater.update(/* config */undefined, /* dry */ true)
     Logger.log(`OK: ${updateResult}`)
     process.exit(0)
   } else {

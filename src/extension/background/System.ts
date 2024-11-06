@@ -26,9 +26,12 @@ class System {
    * Gets the info about the native binary
    * @return the version
    */
-  async getNativeInfo (): Promise<{ binaryVersion: string }> {
+  async getNativeInfo (): Promise<{ binaryVersion: string, apiVersion: string }> {
     const binaryInfo = await NativeIPC.request(kSystemGetInfo, undefined)
-    return { binaryVersion: binaryInfo.version }
+    return {
+      binaryVersion: binaryInfo.version,
+      apiVersion: binaryInfo.apiVersion
+    }
   }
 
   /**
@@ -36,15 +39,17 @@ class System {
    * @return the update result
    */
   async checkForNativeUpdates (): Promise<UpdateResult> {
-    return await NativeIPC.request(kSystemCheckForUpdates, undefined) as UpdateResult
+    return await NativeIPC.request(kSystemCheckForUpdates, config.native.apiVersion) as UpdateResult
   }
 
   /**
    * Checks the native IPC for updates in the background
    */
   async backgroundCheckForNativeUpdates () {
-    const lastUpdateTime = await getLastUpdateTime()
-    if (Date.now() - lastUpdateTime > config.updateCheckInterval) {
+    if (
+      (Date.now() - await getLastUpdateTime() > config.updateCheckInterval) ||
+      ((await this.getNativeInfo())?.apiVersion !== config.native.apiVersion)
+    ) {
       switch (await this.checkForNativeUpdates()) {
         case UpdateResult.NoUpdate:
         case UpdateResult.Updated:

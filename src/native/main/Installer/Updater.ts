@@ -34,10 +34,11 @@ async function verifyUpdate (filepath: string, signature: string) {
 
 /**
  * Checks for update
+ * @param apiVersion=config.native.apiVersion: the supported api version
  * @param dry=false: if false, just checks for an update, if true, updates
  * @returns true if we updated, false otherwise
  */
-export async function update (dry = false) {
+export async function update (apiVersion = config.native.apiVersion, dry = false) {
   if (!sea.isSea()) {
     return UpdateResult.NoUpdate
   }
@@ -59,7 +60,7 @@ export async function update (dry = false) {
 
   // Start the update process
   try {
-    const res = await fetch(urlJoin(config.native.updateUrl, process.platform, process.arch, 'latest.json'))
+    const res = await fetch(urlJoin(config.native.updateUrl, process.platform, process.arch, `latest_${apiVersion}.json`))
     if (!res.ok || !res.body) {
       Logger.log(`Failed to check for updates: ${res.status}`)
       return UpdateResult.NetworkError
