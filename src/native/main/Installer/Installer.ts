@@ -8,6 +8,9 @@ import semver from 'semver'
 import { isDevMode } from '../Env'
 import * as BrowserManifestInstaller from './BrowserManifestInstaller'
 import { importLlama } from '../Llama'
+import sanitizeFilename from 'sanitize-filename'
+import { AIModelManifest } from '#Shared/AIModelManifest'
+import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 
 /* **************************************************************************/
 // MARK: Installing
@@ -37,6 +40,46 @@ export async function install () {
   await BrowserManifestInstaller.install()
 
   Logger.log('Install complete')
+}
+
+/**
+ * Installs a local model
+ * @param rawModelPath: the path to the model manifest
+ *
+ * The model manifest and all assets must be in the same
+ * directory as the executable we're running
+ */
+export async function installLocalModel (rawModelPath: string) {
+  if (rawModelPath) {
+    Logger.log(`Installing model: ${rawModelPath}`)
+    try {
+      // Read the model manifest
+      const modelPath = path.join(path.dirname(process.execPath), sanitizeFilename(rawModelPath))
+      let modelManifest: AIModelManifest
+      try {
+        modelManifest = await fs.readJSON(modelPath)
+      } catch (ex) {
+        throw new Error('Failed to load model manifest')
+      }
+
+      // Install the assets
+      for (const { id } of modelManifest.assets) {
+        try {
+          const assetPath = AIModelFileSystem.getAssetPath(id)
+          await fs.ensureDir(path.dirname(assetPath))
+          await fs.move(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath)
+        } catch (ex) {
+          throw new Error(`Failed to install asset ${id}`)
+        }
+      }
+
+      // Write the manifest
+      await AIModelFileSystem.writeModelManifest(modelManifest)
+      Logger.log(`Installed model: ${rawModelPath}`)
+    } catch (ex) {
+      Logger.error(`Failed to install model: ${ex.message}`)
+    }
+  }
 }
 
 /**

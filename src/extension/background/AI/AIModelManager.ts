@@ -194,10 +194,9 @@ class AIModelManagerImpl extends EventEmitter {
    * @param progressFn: the progress callback
    */
   install (channel: IPCInflightChannel, modelId: string, progressFn?: DownloadProgressFn) {
-    const origin = channel.origin
     return this.#queueTask(TaskType.Install, async (taskId: string) => {
       console.log(`Installing model ${modelId}`)
-      const manifest = await AIModelDownload.fetchModelManifest(modelId, origin)
+      const manifest = await AIModelDownload.fetchModelManifest(modelId)
       this.#updateTaskState(taskId, { id: manifest.id, name: manifest.name })
       await this.#installManifest(manifest, (modelId, loaded, total) => {
         this.#updateTaskProgress(taskId, Math.round((loaded / total) * 100))
@@ -228,7 +227,6 @@ class AIModelManagerImpl extends EventEmitter {
    * @return true if an update check was made, false if no update was needed or it failed
    */
   update (channel: IPCInflightChannel, modelId: string, force = false): Promise<boolean> {
-    const origin = channel.origin
     return this.#queueTask(TaskType.Update, async (): Promise<boolean> => {
       try {
         console.log(`Updating model ${modelId}`)
@@ -244,7 +242,7 @@ class AIModelManagerImpl extends EventEmitter {
 
         if (shouldCheck) {
           console.log(`Model update check needed ${modelId}`)
-          const remoteManifest = await AIModelDownload.fetchModelManifest(modelId, origin)
+          const remoteManifest = await AIModelDownload.fetchModelManifest(modelId)
           const localManifest = await AIModelFileSystem.readModelManifest(modelId)
           await AIModelFileSystem.updateModelStats(modelId, { updateTS: Date.now() })
 

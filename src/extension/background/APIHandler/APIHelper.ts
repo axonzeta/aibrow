@@ -87,7 +87,7 @@ class APIHelper {
       availability = AICapabilityAvailability.Readily
     } catch (ex) {
       try {
-        manifest = await AIModelDownload.fetchModelManifest(modelId, channel.origin)
+        manifest = await AIModelDownload.fetchModelManifest(modelId)
         availability = AICapabilityAvailability.AfterDownload
       } catch (ex) {
         availability = AICapabilityAvailability.No
@@ -251,7 +251,7 @@ class APIHelper {
         }
       } else {
         // Pre-check if the manifest supports the prompt type to save downloading a large model
-        const manifest = await AIModelDownload.fetchModelManifest(modelId, channel.origin)
+        const manifest = await AIModelDownload.fetchModelManifest(modelId)
         if (!this.modelSupportsPromptType(manifest, promptType)) {
           throw new Error(kModelPromptTypeNotSupported)
         }

@@ -52,6 +52,9 @@ async function main () {
     Logger.log('Starting: install')
     Logger.logToConsole = true
     await Installer.install()
+    if (Argv.model) {
+      await Installer.installLocalModel(Argv.model)
+    }
     process.exit(0)
   } else if (Argv.ai_test) {
     Logger.log('Starting: ai_test')

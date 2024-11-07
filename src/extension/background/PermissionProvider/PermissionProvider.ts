@@ -111,7 +111,7 @@ class PermissionProvider {
     try {
       manifest = await AIModelFileSystem.readModelManifest(modelId)
     } catch (ex) {
-      manifest = await AIModelDownload.fetchModelManifest(modelId, channel.origin)
+      manifest = await AIModelDownload.fetchModelManifest(modelId)
     }
     const request = {
       tabId: channel.port.sender.tab.id,
