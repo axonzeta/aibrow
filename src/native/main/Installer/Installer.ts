@@ -67,7 +67,15 @@ export async function installLocalModel (rawModelPath: string) {
         try {
           const assetPath = AIModelFileSystem.getAssetPath(id)
           await fs.ensureDir(path.dirname(assetPath))
-          await fs.move(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath)
+          switch (process.platform) {
+            case 'darwin':
+              // When extracted as part of the pkg installer, we can't move the file only copy it
+              await fs.copy(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath, { overwrite: true })
+              break
+            default:
+              await fs.move(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath)
+              break
+          }
         } catch (ex) {
           throw new Error(`Failed to install asset ${id}`)
         }
@@ -75,7 +83,7 @@ export async function installLocalModel (rawModelPath: string) {
 
       // Write the manifest
       await AIModelFileSystem.writeModelManifest(modelManifest)
-      Logger.log(`Installed model: ${rawModelPath}`)
+      Logger.log(`Installed model: ${modelManifest.id}`)
     } catch (ex) {
       Logger.error(`Failed to install model: ${ex.message}`)
     }
