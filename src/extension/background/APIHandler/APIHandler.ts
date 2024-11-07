@@ -75,7 +75,7 @@ class APIHandler {
     let arch: string
     switch (platformInfo.arch) {
       case 'arm64': arch = 'arm64'; break
-      case 'x86-64': arch = 'x86'; break
+      case 'x86-64': arch = 'x64'; break
     }
 
     const latestUrl = urlJoin(config.native.updateUrl, platform, arch, `latest_${config.native.apiVersion}.json`)
