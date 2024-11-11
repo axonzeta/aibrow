@@ -57,7 +57,7 @@ export function calculateCosineSimilarity (vectorA: AIEmbeddingVector, vectorB: 
  * @param target: the target vector to compare against
  * @returns a list of embedding ids sorted by similarity
  */
-export function findSimilar (embeddings: AIEmbeddingVectorListItem, target: AIEmbeddingVector): AIEmbeddingVectorListItem[] {
+export function findSimilar (embeddings: AIEmbeddingVectorListItem, target: AIEmbeddingVector): any[] {
   const similarities = new Map<any, number>()
   for (const { id, vector } of embeddings) {
     similarities.set(id, calculateCosineSimilarity(vector, target))
