@@ -18,7 +18,7 @@ import {
 import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
 import { kModelPromptAborted, kModelPromptTypeNotSupported } from '#Shared/Errors'
 import APIHelper from './APIHelper'
-import AIPrompter from '../AI/AIPrompter'
+import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
 import { Template } from '@huggingface/jinja'
@@ -90,7 +90,7 @@ class AILanguageModelHandler {
         eos_token: manifest.tokens.eosToken
       })
 
-      const tokenCount = await AIPrompter.countTokens(prompt, props, {})
+      const tokenCount = await AILlmSession.countTokens(prompt, props, {})
       if (tokenCount <= props.contextSize) {
         return prompt
       }
@@ -119,7 +119,7 @@ class AILanguageModelHandler {
     ) => {
       const systemPrompt = payload.getString('systemPrompt')
       const initialPrompts = payload.getAILanguageModelInitialPrompts('initialPrompts')
-      const tokensSoFar = await AIPrompter.countTokens(
+      const tokensSoFar = await AILlmSession.countTokens(
         await this.#buildPrompt(manifest, props, systemPrompt, initialPrompts, []),
         props,
         {}
@@ -143,7 +143,7 @@ class AILanguageModelHandler {
   }
 
   #handleDestroy = async (channel: IPCInflightChannel) => {
-    return await AIPrompter.disposePromptSession(getNonEmptyString(channel.payload.sessionId))
+    return await AILlmSession.disposePromptSession(getNonEmptyString(channel.payload.sessionId))
   }
 
   /* **************************************************************************/
@@ -166,7 +166,7 @@ class AILanguageModelHandler {
       )
       if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
 
-      const count = (await AIPrompter.countTokens(
+      const count = (await AILlmSession.countTokens(
         prompt,
         props,
         { signal: channel.abortSignal }
@@ -198,7 +198,7 @@ class AILanguageModelHandler {
       const sessionId = payload.getNonEmptyString('sessionId')
       if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
 
-      const reply = (await AIPrompter.prompt(
+      const reply = (await AILlmSession.prompt(
         sessionId,
         prompt,
         props,
@@ -209,7 +209,7 @@ class AILanguageModelHandler {
       )) as string
 
       return {
-        tokensSoFar: await AIPrompter.countTokens(
+        tokensSoFar: await AILlmSession.countTokens(
           await this.#buildPrompt(
             manifest,
             props,

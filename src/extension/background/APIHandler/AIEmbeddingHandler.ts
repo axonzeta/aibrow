@@ -1,14 +1,14 @@
 import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
 import {
-  AICoreModelData
-} from '#Shared/API/AICoreModel/AICoreModelTypes'
+  AIEmbeddingData,
+  AIEmbeddingVector
+} from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
 import {
-  kCoreModelGetCapabilities,
-  kCoreModelCreate,
-  kCoreModelDestroy,
-  kCoreModelPrompt,
-  kCoreModelCountTokens
-} from '#Shared/API/AICoreModel/AICoreModelIPCTypes'
+  kEmbeddingGetCapabilities,
+  kEmbeddingCreate,
+  kEmbeddingDestroy,
+  kEmbeddingGet
+} from '#Shared/API/AIEmbedding/AIEmbeddingIPCTypes'
 import {
   IPCServer,
   IPCInflightChannel
@@ -17,9 +17,8 @@ import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AICapabilityPromptType } from '#Shared/API/AI'
-import { kModelPromptAborted } from '#Shared/Errors'
 
-class AICoreModelHandler {
+class AIEmbeddingHandler {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -34,11 +33,10 @@ class AICoreModelHandler {
     this.#server = server
 
     this.#server
-      .addRequestHandler(kCoreModelGetCapabilities, this.#handleGetCapabilities)
-      .addRequestHandler(kCoreModelCreate, this.#handleCreate)
-      .addRequestHandler(kCoreModelDestroy, this.#handleDestroy)
-      .addRequestHandler(kCoreModelPrompt, this.#handlePrompt)
-      .addRequestHandler(kCoreModelCountTokens, this.#handleCountTokens)
+      .addRequestHandler(kEmbeddingGetCapabilities, this.#handleGetCapabilities)
+      .addRequestHandler(kEmbeddingCreate, this.#handleCreate)
+      .addRequestHandler(kEmbeddingDestroy, this.#handleDestroy)
+      .addRequestHandler(kEmbeddingGet, this.#handleGet)
   }
 
   /* **************************************************************************/
@@ -46,7 +44,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.CoreModel)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.Embedding)
   }
 
   /* **************************************************************************/
@@ -54,7 +52,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.CoreModel, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.Embedding, async (
       manifest,
       payload,
       props
@@ -62,7 +60,7 @@ class AICoreModelHandler {
       return {
         sessionId: nanoid(),
         props
-      } as AICoreModelData
+      } as AIEmbeddingData
     })
   }
 
@@ -74,51 +72,25 @@ class AICoreModelHandler {
   // MARK: Prompting
   /* **************************************************************************/
 
-  #handlePrompt = async (channel: IPCInflightChannel) => {
+  #handleGet = async (channel: IPCInflightChannel) => {
     return await APIHelper.handleStandardPromptPreflight(channel, async (
       manifest,
       payload,
       props
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
-      const prompt = payload.getString('prompt')
-
-      await AILlmSession.prompt(
-        sessionId,
-        prompt,
-        props,
-        {
-          signal: channel.abortSignal,
-          stream: (chunk: string) => channel.emit(chunk)
-        }
-      )
-
-      return {}
-    })
-  }
-
-  /* **************************************************************************/
-  // MARK: Tokens
-  /* **************************************************************************/
-
-  #handleCountTokens = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
-      manifest,
-      payload,
-      props
-    ) => {
       const input = payload.getString('input')
-      if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
 
-      const count = (await AILlmSession.countTokens(
+      const embedding = await AILlmSession.getEmbeddingVector(
+        sessionId,
         input,
         props,
         { signal: channel.abortSignal }
-      )) as number
+      )
 
-      return count
+      return embedding as AIEmbeddingVector
     })
   }
 }
 
-export default AICoreModelHandler
+export default AIEmbeddingHandler

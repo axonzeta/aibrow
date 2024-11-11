@@ -16,7 +16,7 @@ import {
   IPCInflightChannel
 } from '#Shared/IPC/IPCServer'
 import APIHelper from './APIHelper'
-import AIPrompter from '../AI/AIPrompter'
+import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
@@ -76,7 +76,7 @@ class AISummarizerHandler {
   }
 
   #handleDestroy = async (channel: IPCInflightChannel) => {
-    return await AIPrompter.disposePromptSession(getNonEmptyString(channel.payload.sessionId))
+    return await AILlmSession.disposePromptSession(getNonEmptyString(channel.payload.sessionId))
   }
 
   /* **************************************************************************/
@@ -98,7 +98,7 @@ class AISummarizerHandler {
       const prompt = this.#getPrompt(manifest, type, format, length, sharedContext, context, input)
       const sessionId = payload.getNonEmptyString('sessionId')
 
-      await AIPrompter.prompt(
+      await AILlmSession.prompt(
         sessionId,
         prompt,
         props,

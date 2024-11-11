@@ -4,11 +4,12 @@ import AISummarizerHandler from './AISummarizerHandler'
 import AIWriterHandler from './AIWriterHandler'
 import AILanguageModelHandler from './AILanguageModelHandler'
 import AICoreModelHandler from './AICoreModelHandler'
+import AIEmbeddingHandler from './AIEmbeddingHandler'
 import { kPrefGetUseBrowserAI } from '#Shared/API/PrefIPCMessageTypes'
 import { getUseBrowserAI } from '#Shared/Prefs'
 import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
-import System, { NativeInstalledResult } from '../System'
-import { AICapabilities } from '#Shared/API/AI'
+import System from '../System'
+import { AICapabilities, AIHelperInstalledState } from '#Shared/API/AI'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
 
@@ -22,8 +23,9 @@ class APIHandler {
   #rewriterHandler: AIRewriterHandler
   #summarizerHandler: AISummarizerHandler
   #writerHandler: AIWriterHandler
-  #languageModel: AILanguageModelHandler
-  #coreModel: AICoreModelHandler
+  #languageModelHandler: AILanguageModelHandler
+  #coreModelHandler: AICoreModelHandler
+  #embeddingHandler: AIEmbeddingHandler
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -35,8 +37,9 @@ class APIHandler {
     this.#rewriterHandler = new AIRewriterHandler(this.#server)
     this.#summarizerHandler = new AISummarizerHandler(this.#server)
     this.#writerHandler = new AIWriterHandler(this.#server)
-    this.#languageModel = new AILanguageModelHandler(this.#server)
-    this.#coreModel = new AICoreModelHandler(this.#server)
+    this.#languageModelHandler = new AILanguageModelHandler(this.#server)
+    this.#coreModelHandler = new AICoreModelHandler(this.#server)
+    this.#embeddingHandler = new AIEmbeddingHandler(this.#server)
 
     this.#server
       .addRequestHandler(kPrefGetUseBrowserAI, this.#handleGetUseBrowserAI)
@@ -57,9 +60,11 @@ class APIHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async () => {
+    const nativeInstalledState = await System.isNativeInstalled()
     return {
       extension: true,
-      helper: (await System.isNativeInstalled()) === NativeInstalledResult.Responded
+      helper: nativeInstalledState === AIHelperInstalledState.Responded,
+      helperState: nativeInstalledState
     } as AICapabilities
   }
 

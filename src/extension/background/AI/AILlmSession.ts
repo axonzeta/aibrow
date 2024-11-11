@@ -1,17 +1,22 @@
 import { AICapabilityGpuEngine, AIRootModelProps } from '#Shared/API/AI'
 import NativeIPC from '../NativeIPC'
 import {
-  kPrompterGetSupportedGpuEngines,
-  kPrompterExecPromptSession,
-  kPrompterCountPromptTokens,
-  kPrompterDisposePromptSession
-} from '#Shared/NativeAPI/PrompterIPC'
+  kLlmSessionGetSupportedGpuEngines,
+  kLlmSessionExecPromptSession,
+  kLlmSessionGetEmbeddingVector,
+  kLlmSessionCountPromptTokens,
+  kLlmSessionDisposePromptSession
+} from '#Shared/NativeAPI/LlmSessionIPC'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
 
 type SupportedEngines = {
   engines: AICapabilityGpuEngine[] | undefined
   resolving: boolean
   callbacks: Array<(engines: AICapabilityGpuEngine[]) => void>
+}
+
+type GetEmbeddingRequestOptions = {
+  signal?: AbortSignal
 }
 
 type CountTokensRequestOptions = {
@@ -23,7 +28,7 @@ type PromptStreamOptions = {
   stream: (chunk: string) => void
 }
 
-class AIPrompter {
+class AILlmSession {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
@@ -39,6 +44,20 @@ class AIPrompter {
   }
 
   /* **************************************************************************/
+  // MARK: Utils
+  /* **************************************************************************/
+
+  /**
+   * Throws an error if the gpu engine isn't supported
+   * @param gpuEngine: the gpu engine the user is trying to use
+   */
+  #ensureGpuEngineSupported = async (gpuEngine: AICapabilityGpuEngine | undefined) => {
+    if (gpuEngine && !(await this.getSupportedGpuEngines()).includes(gpuEngine)) {
+      throw new Error(kGpuEngineNotSupported)
+    }
+  }
+
+  /* **************************************************************************/
   // MARK: Platform support
   /* **************************************************************************/
 
@@ -51,7 +70,7 @@ class AIPrompter {
     if (!this.#supportedEngines.resolving) {
       this.#supportedEngines.resolving = true
       ;(async () => {
-        const supportedEngines = (await NativeIPC.request(kPrompterGetSupportedGpuEngines, {})) as AICapabilityGpuEngine[]
+        const supportedEngines = (await NativeIPC.request(kLlmSessionGetSupportedGpuEngines, {})) as AICapabilityGpuEngine[]
         const callbacks = this.#supportedEngines.callbacks
         this.#supportedEngines.engines = supportedEngines
         this.#supportedEngines.resolving = false
@@ -80,12 +99,10 @@ class AIPrompter {
    * @param streamOptions: the options for the return stream
    */
   async prompt (sessionId: string, prompt: string, props: AIRootModelProps, streamOptions: PromptStreamOptions) {
-    if (props.gpuEngine && !(await this.getSupportedGpuEngines()).includes(props.gpuEngine)) {
-      throw new Error(kGpuEngineNotSupported)
-    }
+    await this.#ensureGpuEngineSupported(props.gpuEngine)
 
     const res = await NativeIPC.stream(
-      kPrompterExecPromptSession,
+      kLlmSessionExecPromptSession,
       { props, prompt, sessionId },
       (chunk: string) => streamOptions.stream(chunk),
       { signal: streamOptions.signal }
@@ -94,11 +111,30 @@ class AIPrompter {
   }
 
   /**
+   * Adds a new embedding request to the queue
+   * @param sessionId: the id of the session
+   * @param input: the input to generate the embedding for
+   * @param props: the prompt model options
+   * @param requestOptions: the requestOptions
+   * @return the embedding vector
+   */
+  async getEmbeddingVector (sessionId: string, input: string, props: AIRootModelProps, requestOptions: GetEmbeddingRequestOptions) {
+    await this.#ensureGpuEngineSupported(props.gpuEngine)
+
+    const res = await NativeIPC.request(
+      kLlmSessionGetEmbeddingVector,
+      { input, props },
+      { signal: requestOptions.signal }
+    )
+    return res as number[]
+  }
+
+  /**
    * Disposes a prompt session freeing its memory
    * @param sessionId: the id of the session
    */
   async disposePromptSession (sessionId: string) {
-    await NativeIPC.request(kPrompterDisposePromptSession, { sessionId })
+    await NativeIPC.request(kLlmSessionDisposePromptSession, { sessionId })
   }
 
   /* **************************************************************************/
@@ -113,17 +149,15 @@ class AIPrompter {
    * @return the token count
    */
   async countTokens (input: string, props: AIRootModelProps, requestOptions: CountTokensRequestOptions) {
-    if (props.gpuEngine && !(await this.getSupportedGpuEngines()).includes(props.gpuEngine)) {
-      throw new Error(kGpuEngineNotSupported)
-    }
+    await this.#ensureGpuEngineSupported(props.gpuEngine)
 
     const res = await NativeIPC.request(
-      kPrompterCountPromptTokens,
+      kLlmSessionCountPromptTokens,
       { input, props },
       { signal: requestOptions.signal }
     )
-    return res
+    return res as number
   }
 }
 
-export default new AIPrompter()
+export default new AILlmSession()

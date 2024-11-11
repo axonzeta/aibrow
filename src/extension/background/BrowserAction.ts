@@ -1,9 +1,10 @@
-import System, { NativeInstalledResult } from './System'
+import System from './System'
 import {
   AIModelManager,
   TaskType as AIModelManagerTaskType,
   InflightTaskProgressEvent as AIModelManagerProgressEvent
 } from './AI/AIModelManager'
+import { AIHelperInstalledState } from '#Shared/API/AI'
 import PermissionProvider from './PermissionProvider'
 import NativeInstallHelper, { NativeInstallHelperShowReason } from './NativeInstallHelper'
 
@@ -79,7 +80,7 @@ class BrowserAction {
   #handleBrowserActionClicked = async (currentTab: chrome.tabs.Tab) => {
     const { id: tabId, windowId } = currentTab
 
-    if (await System.isNativeInstalled() !== NativeInstalledResult.Responded) {
+    if (await System.isNativeInstalled() !== AIHelperInstalledState.Responded) {
       NativeInstallHelper.show(NativeInstallHelperShowReason.UserInteraction)
     } else if (this.#permissionRequestTabs.includes(tabId)) {
       await this.#openPopupWithUserInteraction(windowId, tabId, `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}`)

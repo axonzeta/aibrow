@@ -10,12 +10,7 @@ import {
 } from '#Shared/Prefs'
 import config from '#Shared/Config'
 import { kNativeMessagingHostNotFound } from '#Shared/BrowserErrors'
-
-export enum NativeInstalledResult {
-  Responded,
-  Errored,
-  NotInstalled
-}
+import { AIHelperInstalledState } from '#Shared/API/AI'
 
 class System {
   /* **************************************************************************/
@@ -62,16 +57,20 @@ class System {
   /**
    * @return the current installed state
    */
-  async isNativeInstalled (): Promise<NativeInstalledResult> {
+  async isNativeInstalled (): Promise<AIHelperInstalledState> {
     try {
       // We re-use the management getInfo call for this
-      await this.getNativeInfo()
-      return NativeInstalledResult.Responded
+      const info = await this.getNativeInfo()
+      if (info?.apiVersion === config.native.apiVersion) {
+        return AIHelperInstalledState.Responded
+      } else {
+        return AIHelperInstalledState.RespondedOutdated
+      }
     } catch (ex) {
       if (ex.message === kNativeMessagingHostNotFound) {
-        return NativeInstalledResult.NotInstalled
+        return AIHelperInstalledState.NotInstalled
       } else {
-        return NativeInstalledResult.Errored
+        return AIHelperInstalledState.Errored
       }
     }
   }

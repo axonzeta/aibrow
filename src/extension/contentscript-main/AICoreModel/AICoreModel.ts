@@ -5,7 +5,7 @@ import {
   AICoreModelCloneOptions
 } from '#Shared/API/AICoreModel/AICoreModelTypes'
 import IPC from '../IPC'
-import { kCoreModelCreate, kCoreModelPrompt } from '#Shared/API/AICoreModel/AICoreModelIPCTypes'
+import { kCoreModelCreate, kCoreModelPrompt, kCoreModelCountTokens } from '#Shared/API/AICoreModel/AICoreModelIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
@@ -61,7 +61,7 @@ class AICoreModel extends AIRootModel {
   get grammar () { return this.#props.grammar }
 
   /* **************************************************************************/
-  // MARK: Summarizing
+  // MARK: Prompting
   /* **************************************************************************/
 
   prompt = async (prompt: string, options: AICoreModelPromptOptions = {}): Promise<string> => {
@@ -93,6 +93,18 @@ class AICoreModel extends AIRootModel {
         )
       }
     })
+  }
+
+  /* **************************************************************************/
+  // MARK: Tokens
+  /* **************************************************************************/
+
+  countPromptTokens = async (prompt: string, options: AICoreModelPromptOptions = {}): Promise<number> => {
+    this.#guardDestroyed()
+
+    const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
+    const count = (await IPC.request(kCoreModelCountTokens, { props: this.#props, input: prompt }, { signal })) as number
+    return count
   }
 }
 

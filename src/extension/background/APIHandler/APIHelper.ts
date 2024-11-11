@@ -28,7 +28,7 @@ import {
 } from '#Shared/API/AI'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import PermissionProvider from '../PermissionProvider'
-import AIPrompter from '../AI/AIPrompter'
+import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
 import AIModelManager from '../AI/AIModelManager'
@@ -174,7 +174,7 @@ class APIHelper {
             return { available }
           }
         })(),
-        AIPrompter.getSupportedGpuEngines().then((gpuEngines) => ({ gpuEngines }))
+        AILlmSession.getSupportedGpuEngines().then((gpuEngines) => ({ gpuEngines }))
       ])
 
       return Object.assign({}, ...components)
@@ -224,7 +224,7 @@ class APIHelper {
     const rawPayload = channel.payload
 
     // Pre-validation checks
-    if (rawPayload?.gpuEngine && !(await AIPrompter.getSupportedGpuEngines()).includes(rawPayload?.gpuEngine)) {
+    if (rawPayload?.gpuEngine && !(await AILlmSession.getSupportedGpuEngines()).includes(rawPayload?.gpuEngine)) {
       // This will fail later when you try to use it with the model
       throw new Error(kGpuEngineNotSupported)
     }

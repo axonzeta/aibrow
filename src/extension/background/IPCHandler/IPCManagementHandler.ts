@@ -7,7 +7,7 @@ import {
   kGetSupportedGpuEngines,
   kGetInflightInstallProgress
 } from '#Shared/BackgroundAPI/ManagementIPC'
-import AIPrompter from '../AI/AIPrompter'
+import AILlmSession from '../AI/AILlmSession'
 import { AIModelManager, TaskType as AIModelManagerTaskType } from '../AI/AIModelManager'
 import AIModelFileSystem from '../AI/AIModelFileSystem'
 import System from '../System'
@@ -32,7 +32,7 @@ class IPCManagementHandler {
         return true
       })
       .addHandler(kGetSupportedGpuEngines, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
-        AIPrompter.getSupportedGpuEngines().then((gpuEngines) => sendResponse(gpuEngines))
+        AILlmSession.getSupportedGpuEngines().then((gpuEngines) => sendResponse(gpuEngines))
         return true
       })
       .addHandler(kGetInflightInstallProgress, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {

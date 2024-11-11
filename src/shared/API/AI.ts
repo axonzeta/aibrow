@@ -19,6 +19,7 @@ export enum AICapabilityGpuEngine {
 
 export enum AICapabilityPromptType {
   CoreModel = null,
+  Embedding = null,
   LanguageModel = 'languageModel',
   Summarizer = 'summarizer',
   Writer = 'writer',
@@ -29,9 +30,17 @@ export enum AICapabilityPromptType {
 // MARK: Core capabilities
 /* **************************************************************************/
 
+export enum AIHelperInstalledState {
+  Responded = 'responded',
+  RespondedOutdated = 'responded-outdated',
+  Errored = 'errored',
+  NotInstalled = 'not-installed'
+}
+
 export type AICapabilities = {
   extension: boolean
   helper: boolean
+  helperState: AIHelperInstalledState
 }
 
 export type AIRootCapabilitiesOptions = {
