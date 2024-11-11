@@ -52,6 +52,7 @@ export type AIModelStats = {
   id: string,
   usedTS?: number
   updateTS?: number
+  machineScore?: number
 }
 
 /* **************************************************************************/

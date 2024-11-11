@@ -121,7 +121,10 @@ class Controls {
         let val = $el.value
         if ($el.tagName === 'INPUT') {
           switch ($el.type) {
-            case 'number': val = parseFloat($el.value); break
+            case 'number':
+              val = parseFloat($el.value)
+              if (isNaN(val)) { val = undefined }
+              break
             case 'checkbox': val = $el.checked; break
           }
         }

@@ -1,6 +1,7 @@
 import BrowserIPC from '../BrowserIPC'
 import {
   kLlmSessionGetSupportedGpuEngines,
+  kLlmSessionGetModelScore,
   kLlmSessionExecPromptSession,
   kLlmSessionGetEmbeddingVector,
   kLlmSessionCountPromptTokens,
@@ -71,6 +72,7 @@ class LlmSessionAPIHandler {
 
     BrowserIPC
       .addRequestHandler(kLlmSessionGetSupportedGpuEngines, this.#handleGetSupportedGpuEngines)
+      .addRequestHandler(kLlmSessionGetModelScore, this.#handleGetModelScore)
       .addRequestHandler(kLlmSessionExecPromptSession, this.#handleExecPromptSession)
       .addRequestHandler(kLlmSessionGetEmbeddingVector, this.#handleGetEmbeddingVector)
       .addRequestHandler(kLlmSessionCountPromptTokens, this.#handleExecCountPromptTokens)
@@ -108,9 +110,58 @@ class LlmSessionAPIHandler {
     return supportedEngines
   }
 
+  #handleGetModelScore = async (channel: IPCInflightChannel) => {
+    const props = new UntrustedParser(channel.payload)
+    const gpuEngine = props.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
+    const flashAttention = props.getBool('flashAttention', false)
+    const contextSize = props.getNumber('contextSize', 2048)
+    const modelId = props.getNonEmptyString('modelId')
+    const modelUrl = props.getNonEmptyString('modelUrl')
+
+    const { readGgufFileInfo, GgufInsights } = await importLlama()
+    const llama = await this.#getLlama(gpuEngine)
+
+    const ggufFileInfo = await readGgufFileInfo(
+      modelId
+        ? await (async () => {
+          const manifest = await AIModelFileSystem.readModelManifest(modelId)
+          return AIModelFileSystem.getAssetPath(manifest.model)
+        })()
+        : modelUrl,
+      { fetchHeaders: undefined }
+    )
+
+    const ggufInsights = await GgufInsights.from(ggufFileInfo, llama)
+    const res = await ggufInsights.configurationResolver.resolveAndScoreConfig({
+      flashAttention,
+      targetContextSize: contextSize,
+      targetGpuLayers: undefined,
+      embeddingContext: false
+    })
+
+    return res.totalScore
+  }
+
   /* **************************************************************************/
   // MARK: LLM session management: Loading
   /* **************************************************************************/
+
+  /**
+   * Gets a llama instance
+   * @param gpuEngine: the gpu engine to use
+   * @returns a new llama instance
+   */
+  #getLlama = async (gpuEngine: AICapabilityGpuEngine | undefined) => {
+    const { getLlama } = await importLlama()
+    return await getLlama({
+      build: 'never',
+      gpu: gpuEngine === undefined
+        ? 'auto'
+        : gpuEngine === AICapabilityGpuEngine.Cpu
+          ? false
+          : gpuEngine
+    })
+  }
 
   /**
    * Loads a model into memory
@@ -140,15 +191,8 @@ class LlmSessionAPIHandler {
 
       // Prep everything for the session
       const sessionIds = new Set(sessionId ? [sessionId] : [])
-      const { getLlama } = await importLlama()
-      const llama = await getLlama({
-        build: 'never',
-        gpu: gpuEngine === undefined
-          ? 'auto'
-          : gpuEngine === AICapabilityGpuEngine.Cpu
-            ? false
-            : gpuEngine
-      })
+      const llama = await this.#getLlama(gpuEngine)
+
       const model = await llama.loadModel({
         modelPath: AIModelFileSystem.getAssetPath(manifest.model),
         useMmap

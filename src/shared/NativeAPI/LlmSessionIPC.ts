@@ -1,4 +1,5 @@
 export const kLlmSessionGetSupportedGpuEngines = 'Llm:Session:GetSupportedGpuEngines'
+export const kLlmSessionGetModelScore = 'Llm:Session:GetModelScore'
 export const kLlmSessionDisposePromptSession = 'Llm:Session:DisposePromptSession'
 export const kLlmSessionExecPromptSession = 'Llm:Session:ExecPromptSession'
 export const kLlmSessionGetEmbeddingVector = 'Llm:Session:GetEmbeddingVector'

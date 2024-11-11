@@ -25,6 +25,7 @@ class AIRootModelCapabilities {
   get aibrow () { return true }
   get available () { return this.#data.available }
   get gpuEngines () { return this.#data.gpuEngines }
+  get score () { return this.#data.score }
 
   get defaultTopK () { return this.#data.topK?.[1] ?? null }
   get maxTopK () { return this.#data.topK?.[2] ?? null }

@@ -2,12 +2,14 @@ import { AICapabilityGpuEngine, AIRootModelProps } from '#Shared/API/AI'
 import NativeIPC from '../NativeIPC'
 import {
   kLlmSessionGetSupportedGpuEngines,
+  kLlmSessionGetModelScore,
   kLlmSessionExecPromptSession,
   kLlmSessionGetEmbeddingVector,
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposePromptSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
+import { AIModelManifest } from '#Shared/AIModelManifest'
 
 type SupportedEngines = {
   engines: AICapabilityGpuEngine[] | undefined
@@ -85,6 +87,19 @@ class AILlmSession {
     return new Promise<AICapabilityGpuEngine[]>((resolve) => {
       this.#supportedEngines.callbacks.push(resolve)
     })
+  }
+
+  /**
+   * @returns the model score for this machine
+   */
+  async getModelScore (manifest: AIModelManifest) : Promise<number> {
+    const score = (await NativeIPC.request(kLlmSessionGetModelScore, {
+      gpuEngine: undefined,
+      flashAttention: manifest.config.flashAttention,
+      contextSize: manifest.tokens.max,
+      modelUrl: manifest.assets.find((asset) => asset.id === manifest.model)?.url
+    })) as number
+    return score
   }
 
   /* **************************************************************************/

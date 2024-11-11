@@ -18,6 +18,7 @@ type Config = {
   }
 
   defaultAiModel: string
+  modelMinMachineScore: number
   permissionRequiredForDefaultModel: boolean
   permissionAlwaysAllowedOrigins: string[]
 

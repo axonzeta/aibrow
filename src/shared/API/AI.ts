@@ -50,6 +50,7 @@ export type AIRootCapabilitiesOptions = {
 export type AIRootModelCapabilitiesData = {
   available: AICapabilityAvailability
   gpuEngines: AICapabilityGpuEngine[]
+  score: number
   supportedLanguages?: string[]
   topK?: AIModelManifestConfigRange
   temperature?: AIModelManifestConfigRange

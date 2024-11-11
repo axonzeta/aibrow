@@ -32,6 +32,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
 import AIModelManager from '../AI/AIModelManager'
+import config from '#Shared/Config'
 
 class APIHelper {
   /* **************************************************************************/
@@ -77,32 +78,37 @@ class APIHelper {
    * @param channel: the channel making the request
    * @param modelId: the id of the model
    * @param promptType: the type of prompt to check is available
-   * @returns the model availablility
+   * @returns the model availablility and manifest in the format { availability, manifest }
    */
   async getAIModelAvailability (channel: IPCInflightChannel, modelId: string, promptType: AICapabilityPromptType) {
     let manifest: AIModelManifest
     let availability: AICapabilityAvailability
+    let score: number
     try {
       manifest = await AIModelFileSystem.readModelManifest(modelId)
+      score = (await AIModelFileSystem.readModelStats(modelId))?.machineScore ?? 1
       availability = AICapabilityAvailability.Readily
     } catch (ex) {
       try {
         manifest = await AIModelDownload.fetchModelManifest(modelId)
         availability = AICapabilityAvailability.AfterDownload
+        score = await AILlmSession.getModelScore(manifest)
       } catch (ex) {
         availability = AICapabilityAvailability.No
+        score = 0
       }
     }
 
+    // Check the model supports the prompt type we're trying to use
     if (
-      availability === AICapabilityAvailability.No ||
       !manifest ||
-      !this.modelSupportsPromptType(manifest, promptType)
+      !this.modelSupportsPromptType(manifest, promptType) ||
+      score < config.modelMinMachineScore
     ) {
-      return AICapabilityAvailability.No
-    } else {
-      return availability
+      availability = AICapabilityAvailability.No
     }
+
+    return { availability, manifest, score }
   }
 
   /* **************************************************************************/
@@ -157,10 +163,11 @@ class APIHelper {
 
       const components = await Promise.all([
         (async () => {
-          const available = await this.getAIModelAvailability(channel, modelId, promptType)
-          if (available === AICapabilityAvailability.Readily) {
+          const { availability, score } = await this.getAIModelAvailability(channel, modelId, promptType)
+          if (availability === AICapabilityAvailability.Readily) {
             const manifest = await AIModelFileSystem.readModelManifest(modelId)
             return {
+              score,
               ...configFn ? configFn(manifest) : undefined,
               available: AICapabilityAvailability.Readily,
               topK: manifest.config.topK,
@@ -171,7 +178,7 @@ class APIHelper {
               contextSize: [1, manifest.tokens.default, manifest.tokens.max]
             }
           } else {
-            return { available }
+            return { available: availability, score }
           }
         })(),
         AILlmSession.getSupportedGpuEngines().then((gpuEngines) => ({ gpuEngines }))
@@ -259,6 +266,9 @@ class APIHelper {
         await AIModelManager.install(channel, modelId, (model, loaded, total) => {
           channel.emit({ loaded, total, model })
         })
+
+        const machineScore = await AILlmSession.getModelScore(manifest)
+        await AIModelFileSystem.updateModelStats(modelId, { machineScore })
       }
       if (channel.abortSignal?.aborted) { throw new Error(kModelCreationAborted) }
 
