@@ -44,7 +44,7 @@ class BrowserAction {
       const window = await chrome.windows.getLastFocused()
       await this.#openPopupWithoutUserInteraction(
         window.id,
-        'model-install-popup.html',
+        'ui-model-install-popup.html',
         { width: 448, height: 220 }
       )
     }
@@ -66,7 +66,7 @@ class BrowserAction {
         const tab = await chrome.tabs.get(addedTabId)
         await this.#openPopupWithoutUserInteraction(
           tab.windowId,
-          `permission-popup.html?${new URLSearchParams({ tabId: `${addedTabId}` }).toString()}`,
+          `ui-permission-popup.html?${new URLSearchParams({ tabId: `${addedTabId}` }).toString()}`,
           { width: 448, height: 200 }
         )
       }
@@ -83,9 +83,9 @@ class BrowserAction {
     if (await System.isNativeInstalled() !== AIHelperInstalledState.Responded) {
       NativeInstallHelper.show(NativeInstallHelperShowReason.UserInteraction)
     } else if (this.#permissionRequestTabs.includes(tabId)) {
-      await this.#openPopupWithUserInteraction(windowId, tabId, `permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}`)
+      await this.#openPopupWithUserInteraction(windowId, tabId, `ui-permission-popup.html?${new URLSearchParams({ tabId: `${tabId}` }).toString()}`)
     } else if (this.#installTask?.running && this.#installTask?.type === AIModelManagerTaskType.Install) {
-      await this.#openPopupWithUserInteraction(windowId, tabId, 'model-install-popup.html')
+      await this.#openPopupWithUserInteraction(windowId, tabId, 'ui-model-install-popup.html')
     } else {
       const url = chrome.runtime.getURL(chrome.runtime.getManifest().options_page)
       const contexts = await chrome.runtime.getContexts({ contextTypes: [chrome.runtime.ContextType.TAB] })

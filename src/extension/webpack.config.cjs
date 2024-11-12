@@ -47,7 +47,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
         plugins = []
         break
       default: {
-        const uiEntryPoints = ['permission-popup', 'model-install-popup', 'options']
+        const uiEntryPoints = ['ui-permission-popup', 'ui-model-install-popup', 'ui-options']
         entry = {
           background: path.join(srcDir, 'background/index.ts'),
           'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
