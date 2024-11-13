@@ -248,14 +248,16 @@ class LlmSessionAPIHandler {
         contextSequence: context.getSequence()
       })
 
+      let grammar: LlamaGrammar | undefined
       if (chatOptions.grammar !== undefined) {
-        this.#activeSession.chat.grammar = await this.#activeSession.llama.createGrammarForJsonSchema(chatOptions.grammar)
+        grammar = await this.#activeSession.llama.createGrammarForJsonSchema(chatOptions.grammar)
       }
 
       this.#activeSession.chat = {
         options: chatOptions,
         context,
-        session
+        session,
+        grammar
       }
     }
   }
