@@ -23,7 +23,7 @@
   },
 
   "defaultAiModel": "smollm2-1-7b-instruct-q4-k-m",
-  "modelMinMachineScore": 0.2,
+  "modelMinMachineScore": 0,
   "permissionRequiredForDefaultModel": false,
   "permissionAlwaysAllowedOrigins": ["https://aibrow.ai"],
 

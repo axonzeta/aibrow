@@ -103,7 +103,7 @@ class APIHelper {
     if (
       !manifest ||
       !this.modelSupportsPromptType(manifest, promptType) ||
-      score < config.modelMinMachineScore
+      score <= config.modelMinMachineScore
     ) {
       availability = AICapabilityAvailability.No
     }
