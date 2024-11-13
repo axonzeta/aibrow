@@ -18,7 +18,7 @@ class AI extends EventTarget {
   // MARK: Private
   /* **************************************************************************/
 
-  #browserAI: any
+  #browserAI: globalThis.AI | undefined
   #summarizer: AISummarizerFactory
   #writer: AIWriterFactory
   #rewriter: AIRewriterFactory
@@ -30,7 +30,7 @@ class AI extends EventTarget {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (browserAI: any) {
+  constructor (browserAI: globalThis.AI | undefined) {
     super()
 
     this.#browserAI = browserAI

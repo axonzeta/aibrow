@@ -1,11 +1,10 @@
 import AI from './AI'
 
-const genericWindow = window as any
-const browserAI = genericWindow.ai
-const ai = new AI(browserAI)
+const ai = new AI(window.ai)
 
 if (process.env.BROWSER !== 'extlib') {
-  if (!genericWindow.ai) {
+  const genericWindow = window as any
+  if (!window.ai) {
     genericWindow.ai = ai
   }
   genericWindow.aibrow = ai

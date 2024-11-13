@@ -123,12 +123,13 @@ async function renderSettings () {
     const defaultModelList = [
       ...new Set([defaultModelId, Object.values(config.defaultModels)])
     ].map((modelId) => ({ id: modelId, name: modelId }))
-    renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, defaultModelList, Boolean((window as any).ai?.assistant), useBrowserAI)
+
+    renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, defaultModelList, Boolean(window.ai?.languageModel), useBrowserAI)
 
     const res = await fetch('https://aibrow.ai/api/model/list.json')
     if (res.ok) {
       const { models } = await res.json()
-      renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, models, Boolean((window as any).ai?.assistant), useBrowserAI)
+      renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, models, Boolean(window.ai?.languageModel), useBrowserAI)
     }
   })()
 
