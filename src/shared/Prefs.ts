@@ -1,4 +1,5 @@
-import Config from './Config'
+import config from './Config'
+import { AIModelType } from './API/AI'
 
 /* **************************************************************************/
 // MARK: Base
@@ -38,9 +39,9 @@ export async function setLastUpdateTime (time: number = Date.now()) { return set
 // MARK: Models
 /* **************************************************************************/
 
-const kDefaultModelKey = `${kPrefKeyPrefix}:defaultModel`
-export async function getDefaultModel () { return getPref(kDefaultModelKey, Config.defaultAiModel) }
-export async function setDefaultModel (modelId: string) { return setPref(kDefaultModelKey, modelId) }
+const kDefaultModelsPrefixKey = `${kPrefKeyPrefix}:defaultModels:`
+export async function getDefaultModel (modelType: AIModelType) { return getPref(`${kDefaultModelsPrefixKey}${modelType}`, config.defaultModels[modelType]) }
+export async function setDefaultModel (modelType: AIModelType, modelId: string) { return setPref(`${kDefaultModelsPrefixKey}${modelType}`, modelId) }
 
 const kDefaultUseBrowserAIKey = `${kPrefKeyPrefix}:useBrowserAI`
 export async function getUseBrowserAI () { return getPref(kDefaultUseBrowserAIKey, false) }

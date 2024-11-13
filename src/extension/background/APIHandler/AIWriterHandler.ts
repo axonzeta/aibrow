@@ -20,7 +20,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType } from '#Shared/API/AI'
+import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 
 class AIWriterHandler {
@@ -49,7 +49,7 @@ class AIWriterHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.Writer)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.Writer)
   }
 
   /* **************************************************************************/
@@ -57,7 +57,7 @@ class AIWriterHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.Writer, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.Writer, async (
       manifest,
       payload,
       props
@@ -84,7 +84,7 @@ class AIWriterHandler {
   /* **************************************************************************/
 
   #handleWrite = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
       payload,
       props

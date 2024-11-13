@@ -7,7 +7,7 @@ import {
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposePromptSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
-import { AICapabilityGpuEngine, AIRootModelProps } from '#Shared/API/AI'
+import { AICapabilityGpuEngine, AIRootModelProps, AIModelType } from '#Shared/API/AI'
 import { importLlama } from '#R/Llama'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import deepEqual from 'fast-deep-equal'
@@ -387,7 +387,7 @@ class LlmSessionAPIHandler {
       try {
         // Extract the options
         const payload = new UntrustedParser(channel.payload)
-        const modelId = payload.getAIModelId('props.model')
+        const modelId = payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text])
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
         // Extract prompt options
@@ -453,7 +453,7 @@ class LlmSessionAPIHandler {
       try {
         // Extract the options
         const payload = new UntrustedParser(channel.payload)
-        const modelId = payload.getAIModelId('props.model')
+        const modelId = payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Embedding])
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
         // Extract prompt options
@@ -491,7 +491,7 @@ class LlmSessionAPIHandler {
       try {
         // Extract the options
         const payload = new UntrustedParser(channel.payload)
-        const modelId = payload.getAIModelId('props.model')
+        const modelId = payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text])
         const input = payload.getString('input')
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 

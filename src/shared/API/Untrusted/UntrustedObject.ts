@@ -7,7 +7,6 @@ import {
   getBool,
   getAny,
   getRange,
-  getAIModelId,
   getAILanguageModelInitialPrompts,
   getAILanguageModelPrompts
 } from './UntrustedParser'
@@ -65,14 +64,6 @@ class UntrustedParser {
 
   getRange (path: string, range: [number, number, number]) {
     return getRange(this.#get(path), range)
-  }
-
-  /* **************************************************************************/
-  // MARK: AI types
-  /* **************************************************************************/
-
-  getAIModelId (path: string): string {
-    return getAIModelId(this.#get(path))
   }
 
   /* **************************************************************************/

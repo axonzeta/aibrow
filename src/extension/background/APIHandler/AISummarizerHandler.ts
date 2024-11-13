@@ -20,7 +20,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType } from '#Shared/API/AI'
+import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 
 class AISummarizerHandler {
@@ -49,7 +49,7 @@ class AISummarizerHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.Summarizer)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.Summarizer)
   }
 
   /* **************************************************************************/
@@ -57,7 +57,7 @@ class AISummarizerHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.Summarizer, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.Summarizer, async (
       manifest,
       payload,
       props
@@ -84,7 +84,7 @@ class AISummarizerHandler {
   /* **************************************************************************/
 
   #handleSummarize = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
       payload,
       props

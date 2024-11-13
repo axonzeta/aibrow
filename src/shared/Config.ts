@@ -1,4 +1,6 @@
-type Config = {
+import { AIModelType } from './API/AI'
+
+export type Config = {
   version: string,
 
   native: {
@@ -17,7 +19,10 @@ type Config = {
     installHelperUrl: string
   }
 
-  defaultAiModel: string
+  defaultModels: {
+    [AIModelType.Text]: string
+    [AIModelType.Embedding]: string
+  }
   modelMinMachineScore: number
   permissionRequiredForDefaultModel: boolean
   permissionAlwaysAllowedOrigins: string[]
@@ -28,5 +33,5 @@ type Config = {
   updateCheckInterval: number
 }
 
-const config = (process.env as any).AZ_CONFIG as Config
+export const config = (process.env as any).AZ_CONFIG as Config
 export default config

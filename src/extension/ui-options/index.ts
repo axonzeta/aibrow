@@ -32,9 +32,10 @@ import {
   getUseMmap,
   setUseMmap
 } from '#Shared/Prefs'
-import Config from '#Shared/Config'
+import config from '#Shared/Config'
 import { AICapabilityGpuEngine } from '#Shared/API/AICapability'
 import { UpdateResult } from '#Shared/Updater'
+import { AIModelType } from '#Shared/API/AI'
 
 /* **************************************************************************/
 // MARK: Settings
@@ -45,13 +46,16 @@ const kBrowserAiModelId = '__browser__'
 function renderDefaultModelOptions (
   $el: HTMLSelectElement,
   selectedModelId: string,
-  useBrowserAI: boolean,
-  modelList: Array<{ id: string, name: string }>
+  modelList: Array<{ id: string, name: string }>,
+  hasBrowserAI: boolean,
+  useBrowserAI: boolean
 ) {
   UI.empty($el)
 
-  if ((window as any).ai?.assistant) {
+  if (hasBrowserAI) {
     modelList = [{ id: kBrowserAiModelId, name: 'Browser AI' }, ...modelList]
+  } else {
+    useBrowserAI = false
   }
 
   for (const model of modelList) {
@@ -99,28 +103,52 @@ async function renderDefaultEngineOptions (
 }
 
 async function renderSettings () {
-  // Default model
-  const $defaultModelOpt = document.getElementById('opt-model-default') as HTMLSelectElement
-  $defaultModelOpt.addEventListener('change', async () => {
-    const modelId = ($defaultModelOpt as HTMLSelectElement).value
+  // TODO: this needs a refactor. We're making multiple http fetch calls to the same endpoint
+
+  // Default text model
+  const $defaultTextModelOpt = document.getElementById('opt-model-text-default') as HTMLSelectElement
+  $defaultTextModelOpt.addEventListener('change', async () => {
+    const modelId = $defaultTextModelOpt.value
 
     if (modelId === kBrowserAiModelId) {
       await setUseBrowserAI(true)
     } else {
       await setUseBrowserAI(false)
-      await setDefaultModel(modelId)
+      await setDefaultModel(AIModelType.Text, modelId)
     }
   })
   ;(async () => {
     const useBrowserAI = await getUseBrowserAI()
-    const defaultModelId = await getDefaultModel()
-    const defaultModelList = [...new Set([defaultModelId, Config.defaultAiModel])].map((modelId) => ({ id: modelId, name: modelId }))
-    renderDefaultModelOptions($defaultModelOpt, defaultModelId, useBrowserAI, defaultModelList)
+    const defaultModelId = await getDefaultModel(AIModelType.Text)
+    const defaultModelList = [
+      ...new Set([defaultModelId, Object.values(config.defaultModels)])
+    ].map((modelId) => ({ id: modelId, name: modelId }))
+    renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, defaultModelList, Boolean((window as any).ai?.assistant), useBrowserAI)
 
     const res = await fetch('https://aibrow.ai/api/model/list.json')
     if (res.ok) {
       const { models } = await res.json()
-      renderDefaultModelOptions($defaultModelOpt, defaultModelId, useBrowserAI, models)
+      renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, models, Boolean((window as any).ai?.assistant), useBrowserAI)
+    }
+  })()
+
+  // Default embedding model
+  const $defaultEmbeddingModelOpt = document.getElementById('opt-model-embedding-default') as HTMLSelectElement
+  $defaultEmbeddingModelOpt.addEventListener('change', async () => {
+    const modelId = $defaultEmbeddingModelOpt.value
+    await setDefaultModel(AIModelType.Embedding, modelId)
+  })
+  ;(async () => {
+    const defaultModelId = await getDefaultModel(AIModelType.Embedding)
+    const defaultModelList = [
+      ...new Set([defaultModelId, Object.values(config.defaultModels)])
+    ].map((modelId) => ({ id: modelId, name: modelId }))
+    renderDefaultModelOptions($defaultEmbeddingModelOpt, defaultModelId, defaultModelList, false, false)
+
+    const res = await fetch('https://aibrow.ai/api/model/list.json')
+    if (res.ok) {
+      const { models } = await res.json()
+      renderDefaultModelOptions($defaultEmbeddingModelOpt, defaultModelId, models, false, false)
     }
   })()
 

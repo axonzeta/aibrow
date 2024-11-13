@@ -26,6 +26,11 @@ export enum AICapabilityPromptType {
   Rewriter = 'rewriter'
 }
 
+export enum AIModelType {
+  Text = 'text',
+  Embedding = 'embedding'
+}
+
 /* **************************************************************************/
 // MARK: Core capabilities
 /* **************************************************************************/

@@ -16,7 +16,7 @@ import {
 import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
-import { AICapabilityPromptType } from '#Shared/API/AI'
+import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptAborted } from '#Shared/Errors'
 
 class AICoreModelHandler {
@@ -46,7 +46,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.CoreModel)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.CoreModel)
   }
 
   /* **************************************************************************/
@@ -54,7 +54,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.CoreModel, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.CoreModel, async (
       manifest,
       payload,
       props
@@ -75,7 +75,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handlePrompt = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
       payload,
       props
@@ -102,7 +102,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleCountTokens = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
       payload,
       props

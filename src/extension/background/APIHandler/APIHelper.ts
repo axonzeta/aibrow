@@ -1,4 +1,4 @@
-import { clamp, getAIModelId, getEnum } from '#Shared/API/Untrusted/UntrustedParser'
+import { clamp, getNonEmptyString, getEnum } from '#Shared/API/Untrusted/UntrustedParser'
 import {
   getDefaultModel,
   getDefaultModelEngine,
@@ -24,7 +24,8 @@ import {
   AICapabilityAvailability,
   AIRootModelCapabilitiesData,
   AICapabilityPromptType,
-  AIRootModelProps
+  AIRootModelProps,
+  AIModelType
 } from '#Shared/API/AI'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import PermissionProvider from '../PermissionProvider'
@@ -44,8 +45,8 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  async getModelId (modelId: any): Promise<string> {
-    return getAIModelId(modelId, await getDefaultModel())
+  async getModelId (modelId: any, modelType: AIModelType): Promise<string> {
+    return getNonEmptyString(modelId, await getDefaultModel(modelType))
   }
 
   /**
@@ -56,10 +57,6 @@ class APIHelper {
   async getGpuEngine (gpuEngine: any): Promise<AICapabilityGpuEngine> {
     return getEnum(gpuEngine, AICapabilityGpuEngine, await getDefaultModelEngine())
   }
-
-  /* **************************************************************************/
-  // MARK: Models
-  /* **************************************************************************/
 
   /**
    * Looks to see if a model supports a given prompt type
@@ -146,16 +143,18 @@ class APIHelper {
   /**
    * Gets the standard capabilities data
    * @param channel: the incoming channel
+   * @param modelType: the type of model we're targeting
    * @param promptType: the type of prompt to check is available
    * @returns the response for the channel
    */
   async handleGetStandardCapabilitiesData (
     channel: IPCInflightChannel,
+    modelType: AIModelType,
     promptType: AICapabilityPromptType,
     configFn?: (manifest: AIModelManifest) => object
   ): Promise<AIRootModelCapabilitiesData> {
     return await this.captureCommonErrorsForResponse(async () => {
-      const modelId = await this.getModelId(channel.payload?.model)
+      const modelId = await this.getModelId(channel.payload?.model, modelType)
 
       // Permission checks & requests
       await PermissionProvider.requestModelPermission(channel, modelId)
@@ -215,12 +214,14 @@ class APIHelper {
   /**
    * Handles a bunch of preflight tasks before a create call
    * @param channel: the incoming IPC channel
+   * @param modelType: the type of model we're targeting
    * @param promptType: the prompt type we should check support for
    * @param postflightFn: a function that can execute a after the preflight calls have been executed
    * @returns the reply from the postflight
    */
   async handleStandardCreatePreflight (
     channel: IPCInflightChannel,
+    modelType: AIModelType,
     promptType: AICapabilityPromptType,
     postflightFn: (
       manifest: AIModelManifest,
@@ -239,7 +240,7 @@ class APIHelper {
     const payload = new UntrustedParser(rawPayload)
     return await this.captureCommonErrorsForResponse(async () => {
       // Values with user-defined defaults
-      const modelId = await this.getModelId(rawPayload?.model)
+      const modelId = await this.getModelId(rawPayload?.model, modelType)
       const gpuEngine = await this.getGpuEngine(rawPayload?.gpuEngine)
 
       // Permission checks & requests
@@ -290,11 +291,13 @@ class APIHelper {
   /**
    * Handles a bunch of preflight tasks before a prompt call
    * @param channel: the incoming IPC channel
+   * @param modelType: the type of model we're targeting
    * @param postflightFn: a function that can execute a after the preflight calls have been executed
    * @returns the reply from the postflight
    */
   async handleStandardPromptPreflight (
     channel: IPCInflightChannel,
+    modelType: AIModelType,
     postflightFn: (
       manifest: AIModelManifest,
       payload: UntrustedParser,
@@ -305,7 +308,7 @@ class APIHelper {
     const payload = new UntrustedParser(rawPayload)
 
     // Values with user-defined defaults
-    const modelId = await this.getModelId(rawPayload?.props?.model)
+    const modelId = await this.getModelId(rawPayload?.props?.model, modelType)
     const gpuEngine = await this.getGpuEngine(rawPayload?.props?.gpuEngine)
 
     // Permission checks & requests

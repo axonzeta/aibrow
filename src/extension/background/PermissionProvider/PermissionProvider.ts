@@ -62,7 +62,7 @@ class PermissionProvider {
 
     // The default model might already have permission
     if (config.permissionRequiredForDefaultModel === false) {
-      if (modelId === undefined || modelId === config.defaultAiModel) { return true }
+      if (modelId === undefined || Object.values(config.defaultModels).includes(modelId)) { return true }
     }
 
     // Check if we're a pre-allowed origin

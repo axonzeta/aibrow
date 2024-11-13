@@ -60,7 +60,7 @@ async function main () {
     Logger.log('Starting: ai_test')
     Logger.logToConsole = true
 
-    const modelName = config.defaultAiModel
+    const modelName = config.defaultModels.text
 
     if (!await AIModelFileSystem.hasModel(modelName)) {
       Logger.log('Model not available')

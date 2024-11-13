@@ -4,7 +4,6 @@ import {
   AILanguageModelPrompt,
   AILanguageModelPromptRole
 } from '#Shared/API/AILanguageModel/AILanguageModelTypes'
-import config from '#Shared/Config'
 
 /* **************************************************************************/
 // MARK: Base types
@@ -41,14 +40,6 @@ export function clamp (val: number, min: number, max: number) {
 export function getRange (val: any, range: [number, number, number]) {
   const [min, defaultVal, max] = range
   return clamp(getNumber(val, defaultVal), min, max)
-}
-
-/* **************************************************************************/
-// MARK: AI types
-/* **************************************************************************/
-
-export function getAIModelId (modelId: any, defaultVal: string = config.defaultAiModel): string {
-  return getNonEmptyString(modelId, defaultVal) as string
 }
 
 /* **************************************************************************/

@@ -16,7 +16,7 @@ import {
 import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
-import { AICapabilityPromptType } from '#Shared/API/AI'
+import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
 
 class AIEmbeddingHandler {
   /* **************************************************************************/
@@ -44,7 +44,7 @@ class AIEmbeddingHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.Embedding)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Embedding, AICapabilityPromptType.Embedding)
   }
 
   /* **************************************************************************/
@@ -52,7 +52,7 @@ class AIEmbeddingHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.Embedding, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Embedding, AICapabilityPromptType.Embedding, async (
       manifest,
       payload,
       props
@@ -73,7 +73,7 @@ class AIEmbeddingHandler {
   /* **************************************************************************/
 
   #handleGet = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Embedding, async (
       manifest,
       payload,
       props

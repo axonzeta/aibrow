@@ -22,7 +22,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIRootModelProps } from '#Shared/API/AI'
+import { AICapabilityPromptType, AIRootModelProps, AIModelType } from '#Shared/API/AI'
 
 class AILanguageModelHandler {
   /* **************************************************************************/
@@ -104,7 +104,7 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AICapabilityPromptType.LanguageModel)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.LanguageModel)
   }
 
   /* **************************************************************************/
@@ -112,7 +112,7 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AICapabilityPromptType.LanguageModel, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.LanguageModel, async (
       manifest,
       payload,
       props
@@ -151,7 +151,7 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleCountTokens = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
       payload,
       props
@@ -186,7 +186,7 @@ class AILanguageModelHandler {
    * @returns the stream response
    */
   #handlePrompt = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardPromptPreflight(channel, async (
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
       payload,
       props
