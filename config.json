@@ -21,7 +21,7 @@
   "extensionLibrary": {
     "name": "@aibrow/extension"
   },
-  "typesLibrary": {
+  "domTypesLibrary": {
     "name": "@aibrow/dom-types"
   },
 

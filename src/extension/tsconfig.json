@@ -8,8 +8,7 @@
     "moduleResolution": "node",
     "paths": {
       "#Shared/*": ["../shared/*"]
-    },
-    "types": ["@aibrow/dom-types"]
+    }
   },
   "include": [
     "./*/*.ts"
