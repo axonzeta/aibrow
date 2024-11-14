@@ -58,12 +58,12 @@ class AILanguageDetector extends AIRootModel {
   // MARK: Detection
   /* **************************************************************************/
 
-  detect = async (input: string, options: AILanguageDetectorDetectOptions = {}):Promise<AILanguageDetectorDetectResult> => {
+  detect = async (input: string, options: AILanguageDetectorDetectOptions = {}):Promise<AILanguageDetectorDetectResult[]> => {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
 
-    const result = (await IPC.request(kLanguageDetectorDetect, { props: this.#props, input }, { signal })) as AILanguageDetectorDetectResult
+    const result = (await IPC.request(kLanguageDetectorDetect, { props: this.#props, input }, { signal })) as AILanguageDetectorDetectResult[]
     return result
   }
 }

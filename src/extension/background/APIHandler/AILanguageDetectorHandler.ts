@@ -87,39 +87,47 @@ class AILanguageDetectorHandler {
       const input = payload.getString('input')
       const prompt = this.#getPrompt(manifest, input)
       const sessionId = payload.getNonEmptyString('sessionId')
+      const results: AILanguageDetectorDetectResult[] = []
 
-      const result = JSON.parse(await AILlmSession.prompt(
-        sessionId,
-        prompt,
-        {
-          ...props,
-          grammar: {
-            type: 'object',
-            properties: {
-              detectedLanguage: {
-                type: 'string',
-                enum: AILanguageDetectorDefaultLanguages
+      for (let i = 0; i < 1; i++) {
+        const detectedLanguage = new Set(results.map(result => result.detectedLanguage))
+        const languages = AILanguageDetectorDefaultLanguages.filter((language) => !detectedLanguage.has(language))
+
+        const result = JSON.parse(await AILlmSession.prompt(
+          sessionId,
+          prompt,
+          {
+            ...props,
+            grammar: {
+              type: 'object',
+              properties: {
+                detectedLanguage: {
+                  type: 'string',
+                  enum: languages
+                },
+                confidence: {
+                  type: 'integer',
+                  minimum: 0,
+                  maximum: 100
+                }
               },
-              confidence: {
-                type: 'integer',
-                minimum: 0,
-                maximum: 100
-              }
-            },
-            required: ['detectedLanguage', 'confidence'],
-            additionalProperties: false
+              required: ['detectedLanguage', 'confidence'],
+              additionalProperties: false
+            }
+          },
+          {
+            signal: channel.abortSignal,
+            stream: noop
           }
-        },
-        {
-          signal: channel.abortSignal,
-          stream: noop
-        }
-      ))
+        ))
 
-      return {
-        detectedLanguage: result.detectedLanguage,
-        confidence: result.confidence / 100
-      } as AILanguageDetectorDetectResult
+        results.push({
+          detectedLanguage: result.detectedLanguage,
+          confidence: result.confidence / 100
+        } as AILanguageDetectorDetectResult)
+      }
+
+      return results
     })
   }
 
