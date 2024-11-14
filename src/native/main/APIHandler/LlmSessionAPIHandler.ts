@@ -13,7 +13,7 @@ import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import deepEqual from 'fast-deep-equal'
 import Logger from '#R/Logger'
 import config from '#Shared/Config'
-import type { Llama, LlamaChatSession, LlamaContext, LlamaModel, LlamaGrammar, LlamaEmbeddingContext } from 'node-llama-cpp'
+import type { Llama, LlamaCompletion, LlamaContext, LlamaModel, LlamaGrammar, LlamaEmbeddingContext } from 'node-llama-cpp'
 import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 import { kModelPromptAborted } from '#Shared/Errors'
 import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
@@ -46,7 +46,7 @@ type LlmSession = {
   chat?: {
     options: LlmChatSessionOptions
     context: LlamaContext
-    session: LlamaChatSession
+    session: LlamaCompletion
     grammar?: LlamaGrammar
   }
   embedding?: {
@@ -230,7 +230,6 @@ class LlmSessionAPIHandler {
     // Create or re-use the session
     if (deepEqual(this.#activeSession?.chat?.options, chatOptions)) {
       Logger.log(`Reusing AI chat instance ${modelOptions.modelId}`)
-      this.#activeSession.chat.session.resetChatHistory()
     } else {
       Logger.log(`Loading new AI chat instance ${modelOptions.modelId}`)
 
@@ -243,8 +242,8 @@ class LlmSessionAPIHandler {
           : undefined
       })
 
-      const { LlamaChatSession } = await importLlama()
-      const session = new LlamaChatSession({
+      const { LlamaCompletion } = await importLlama()
+      const session = new LlamaCompletion({
         contextSequence: context.getSequence()
       })
 
@@ -421,7 +420,7 @@ class LlmSessionAPIHandler {
         if (channel.abortSignal.aborted) { throw new Error(kModelPromptAborted) }
 
         // Send the prompt to the model
-        await this.#activeSession.chat.session.prompt(prompt, {
+        const result = await this.#activeSession.chat.session.generateCompletionWithMeta(prompt, {
           signal: channel.abortSignal,
           topK,
           topP,
@@ -435,6 +434,10 @@ class LlmSessionAPIHandler {
           customStopTriggers: manifest.tokens.stop
         })
 
+        if (process.env.NODE_ENV === 'development') {
+	  Logger.log("Response Completion Metadata:", result.metadata)
+	}
+	
         return output
       } catch (ex) {
         if (ex.message === 'Failed to compress chat history for context shift due to a too long prompt or system message that cannot be compressed without affecting the generation quality. Consider increasing the context size or shortening the long prompt or system message.') {
