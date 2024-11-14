@@ -4,6 +4,8 @@ import AIRewriterFactory from './AIRewriter/AIRewriterFactory'
 import AILanguageModelFactory from './AILanguageModel/AILanguageModelFactory'
 import AICoreModelFactory from './AICoreModel/AICoreModelFactory'
 import AIEmbeddingFactory from './AIEmbedding/AIEmbeddingFactory'
+import AITranslatorFactory from './AITranslator/AITranslatorFactory'
+import AILanguageDetectorFactory from './AILanguageDetector/AILanguageDetectorFactory'
 import IPC from './IPC'
 import {
   kAIGetCapabilities,
@@ -25,6 +27,8 @@ class AI extends EventTarget {
   #languageModel: AILanguageModelFactory
   #coreModel: AICoreModelFactory
   #embedding: AIEmbeddingFactory
+  #translator: AITranslatorFactory
+  #languageDetector: AILanguageDetectorFactory
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -40,6 +44,8 @@ class AI extends EventTarget {
     this.#languageModel = new AILanguageModelFactory(this.#browserAI)
     this.#coreModel = new AICoreModelFactory()
     this.#embedding = new AIEmbeddingFactory()
+    this.#translator = new AITranslatorFactory()
+    this.#languageDetector = new AILanguageDetectorFactory()
   }
 
   /* **************************************************************************/
@@ -63,6 +69,10 @@ class AI extends EventTarget {
   get coreModel () { return this.#coreModel }
 
   get embedding () { return this.#embedding }
+
+  get translator () { return this.#translator }
+
+  get languageDetector () { return this.#languageDetector }
 
   /* **************************************************************************/
   // MARK: Capabilities

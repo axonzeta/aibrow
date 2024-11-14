@@ -5,6 +5,8 @@ import AIWriterHandler from './AIWriterHandler'
 import AILanguageModelHandler from './AILanguageModelHandler'
 import AICoreModelHandler from './AICoreModelHandler'
 import AIEmbeddingHandler from './AIEmbeddingHandler'
+import AILanguageDetectorHandler from './AILanguageDetectorHandler'
+import AITranslatorHandler from './AITranslatorHandler'
 import { kPrefGetUseBrowserAI } from '#Shared/API/PrefIPCMessageTypes'
 import { getUseBrowserAI } from '#Shared/Prefs'
 import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
@@ -26,6 +28,8 @@ class APIHandler {
   #languageModelHandler: AILanguageModelHandler
   #coreModelHandler: AICoreModelHandler
   #embeddingHandler: AIEmbeddingHandler
+  #languageDetectorHandler: AILanguageDetectorHandler
+  #translatorHandler: AITranslatorHandler
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -40,6 +44,8 @@ class APIHandler {
     this.#languageModelHandler = new AILanguageModelHandler(this.#server)
     this.#coreModelHandler = new AICoreModelHandler(this.#server)
     this.#embeddingHandler = new AIEmbeddingHandler(this.#server)
+    this.#languageDetectorHandler = new AILanguageDetectorHandler(this.#server)
+    this.#translatorHandler = new AITranslatorHandler(this.#server)
 
     this.#server
       .addRequestHandler(kPrefGetUseBrowserAI, this.#handleGetUseBrowserAI)

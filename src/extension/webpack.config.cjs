@@ -20,7 +20,7 @@ const childProcess = require('child_process')
 function rollupContentScriptTypesPlugin (srcDir, outDir) {
   return {
     apply: (compiler) => {
-      compiler.hooks.done.tapAsync('BuildDonePlugin', async (compilation, callback) => {
+      compiler.hooks.afterEmit.tapAsync('rollup-content-script-types-plugin', async (compilation, callback) => {
         try {
           const typesOutPath = path.join(outDir, 'index.d.ts')
 
@@ -64,7 +64,8 @@ function rollupContentScriptTypesPlugin (srcDir, outDir) {
 
           callback()
         } catch (ex) {
-          callback(ex)
+          compilation.errors.push(ex)
+          callback()
         }
       })
     }

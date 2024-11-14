@@ -23,6 +23,7 @@
     "@babel/eslint-parser": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
     "@stylistic/eslint-plugin": "^2.10.1",
+    "@types/capitalize": "^2.0.2",
     "@types/chrome": "^0.0.281",
     "@types/dom-chromium-ai": "^0.0.2",
     "@types/fs-extra": "^11.0.4",
@@ -64,7 +65,9 @@
   },
   "dependencies": {
     "@huggingface/jinja": "^0.3.2",
+    "best-effort-json-parser": "^1.1.2",
     "bootstrap": "^5.3.3",
+    "capitalize": "^2.0.4",
     "fs-extra": "^11.2.0",
     "nanoid": "^5.0.8",
     "node-llama-cpp": "^3.2.0",

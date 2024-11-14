@@ -23,7 +23,9 @@ export enum AICapabilityPromptType {
   LanguageModel = 'languageModel',
   Summarizer = 'summarizer',
   Writer = 'writer',
-  Rewriter = 'rewriter'
+  Rewriter = 'rewriter',
+  Translator = 'translator',
+  LanguageDetector = 'languageDetector'
 }
 
 export enum AIModelType {
