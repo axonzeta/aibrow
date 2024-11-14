@@ -1,7 +1,8 @@
 import AI from './AI'
 import Translation from './Translation'
 
-const ai = new AI(window.ai)
+export const ai = new AI(window.ai)
+export const translation = new Translation(ai)
 
 if (process.env.BROWSER !== 'extlib') {
   const genericWindow = window as any
@@ -9,7 +10,7 @@ if (process.env.BROWSER !== 'extlib') {
     genericWindow.ai = ai
   }
   if (!genericWindow.translation) {
-    genericWindow.translation = new Translation(ai)
+    genericWindow.translation = translation
   }
   genericWindow.aibrow = ai
 }
