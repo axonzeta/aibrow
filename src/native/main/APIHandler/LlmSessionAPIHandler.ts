@@ -435,9 +435,9 @@ class LlmSessionAPIHandler {
         })
 
         if (process.env.NODE_ENV === 'development') {
-	  Logger.log("Response Completion Metadata:", result.metadata)
-	}
-	
+          Logger.log('Response Completion Metadata:', result.metadata)
+        }
+
         return output
       } catch (ex) {
         if (ex.message === 'Failed to compress chat history for context shift due to a too long prompt or system message that cannot be compressed without affecting the generation quality. Consider increasing the context size or shortening the long prompt or system message.') {
