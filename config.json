@@ -21,6 +21,9 @@
   "extensionLibrary": {
     "name": "@aibrow/extension"
   },
+  "typesLibrary": {
+    "name": "@aibrow/dom-types"
+  },
 
   "defaultModels": {
     "text": "smollm2-1-7b-instruct-q4-k-m",

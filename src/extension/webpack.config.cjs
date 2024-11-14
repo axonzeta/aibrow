@@ -1,4 +1,5 @@
 const path = require('path')
+const fs = require('fs-extra')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 const CircularDependencyPlugin = require('circular-dependency-plugin')
@@ -8,6 +9,7 @@ const { pathsToWebpackAlias } = require('../../build/tsconfig_util.cjs')
 const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const childProcess = require('child_process')
 
 module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
   const srcDir = __dirname
@@ -150,5 +152,77 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
         ]
       }
     }
-  })
+  }).concat([{
+    name: 'typeslib',
+    mode: 'development',
+    entry: {},
+    output: {
+      filename: '[name].js',
+      path: path.join(outDir, 'typeslib')
+    },
+    plugins: [{
+      apply: (compiler) => {
+        compiler.hooks.done.tapAsync('BuildDonePlugin', async (compilation, callback) => {
+          try {
+            const typesOutPath = path.join(outDir, 'typeslib', 'index.d.ts')
+
+            // Build the definitions
+            await new Promise((resolve, reject) => {
+              const child = childProcess.spawn('npx', [
+                'rollup',
+                '--config', './types-rollup.config.js',
+                '--input', path.join(srcDir, 'contentscript-main/index.ts'),
+                '--format es',
+                '--file', typesOutPath
+              ], {
+                shell: true, stdio: 'inherit', detatched: true, cwd: __dirname
+              })
+              child.on('close', (code) => {
+                if (code === 0) {
+                  resolve()
+                } else {
+                  reject(new Error(`Failed to run rollup with exit code ${code}`))
+                }
+              })
+              child.on('error', (err) => {
+                reject(new Error(`Rollup failed to generate types ${err}`))
+              })
+            })
+
+            // Update the export
+            await fs.appendFile(typesOutPath, '\ndeclare global { interface Window { readonly aibrow: AI; } }\n')
+
+            // Write the accompanying files
+            await fs.writeJSON(path.join(outDir, 'typeslib', 'package.json'), {
+              name: config.typesLibrary.name,
+              main: '',
+              types: 'index.d.ts',
+              ...['version', 'author', 'license', 'description', 'repository'].reduce((acc, k) => {
+                acc[k] = pkg[k]
+                return acc
+              }, {})
+            }, { spaces: 2 })
+            await fs.writeJSON(path.join(outDir, 'typeslib', 'tsconfig.json'), {
+              compilerOptions: {
+                module: 'node16',
+                lib: ['es6'],
+                noImplicitAny: true,
+                noImplicitThis: true,
+                strictFunctionTypes: true,
+                strictNullChecks: true,
+                types: [],
+                noEmit: true,
+                forceConsistentCasingInFileNames: true
+              },
+              files: ['index.d.ts']
+            }, { spaces: 2 })
+
+            callback()
+          } catch (ex) {
+            callback(ex)
+          }
+        })
+      }
+    }]
+  }])
 }

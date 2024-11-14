@@ -71,6 +71,20 @@ if (window.aibrow) {
 }
 ```
 
+#### Typescript types
+
+Types for `window.aibrow` can be added to your project by using the `npm install --save-dev @aibrow/dom-types` package. Then to expose them, place the following either in your `global.d.ts` or the entry point to your code
+
+```ts
+import type AI from "@aibrow/dom-types"
+
+declare global {
+  interface Window {
+    readonly aibrow: typeof AI;
+  }
+}
+```
+
 ### Extension
 
 Install the library using `npm install @aibrow/extension`

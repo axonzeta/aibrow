@@ -7,9 +7,9 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "paths": {
-      "#R/*": ["./*"],
       "#Shared/*": ["../shared/*"]
-    }
+    },
+    "types": ["@aibrow/dom-types"]
   },
   "include": [
     "./*/*.ts"

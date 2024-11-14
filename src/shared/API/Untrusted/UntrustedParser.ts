@@ -3,7 +3,7 @@ import {
   AILanguageModelInitialPromptRole,
   AILanguageModelPrompt,
   AILanguageModelPromptRole
-} from '#Shared/API/AILanguageModel/AILanguageModelTypes'
+} from '../AILanguageModel/AILanguageModelTypes'
 
 /* **************************************************************************/
 // MARK: Base types
