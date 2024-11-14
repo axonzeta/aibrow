@@ -234,7 +234,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
             force: true,
             transform: (content) => {
               const manifest = JSON.parse(content.toString())
-              manifest.name = config.extensionLibrary.name
+              manifest.name = config.domTypesLibrary.name
               for (const key of ['version', 'author', 'license', 'description', 'repository']) {
                 manifest[key] = pkg[key]
               }
