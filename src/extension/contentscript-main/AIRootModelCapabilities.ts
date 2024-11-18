@@ -48,7 +48,7 @@ class AIRootModelCapabilities {
   // MARK: Getters
   /* **************************************************************************/
 
-  supportsLanguage = (language: string) => {
+  supportsLanguage = (language: string): AICapabilityAvailability => {
     const supports = this.#data.supportedLanguages
       ? this.#data.supportedLanguages.includes(language)
       : true

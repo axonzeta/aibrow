@@ -1,6 +1,7 @@
 import AI from './AI'
 import AILanguageDetector from './AILanguageDetector/AILanguageDetector'
 import AITranslator from './AITranslator/AITranslator'
+import { AICapabilityAvailability } from '#Shared/API/AI'
 
 type DetectorBridge = {
   aiDetector?: AILanguageDetector
@@ -124,7 +125,20 @@ class Translation {
 
   canTranslate = async (opts: TranslatorOptions) => {
     const capabilities = await this.#ai.translator.capabilities()
-    return capabilities.languagePairAvailable(opts.sourceLanguage, opts.targetLanguage)
+    const source = capabilities.supportsLanguage(opts.sourceLanguage)
+    const target = capabilities.supportsLanguage(opts.targetLanguage)
+    if (target === source) {
+      return target
+    } else {
+      if (target === AICapabilityAvailability.No || source === AICapabilityAvailability.No) {
+        return AICapabilityAvailability.No
+      } else if (target === AICapabilityAvailability.AfterDownload || source === AICapabilityAvailability.AfterDownload) {
+        return AICapabilityAvailability.AfterDownload
+      } else {
+        // We shouldn't get here
+        return AICapabilityAvailability.No
+      }
+    }
   }
 
   createTranslator = async (opts: TranslatorOptions) => {
