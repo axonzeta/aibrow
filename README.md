@@ -118,5 +118,5 @@ if (extension) {
 
 ## Examples
 
-1. `cd examples`
-1. `npm start`
+1. [AiBrow Playground](https://github.com/axonzeta/aibrow-playground)
+2. [AiBrow demo extension](https://github.com/axonzeta/aibrow-demo-extension)
