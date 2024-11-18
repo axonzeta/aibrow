@@ -73,17 +73,20 @@ class Translation {
   /* **************************************************************************/
 
   #ai: AI
+  #browserTranslation: any
   #downloadProgressFn: (evt: Event) => void
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (ai: AI) {
+  constructor (ai: AI, translation: any) {
     this.#ai = ai
+    this.#browserTranslation = translation
   }
 
   get aibrow () { return true }
+  get browserTranslation () { return this.#browserTranslation }
 
   /* **************************************************************************/
   // MARK: Detection

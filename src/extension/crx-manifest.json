@@ -37,12 +37,16 @@
       "all_frames": true
     }
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "externally_connectable": {
     "ids": ["*"]
   },
   "permissions": [
     "nativeMessaging",
     "storage",
+    "scripting",
     "webNavigation"
   ]
 }

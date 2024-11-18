@@ -47,6 +47,33 @@ const kDefaultUseBrowserAIKey = `${kPrefKeyPrefix}:useBrowserAI`
 export async function getUseBrowserAI () { return getPref(kDefaultUseBrowserAIKey, false) }
 export async function setUseBrowserAI (use: boolean) { return setPref(kDefaultUseBrowserAIKey, use) }
 
+const kOverrideBrowserAIKey = `${kPrefKeyPrefix}:overrideBrowserAI`
+const kContentscriptMainOverrideId = 'contentscript-main-override'
+export async function getOverrideBrowserAI () { return getPref(kOverrideBrowserAIKey, false) }
+export async function setOverrideBrowserAI (override: boolean) {
+  await updateOverrideBrowserAIScriptInjection(override)
+  await setPref(kOverrideBrowserAIKey, override)
+}
+export async function updateOverrideBrowserAIScriptInjection (override: boolean) {
+  const scripts = await chrome.scripting.getRegisteredContentScripts({ ids: [kContentscriptMainOverrideId] })
+  if (override) {
+    if (scripts.length === 0) {
+      await chrome.scripting.registerContentScripts([{
+        id: kContentscriptMainOverrideId,
+        js: ['contentscript-main-override.js'],
+        allFrames: true,
+        runAt: 'document_start',
+        world: 'MAIN',
+        matches: ['<all_urls>']
+      }])
+    }
+  } else {
+    if (scripts.length) {
+      await chrome.scripting.unregisterContentScripts({ ids: [kContentscriptMainOverrideId] })
+    }
+  }
+}
+
 const kDefaultModelEngineKey = `${kPrefKeyPrefix}:defaultModelEngine`
 export async function getDefaultModelEngine () { return getPref(kDefaultModelEngineKey, undefined) }
 export async function setDefaultModelEngine (engine: string) { return setPref(kDefaultModelEngineKey, engine) }

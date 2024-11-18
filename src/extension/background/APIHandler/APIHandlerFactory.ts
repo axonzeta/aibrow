@@ -1,6 +1,7 @@
 import { kContentScriptPortName, kExtensionLibPortName } from '#Shared/API/ContentScript'
 import APIHandler from './APIHandler'
 import NativeIPC from '../NativeIPC'
+import { updateOverrideBrowserAIScriptInjection, getOverrideBrowserAI } from '#Shared/Prefs'
 
 class APIHandlerFactory {
   /* **************************************************************************/
@@ -14,11 +15,13 @@ class APIHandlerFactory {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  start () {
+  async start () {
     if (this.#started) { return }
     this.#started = true
     chrome.runtime.onConnect.addListener(this.#handleRuntimeConnect)
     chrome.runtime.onConnectExternal.addListener(this.#handleRuntimeConnectExternal)
+
+    await updateOverrideBrowserAIScriptInjection(await getOverrideBrowserAI())
   }
 
   /* **************************************************************************/

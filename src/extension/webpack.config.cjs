@@ -118,6 +118,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
           background: path.join(srcDir, 'background/index.ts'),
           'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
           'contentscript-main': path.join(srcDir, 'contentscript-main/index.ts'),
+          'contentscript-main-override': path.join(srcDir, 'contentscript-main-override/index.ts'),
           ...uiEntryPoints.reduce((acc, key) => {
             acc[key] = path.join(srcDir, `${key}/index.ts`)
             return acc

@@ -30,7 +30,9 @@ import {
   ModelUpdatePeriod,
   getModelUpdatePeriod,
   getUseMmap,
-  setUseMmap
+  setUseMmap,
+  getOverrideBrowserAI,
+  setOverrideBrowserAI
 } from '#Shared/Prefs'
 import config from '#Shared/Config'
 import { AICapabilityGpuEngine } from '#Shared/API/AICapability'
@@ -191,6 +193,13 @@ async function renderSettings () {
     await setUseMmap($useMmapOpt.checked)
   })
   $useMmapOpt.checked = await getUseMmap()
+
+  // Override browser ai
+  const $overrideBrowserAIOpt = document.getElementById('opt-override-browser-ai') as HTMLInputElement
+  $overrideBrowserAIOpt.addEventListener('change', async () => {
+    await setOverrideBrowserAI($overrideBrowserAIOpt.checked)
+  })
+  $overrideBrowserAIOpt.checked = await getOverrideBrowserAI()
 }
 
 /* **************************************************************************/

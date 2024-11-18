@@ -41,10 +41,14 @@
       "all_frames": true
     }
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "permissions": [
     "nativeMessaging",
     "notifications",
     "storage",
+    "scripting",
     "webNavigation"
   ]
 }
