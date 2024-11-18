@@ -1,6 +1,8 @@
 {
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyhqExAz/IOFBLngXKamiEndSQIk3gnfaMqQl+HYrGALhCYzeTv3pDmW5wRwl0uLtC3dUZpvlgBBp8jrZMe4BbFP1+whqwNmO9diAqHIwt/k4hc5QKDBIp/I+k8tuBpVW+SO4yCFtjuk4AOUsGq+ADoEUqU7TmWKs56qkiiXOqcw6mwFcwzxuleaepEXTSMHJ6Hhyq290uOJrXn+cV0QgtM+pJSlDT8cJir6qsd2LaqbudMxrf4K2AuhbTinR/flxncLW6/WL+PYezT4JnJmKItvd+0F4qN8hRgx66rnabOqKiQcrsrhSscekNLKIuNo4T81NrD9WxLR+NtzyWqQjCQIDAQAB",
-  "name": "AiBrow",
+  "name": "AiBrow: Local AI for your browser",
+  "short_name": "AiBrow",
+  "description": "Run small AI language models locally on your machine, allowing you to develop with the window.aibrow and window.ai APIs.",
   "manifest_version": 3,
   "minimum_chrome_version": "127",
   "background": {

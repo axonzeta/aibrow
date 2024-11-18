@@ -1,5 +1,7 @@
 {
-  "name": "AiBrow",
+  "name": "AiBrow: Local AI for your browser",
+  "short_name": "AiBrow",
+  "description": "Run small AI language models locally on your machine, allowing you to develop with the window.aibrow and window.ai APIs.",
   "manifest_version": 3,
   "background": {
     "scripts": ["background.js"]
