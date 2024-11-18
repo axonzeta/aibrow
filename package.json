@@ -24,7 +24,7 @@
     "@babel/preset-env": "^7.26.0",
     "@stylistic/eslint-plugin": "^2.10.1",
     "@types/capitalize": "^2.0.2",
-    "@types/chrome": "^0.0.281",
+    "@types/chrome": "^0.0.283",
     "@types/dom-chromium-ai": "^0.0.2",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.9.0",
