@@ -2,10 +2,14 @@ const genericWindow = window as any
 if (genericWindow.aibrow) {
   genericWindow.ai = genericWindow.aibrow
 } else {
-  console.warn('aibrow not found')
+  if (genericWindow.ai) {
+    genericWindow.ai.__aibrowOverride = true
+  }
 }
 if (genericWindow.aibrowTranslation) {
   genericWindow.translation = genericWindow.aibrowTranslation
 } else {
-  console.warn('aibrowTranslation not found')
+  if (genericWindow.translation) {
+    genericWindow.translation.__aibrowOverride = true
+  }
 }

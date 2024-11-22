@@ -6,10 +6,10 @@ export const translation = new Translation(ai, (window as any).translation)
 
 if (process.env.BROWSER !== 'extlib') {
   const genericWindow = window as any
-  if (!window.ai) {
+  if (!window.ai || genericWindow.ai?.__aibrowOverride === true) {
     genericWindow.ai = ai
   }
-  if (!genericWindow.translation) {
+  if (!genericWindow.translation || genericWindow.translation?.__aibrowOverride === true) {
     genericWindow.translation = translation
   }
   genericWindow.aibrow = ai
