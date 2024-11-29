@@ -13,6 +13,12 @@ export function getString (val: any, defaultVal?: string | undefined): string | 
   return typeof val === 'string' ? val : defaultVal
 }
 
+export function getStringArray (val: any): string[] {
+  return Array.isArray(val)
+    ? val.filter((v) => typeof v === 'string')
+    : []
+}
+
 export function getNonEmptyString (val: any, defaultVal?: string | undefined): string | undefined {
   return typeof val === 'string' && val.length > 0 ? val : defaultVal
 }

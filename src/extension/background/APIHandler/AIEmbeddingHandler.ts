@@ -79,16 +79,16 @@ class AIEmbeddingHandler {
       props
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
-      const input = payload.getString('input')
+      const inputs = payload.getStringArray('inputs')
 
-      const embedding = await AILlmSession.getEmbeddingVector(
+      const embedding = await AILlmSession.getEmbeddingVectors(
         sessionId,
-        input,
+        inputs,
         props,
         { signal: channel.abortSignal }
       )
 
-      return embedding as AIEmbeddingVector
+      return embedding as AIEmbeddingVector[]
     })
   }
 }

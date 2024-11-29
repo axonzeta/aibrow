@@ -59,12 +59,16 @@ class AIEmbedding extends AIRootModel {
   // MARK: Summarizing
   /* **************************************************************************/
 
-  get = async (input: string, options: AIEmbeddingGetOptions = {}): Promise<AIEmbeddingVector> => {
+  get = async (input: string | string[], options: AIEmbeddingGetOptions = {}): Promise<AIEmbeddingVector | AIEmbeddingVector[]> => {
     this.#guardDestroyed()
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
 
-    const embedding = (await IPC.request(kEmbeddingGet, { props: this.#props, input }, { signal })) as AIEmbeddingVector
-    return embedding
+    const inputs = Array.isArray(input) ? input : [input]
+    const embedding = (await IPC.request(kEmbeddingGet, { props: this.#props, inputs }, { signal })) as AIEmbeddingVector | AIEmbeddingVector[]
+
+    return Array.isArray(input)
+      ? embedding as AIEmbeddingVector[]
+      : embedding[0] as AIEmbeddingVector
   }
 
   /* **************************************************************************/

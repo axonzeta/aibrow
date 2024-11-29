@@ -3,7 +3,7 @@ import {
   kLlmSessionGetSupportedGpuEngines,
   kLlmSessionGetModelScore,
   kLlmSessionExecPromptSession,
-  kLlmSessionGetEmbeddingVector,
+  kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposePromptSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
@@ -74,7 +74,7 @@ class LlmSessionAPIHandler {
       .addRequestHandler(kLlmSessionGetSupportedGpuEngines, this.#handleGetSupportedGpuEngines)
       .addRequestHandler(kLlmSessionGetModelScore, this.#handleGetModelScore)
       .addRequestHandler(kLlmSessionExecPromptSession, this.#handleExecPromptSession)
-      .addRequestHandler(kLlmSessionGetEmbeddingVector, this.#handleGetEmbeddingVector)
+      .addRequestHandler(kLlmSessionGetEmbeddingVectors, this.#handleGetEmbeddingVectors)
       .addRequestHandler(kLlmSessionCountPromptTokens, this.#handleExecCountPromptTokens)
       .addRequestHandler(kLlmSessionDisposePromptSession, this.#handleDisposePromptSession)
   }
@@ -451,7 +451,7 @@ class LlmSessionAPIHandler {
     })
   }
 
-  #handleGetEmbeddingVector = async (channel: IPCInflightChannel) => {
+  #handleGetEmbeddingVectors = async (channel: IPCInflightChannel) => {
     return await this.#requestQueue.push(async () => {
       try {
         // Extract the options
@@ -466,7 +466,7 @@ class LlmSessionAPIHandler {
           useMmap
         } = this.#sanitizeModelProps(payload.getAny('props'), manifest)
         const sessionId = payload.getNonEmptyString('sessionId', nanoid())
-        const input = payload.getNonEmptyString('input')
+        const inputs = payload.getStringArray('inputs')
 
         // Load the session
         await this.#loadLlmEmbeddingSession(sessionId, manifest, {
@@ -481,8 +481,12 @@ class LlmSessionAPIHandler {
         if (channel.abortSignal.aborted) { throw new Error(kModelPromptAborted) }
 
         // Generate the embedding
-        const embedding = await this.#activeSession.embedding.context.getEmbeddingFor(input)
-        return embedding.vector
+        for (const input of inputs) {
+          const embedding = await this.#activeSession.embedding.context.getEmbeddingFor(input)
+          channel.emit(embedding.vector)
+        }
+
+        return {}
       } finally {
         this.#scheduleLlmSessionDispose()
       }

@@ -4,10 +4,13 @@ import {
   kLlmSessionGetSupportedGpuEngines,
   kLlmSessionGetModelScore,
   kLlmSessionExecPromptSession,
-  kLlmSessionGetEmbeddingVector,
+  kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposePromptSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
+import {
+  AIEmbeddingVector
+} from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 
@@ -128,20 +131,23 @@ class AILlmSession {
   /**
    * Adds a new embedding request to the queue
    * @param sessionId: the id of the session
-   * @param input: the input to generate the embedding for
+   * @param inputs: the input to generate the embedding for
    * @param props: the prompt model options
    * @param requestOptions: the requestOptions
    * @return the embedding vector
    */
-  async getEmbeddingVector (sessionId: string, input: string, props: AIRootModelProps, requestOptions: GetEmbeddingRequestOptions) {
+  async getEmbeddingVectors (sessionId: string, inputs: string[], props: AIRootModelProps, requestOptions: GetEmbeddingRequestOptions) {
     await this.#ensureGpuEngineSupported(props.gpuEngine)
 
-    const res = await NativeIPC.request(
-      kLlmSessionGetEmbeddingVector,
-      { input, props },
+    const res: AIEmbeddingVector[] = []
+    await NativeIPC.stream(
+      kLlmSessionGetEmbeddingVectors,
+      { inputs, props },
+      (chunk: AIEmbeddingVector) => { res.push(chunk) },
       { signal: requestOptions.signal }
     )
-    return res as number[]
+
+    return res
   }
 
   /**

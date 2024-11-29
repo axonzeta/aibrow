@@ -1,6 +1,7 @@
 import objectPath from 'object-path'
 import {
   getString,
+  getStringArray,
   getNonEmptyString,
   getNumber,
   getEnum,
@@ -40,6 +41,10 @@ class UntrustedParser {
 
   getString (path: string, defaultVal?: string | undefined): string | undefined {
     return getString(this.#get(path), defaultVal)
+  }
+
+  getStringArray (path: string): string[] {
+    return getStringArray(this.#get(path))
   }
 
   getNonEmptyString (path: string, defaultVal?: string | undefined): string | undefined {
