@@ -27,7 +27,7 @@
 
   "defaultModels": {
     "text": "smollm2-1-7b-instruct-q4-k-m",
-    "embedding": "nomic-embed-text-v1-5-q8-0"
+    "embedding": "all-minilm-l6-v2-q8-0"
   },
   "modelMinMachineScore": 0,
   "permissionRequiredForDefaultModel": false,
