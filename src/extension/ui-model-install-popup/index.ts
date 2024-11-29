@@ -26,8 +26,8 @@ async function render (progress: { inflight: boolean, progress: number | null, n
   }
 
   document.getElementById('model').textContent = progress.name
-  document.getElementById('progress-status').textContent = progress.progress === null ? 'Loading...' : `${progress.progress}%`
-  document.getElementById('progress-bar').style.width = progress.progress === null ? '0%' : `${progress.progress}%`
+  document.getElementById('progress-status').textContent = progress.progress === null ? 'Loading...' : `${Math.max(1, progress.progress)}%`
+  document.getElementById('progress-bar').style.width = progress.progress === null ? '1%' : `${Math.max(1, progress.progress)}%`
 }
 
 main()
