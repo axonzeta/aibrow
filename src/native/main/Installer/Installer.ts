@@ -44,48 +44,52 @@ export async function install () {
 
 /**
  * Installs a local model
- * @param rawModelPath: the path to the model manifest
+ * @param rawModelPaths: the paths to the model manifests
  *
  * The model manifest and all assets must be in the same
  * directory as the executable we're running
  */
-export async function installLocalModel (rawModelPath: string) {
-  if (rawModelPath) {
-    Logger.log(`Installing model: ${rawModelPath}`)
-    try {
-      // Read the model manifest
-      const modelPath = path.join(path.dirname(process.execPath), sanitizeFilename(rawModelPath))
-      let modelManifest: AIModelManifest
+export async function installLocalModel (rawModelPaths: (string | number)[]) {
+  if (rawModelPaths && rawModelPaths.length) {
+    for (const rawModelPath of rawModelPaths) {
+      if (typeof (rawModelPath) !== 'string') { continue }
+
+      Logger.log(`Installing model: ${rawModelPath}`)
       try {
-        modelManifest = await fs.readJSON(modelPath)
-      } catch (ex) {
-        throw new Error('Failed to load model manifest')
-      }
-
-      // Install the assets
-      for (const { id } of modelManifest.assets) {
+        // Read the model manifest
+        const modelPath = path.join(path.dirname(process.execPath), sanitizeFilename(rawModelPath))
+        let modelManifest: AIModelManifest
         try {
-          const assetPath = AIModelFileSystem.getAssetPath(id)
-          await fs.ensureDir(path.dirname(assetPath))
-          switch (process.platform) {
-            case 'darwin':
-              // When extracted as part of the pkg installer, we can't move the file only copy it
-              await fs.copy(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath, { overwrite: true })
-              break
-            default:
-              await fs.move(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath)
-              break
-          }
+          modelManifest = await fs.readJSON(modelPath)
         } catch (ex) {
-          throw new Error(`Failed to install asset ${id}`)
+          throw new Error('Failed to load model manifest')
         }
-      }
 
-      // Write the manifest
-      await AIModelFileSystem.writeModelManifest(modelManifest)
-      Logger.log(`Installed model: ${modelManifest.id}`)
-    } catch (ex) {
-      Logger.error(`Failed to install model: ${ex.message}`)
+        // Install the assets
+        for (const { id } of modelManifest.assets) {
+          try {
+            const assetPath = AIModelFileSystem.getAssetPath(id)
+            await fs.ensureDir(path.dirname(assetPath))
+            switch (process.platform) {
+              case 'darwin':
+                // When extracted as part of the pkg installer, we can't move the file only copy it
+                await fs.copy(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath, { overwrite: true })
+                break
+              default:
+                await fs.move(path.join(path.dirname(modelPath), sanitizeFilename(id)), assetPath)
+                break
+            }
+          } catch (ex) {
+            throw new Error(`Failed to install asset ${id}`)
+          }
+        }
+
+        // Write the manifest
+        await AIModelFileSystem.writeModelManifest(modelManifest)
+        Logger.log(`Installed model: ${modelManifest.id}`)
+      } catch (ex) {
+        Logger.error(`Failed to install model: ${ex.message}`)
+      }
     }
   }
 }
