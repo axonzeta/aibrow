@@ -95,9 +95,15 @@ class AITranslatorHandler {
           continue
         }
 
+        /*
+        const translator = await window.aibrow.translator.create({ sourceLanguage: 'en', targetLanguage: 'es' })
+await translator.translate('The Translator and the Language Detector APIs will from now on be available on the `self.ai` namespace.')
+        */
+
         const prompt = this.#getPrompt(manifest, sourceLanguage, targetLanguage, sourceSection)
         const sessionId = payload.getNonEmptyString('sessionId')
 
+        const translationKey = `translation-${targetLanguage}`
         let chunkBuffer = ''
         let translation: string
         await AILlmSession.prompt(
@@ -108,9 +114,9 @@ class AITranslatorHandler {
             grammar: {
               type: 'object',
               properties: {
-                translation: { type: 'string' }
+                [translationKey]: { type: 'string' }
               },
-              required: ['translation'],
+              required: [translationKey],
               additionalProperties: false
             }
           },
@@ -119,7 +125,7 @@ class AITranslatorHandler {
             stream: (chunk: string) => {
               chunkBuffer += chunk
               try {
-                translation = partialJsonParse(chunkBuffer).translation
+                translation = partialJsonParse(chunkBuffer)[translationKey]
               } catch (ex) { }
 
               if (translation) {
@@ -149,14 +155,16 @@ class AITranslatorHandler {
     }
     const config = manifest.prompts[AICapabilityPromptType.Translator]
     const template = new Template(config.template)
-    const sourceLanguageName = (new Intl.DisplayNames([sourceLanguage], { type: 'language' })).of(sourceLanguage)
-    const targetLanguageName = (new Intl.DisplayNames([targetLanguage], { type: 'language' })).of(targetLanguage)
+    const sourceLanguageName = (new Intl.DisplayNames(['en'], { type: 'language' })).of(sourceLanguage)
+    const sourceLanguageNameNative = (new Intl.DisplayNames([sourceLanguage], { type: 'language' })).of(sourceLanguage)
+    const targetLanguageName = (new Intl.DisplayNames(['en'], { type: 'language' })).of(targetLanguage)
+    const targetLanguageNameNative = (new Intl.DisplayNames([targetLanguage], { type: 'language' })).of(targetLanguage)
     return template.render({
       input,
       source_language_code: sourceLanguage,
       target_language_code: targetLanguage,
-      source_language_name: capitalize(sourceLanguageName),
-      target_language_name: capitalize(targetLanguageName),
+      source_language_name: `${capitalize(sourceLanguageName)} (${sourceLanguageNameNative})`,
+      target_language_name: `${capitalize(targetLanguageName)} (${targetLanguageNameNative})`,
       bos_token: manifest.tokens.bosToken,
       eos_token: manifest.tokens.eosToken
     })
