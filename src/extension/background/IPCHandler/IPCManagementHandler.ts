@@ -10,6 +10,7 @@ import {
 import AILlmSession from '../AI/AILlmSession'
 import { AIModelManager, TaskType as AIModelManagerTaskType } from '../AI/AIModelManager'
 import AIModelFileSystem from '../AI/AIModelFileSystem'
+import AIModelId from '#Shared/AIModelId'
 import System from '../System'
 
 class IPCManagementHandler {
@@ -20,7 +21,7 @@ class IPCManagementHandler {
         return true
       })
       .addHandler(kUninstallModel, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {
-        AIModelManager.uninstall(message.model).then(() => sendResponse(undefined))
+        AIModelManager.uninstall(new AIModelId(message.model)).then(() => sendResponse(undefined))
         return true
       })
       .addHandler(kUpdateNativeBinary, (message: any, sender: chrome.runtime.MessageSender, sendResponse: IPCSendResponseFn) => {

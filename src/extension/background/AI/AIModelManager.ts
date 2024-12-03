@@ -9,6 +9,7 @@ import {
 } from '#Shared/Prefs'
 import { nanoid } from 'nanoid'
 import { EventEmitter } from 'events'
+import AIModelId, { AIModelIdProvider } from '#Shared/AIModelId'
 
 export enum TaskType {
   Install = 'install',
@@ -184,7 +185,7 @@ class AIModelManagerImpl extends EventEmitter {
 
     // Write the model manifest
     await AIModelFileSystem.writeModelManifest(manifest)
-    await AIModelFileSystem.updateModelStats(manifest.id, { updateTS: Date.now() })
+    await AIModelFileSystem.updateModelStats(new AIModelId(manifest.id), { updateTS: Date.now() })
   }
 
   /**
@@ -193,7 +194,7 @@ class AIModelManagerImpl extends EventEmitter {
    * @param modelId: the id of the model to download
    * @param progressFn: the progress callback
    */
-  install (channel: IPCInflightChannel, modelId: string, progressFn?: DownloadProgressFn) {
+  install (channel: IPCInflightChannel, modelId: AIModelId, progressFn?: DownloadProgressFn) {
     return this.#queueTask(TaskType.Install, async (taskId: string) => {
       console.log(`Installing model ${modelId}`)
       const manifest = await AIModelDownload.fetchModelManifest(modelId)
@@ -211,9 +212,9 @@ class AIModelManagerImpl extends EventEmitter {
    * Uninstalls a model
    * @param modelId: the id of the model
    */
-  uninstall (modelId: string) {
+  uninstall (modelId: AIModelId) {
     return this.#queueTask(TaskType.Uninstall, async () => {
-      console.log(`Uninstalling model ${modelId}`)
+      console.log(`Uninstalling model ${modelId.toString()}`)
       await AIModelFileSystem.removeModelRepo(modelId)
       await AIModelFileSystem.removeUnusedAssets()
     })
@@ -226,10 +227,15 @@ class AIModelManagerImpl extends EventEmitter {
    * @param force=false: set to true to always check for updates, irregardless of the last check
    * @return true if an update check was made, false if no update was needed or it failed
    */
-  update (channel: IPCInflightChannel, modelId: string, force = false): Promise<boolean> {
+  update (channel: IPCInflightChannel, modelId: AIModelId, force = false): Promise<boolean> {
     return this.#queueTask(TaskType.Update, async (): Promise<boolean> => {
       try {
         console.log(`Updating model ${modelId}`)
+        // Only AiBrow models can be updated
+        if (modelId.provider !== AIModelIdProvider.AiBrow) {
+          console.log(`Model ${modelId} cannot is not updatable`)
+          return false
+        }
 
         if (!await AIModelFileSystem.hasModelInstalled(modelId)) {
           throw new Error(`Model ${modelId} not installed`)
@@ -250,6 +256,8 @@ class AIModelManagerImpl extends EventEmitter {
             console.log(`Model updating ${modelId}`)
             await this.#installManifest(remoteManifest)
             await AIModelFileSystem.removeUnusedAssets()
+          } else {
+            console.log(`Model already at latest version ${modelId}`)
           }
 
           return true

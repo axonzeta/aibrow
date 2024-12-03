@@ -166,7 +166,8 @@ await translator.translate('The Translator and the Language Detector APIs will f
       source_language_name: `${capitalize(sourceLanguageName)} (${sourceLanguageNameNative})`,
       target_language_name: `${capitalize(targetLanguageName)} (${targetLanguageNameNative})`,
       bos_token: manifest.tokens.bosToken,
-      eos_token: manifest.tokens.eosToken
+      eos_token: manifest.tokens.eosToken,
+      add_generation_prompt: true
     })
   }
 }

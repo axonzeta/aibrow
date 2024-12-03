@@ -6,6 +6,7 @@ import { importLlama } from './Llama'
 import * as Installer from './Installer/Installer'
 import * as Updater from './Installer/Updater'
 import APIHandler from './APIHandler'
+import AIModelId from '#Shared/AIModelId'
 
 /* **************************************************************************/
 // MARK: Launch
@@ -60,9 +61,9 @@ async function main () {
     Logger.log('Starting: ai_test')
     Logger.logToConsole = true
 
-    const modelName = config.defaultModels.text
+    const modelId = new AIModelId(config.defaultModels.text)
 
-    if (!await AIModelFileSystem.hasModel(modelName)) {
+    if (!await AIModelFileSystem.hasModel(modelId)) {
       Logger.log('Model not available')
       process.exit(-1)
     }
@@ -70,7 +71,7 @@ async function main () {
     const { getLlama, LlamaChatSession } = await importLlama()
     const llama = await getLlama({ build: 'never' })
     const model = await llama.loadModel({
-      modelPath: await AIModelFileSystem.getLLMPath(modelName)
+      modelPath: await AIModelFileSystem.getLLMPath(modelId)
     })
     const context = await model.createContext({})
     const session = new LlamaChatSession({

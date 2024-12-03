@@ -134,7 +134,8 @@ class AISummarizerHandler {
       context,
       input,
       bos_token: manifest.tokens.bosToken,
-      eos_token: manifest.tokens.eosToken
+      eos_token: manifest.tokens.eosToken,
+      add_generation_prompt: true
     })
   }
 }

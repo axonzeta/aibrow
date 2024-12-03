@@ -10,6 +10,12 @@ import {
 import lockfile from 'proper-lockfile'
 import { withFile } from 'tmp-promise'
 import Logger from '#R/Logger'
+import AIModelId from '#Shared/AIModelId'
+import klaw from 'klaw'
+import normalizePath from 'normalize-path'
+
+const kManifestFilename = 'manifest.json'
+const kStatsFilename = 'stats.json'
 
 class AIModelFileSystem {
   /* **************************************************************************/
@@ -20,15 +26,15 @@ class AIModelFileSystem {
    * @param modelId: the model id
    * @returns the path to the local model
    */
-  getModelRepoPath (modelId: string) {
-    return path.join(Paths.models, sanitizeFilename(modelId.replaceAll('/', '--')))
+  getModelRepoPath (modelId: AIModelId) {
+    return path.join(Paths.models, ...modelId.toPathComponents())
   }
 
   /**
    * Removes a model from disk
    * @param modelId: the id of the model
    */
-  async removeModelRepo (modelId: string) {
+  async removeModelRepo (modelId: AIModelId) {
     await fs.remove(this.getModelRepoPath(modelId))
   }
 
@@ -41,7 +47,7 @@ class AIModelFileSystem {
    * @param id: the model id
    * @returns true if there's a local model on path, false otherwise
    */
-  async hasModel (modelId: string) {
+  async hasModel (modelId: AIModelId) {
     try {
       await this.readModelManifest(modelId)
       return true
@@ -57,18 +63,25 @@ class AIModelFileSystem {
    */
   async getModels (stats = false) {
     const models: Array<{ manifest: AIModelManifest, stats: AIModelStats } | AIModelManifest> = []
+
     try {
-      for (const modelDir of await fs.readdir(Paths.models)) {
-        try {
-          const manifest = await this.readModelManifest(modelDir)
-          if (stats) {
-            models.push({ manifest, stats: await this.readModelStats(modelDir) })
-          } else {
-            models.push(manifest)
-          }
-        } catch (ex) { /* no-op */ }
+      for await (const file of klaw(Paths.models)) {
+        if (path.basename(file.path) === kManifestFilename) {
+          try {
+            const manifest = await fs.readJSON(file.path)
+            const modelId = new AIModelId(manifest.id)
+            if (normalizePath(this.getModelManifestPath(modelId)) === normalizePath(file.path)) {
+              if (stats) {
+                models.push({ manifest, stats: await this.readModelStats(modelId) })
+              } else {
+                models.push(manifest)
+              }
+            }
+          } catch (ex) { /* no-op */ }
+        }
       }
     } catch (ex) { /* no-op */ }
+
     return models
   }
 
@@ -80,15 +93,15 @@ class AIModelFileSystem {
    * @param modelId: the model id
    * @returns the models manifest path
    */
-  getModelManifestPath (modelId: string) {
-    return path.join(this.getModelRepoPath(modelId), 'manifest.json')
+  getModelManifestPath (modelId: AIModelId) {
+    return path.join(this.getModelRepoPath(modelId), kManifestFilename)
   }
 
   /**
    * @param modelId: the model id
    * @returns the models manifest
    */
-  async readModelManifest (modelId: string) {
+  async readModelManifest (modelId: AIModelId) {
     const manifest = await fs.readJSON(this.getModelManifestPath(modelId))
     return manifest as AIModelManifest
   }
@@ -99,7 +112,7 @@ class AIModelFileSystem {
    */
   async writeModelManifest (manifest: AIModelManifest) {
     await withFile(async (file) => {
-      const manifestPath = this.getModelManifestPath(manifest.id)
+      const manifestPath = this.getModelManifestPath(new AIModelId(manifest.id))
       await fs.writeJSON(file.path, manifest, { spaces: 2 })
       await fs.ensureDir(path.dirname(manifestPath))
       await fs.move(file.path, manifestPath, { overwrite: true })
@@ -114,7 +127,7 @@ class AIModelFileSystem {
    * Marks a model as used by writing a timestamp
    * @param id
    */
-  async markModelUsed (modelId: string) {
+  async markModelUsed (modelId: AIModelId) {
     await this.updateModelStats(modelId, { usedTS: Date.now() })
   }
 
@@ -124,9 +137,9 @@ class AIModelFileSystem {
    * @param delta: the stats to update
    * @returns the model stats
    */
-  async updateModelStats (modelId: string, delta: Partial<AIModelStats>) {
+  async updateModelStats (modelId: AIModelId, delta: Partial<AIModelStats>) {
     const repoPath = this.getModelRepoPath(modelId)
-    const statsPath = path.join(repoPath, 'stats.json')
+    const statsPath = path.join(repoPath, kStatsFilename)
 
     let release: any
     try {
@@ -150,12 +163,12 @@ class AIModelFileSystem {
    * @param modelId: the model id
    * @returns the model stats
    */
-  async readModelStats (modelId: string) {
+  async readModelStats (modelId: AIModelId) {
     const repoPath = this.getModelRepoPath(modelId)
     try {
-      return await fs.readJSON(path.join(repoPath, 'stats.json')) as AIModelStats
+      return await fs.readJSON(path.join(repoPath, kStatsFilename)) as AIModelStats
     } catch (ex) {
-      return { id: modelId } as AIModelStats
+      return { id: modelId.toString() } as AIModelStats
     }
   }
 
@@ -168,24 +181,29 @@ class AIModelFileSystem {
    * @returns the path to the local asset
    */
   getAssetPath (assetId: AIModelAssetId) {
-    return path.join(Paths.assets, sanitizeFilename(assetId))
+    return path.join(
+      Paths.assets,
+      ...assetId
+        .split('/')
+        .map((part) => sanitizeFilename(part))
+        .filter(Boolean))
   }
 
   /**
    * Removes all unused assets
    */
   async removeUnusedAssets () {
-    const usedAssetIds = new Set()
-    for (const manifest of await this.getModels(false)) {
-      for (const asset of (manifest as AIModelManifest).assets) {
-        usedAssetIds.add(asset.id)
+    const usedAssetPaths = new Set<string>()
+    for (const manifest of (await this.getModels(false)) as AIModelManifest[]) {
+      for (const asset of manifest.assets) {
+        usedAssetPaths.add(normalizePath(this.getAssetPath(asset.id)))
       }
     }
 
-    for (const assetId of await fs.readdir(Paths.assets)) {
-      if (!usedAssetIds.has(assetId)) {
-        Logger.log(`Removing asset ${assetId}`)
-        await fs.remove(this.getAssetPath(assetId))
+    for await (const file of klaw(Paths.assets)) {
+      if (file.stats.isFile() && !usedAssetPaths.has(normalizePath(file.path))) {
+        Logger.log(`Removing asset ${file.path}`)
+        await fs.remove(file.path)
       }
     }
   }
@@ -199,7 +217,7 @@ class AIModelFileSystem {
    * @param modelId: the model id
    * @returns the path to the local model
    */
-  async getLLMPath (modelId: string) {
+  async getLLMPath (modelId: AIModelId) {
     const manifest = await this.readModelManifest(modelId)
     return this.getAssetPath(manifest.model)
   }

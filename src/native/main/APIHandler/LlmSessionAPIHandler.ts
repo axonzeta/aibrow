@@ -21,6 +21,7 @@ import { nanoid } from 'nanoid'
 import { clamp } from '#Shared/API/Untrusted/UntrustedParser'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import AsyncQueue from '#Shared/AsyncQueue'
+import AIModelId from '#Shared/AIModelId'
 
 type LlmModelOptions = {
   gpuEngine: AICapabilityGpuEngine | undefined
@@ -124,7 +125,7 @@ class LlmSessionAPIHandler {
     const ggufFileInfo = await readGgufFileInfo(
       modelId
         ? await (async () => {
-          const manifest = await AIModelFileSystem.readModelManifest(modelId)
+          const manifest = await AIModelFileSystem.readModelManifest(new AIModelId(modelId))
           return AIModelFileSystem.getAssetPath(manifest.model)
         })()
         : modelUrl,
@@ -208,7 +209,7 @@ class LlmSessionAPIHandler {
     }
 
     // Mark the model as used
-    await AIModelFileSystem.markModelUsed(modelId)
+    await AIModelFileSystem.markModelUsed(new AIModelId(modelId))
   }
 
   /**
@@ -386,7 +387,7 @@ class LlmSessionAPIHandler {
       try {
         // Extract the options
         const payload = new UntrustedParser(channel.payload)
-        const modelId = payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text])
+        const modelId = new AIModelId(payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text]))
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
         // Extract prompt options
@@ -408,7 +409,7 @@ class LlmSessionAPIHandler {
         await this.#loadLlmChatSession(sessionId, manifest, {
           gpuEngine,
           manifestVersion: manifest.version,
-          modelId,
+          modelId: modelId.toString(),
           contextSize,
           useMmap
         }, {
@@ -456,7 +457,7 @@ class LlmSessionAPIHandler {
       try {
         // Extract the options
         const payload = new UntrustedParser(channel.payload)
-        const modelId = payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Embedding])
+        const modelId = new AIModelId(payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Embedding]))
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
         // Extract prompt options
@@ -472,7 +473,7 @@ class LlmSessionAPIHandler {
         await this.#loadLlmEmbeddingSession(sessionId, manifest, {
           gpuEngine,
           manifestVersion: manifest.version,
-          modelId,
+          modelId: modelId.toString(),
           contextSize,
           useMmap
         }, {})
@@ -498,7 +499,7 @@ class LlmSessionAPIHandler {
       try {
         // Extract the options
         const payload = new UntrustedParser(channel.payload)
-        const modelId = payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text])
+        const modelId = new AIModelId(payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text]))
         const input = payload.getString('input')
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
@@ -515,7 +516,7 @@ class LlmSessionAPIHandler {
         await this.#loadLlmChatSession(undefined, manifest, {
           gpuEngine,
           manifestVersion: manifest.version,
-          modelId,
+          modelId: modelId.toString(),
           contextSize,
           useMmap
         }, {

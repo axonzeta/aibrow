@@ -8,6 +8,7 @@ import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
+import AIModelId from '#Shared/AIModelId'
 
 class PermissionProvider {
   /* **************************************************************************/
@@ -56,19 +57,19 @@ class PermissionProvider {
    * @param modelId: the id of the model
    * @return true if we have permission, false if not, undefined if it's undecided
    */
-  async #getModelPermission (channel: IPCInflightChannel, modelId: string | undefined): Promise<boolean | undefined> {
+  async #getModelPermission (channel: IPCInflightChannel, modelId: AIModelId): Promise<boolean | undefined> {
     if (this.#isChannelFromExtension(channel)) { return true }
     if (this.#isChannelValidForPermission(channel) === false) { return false }
 
     // The default model might already have permission
     if (config.permissionRequiredForDefaultModel === false) {
-      if (modelId === undefined || Object.values(config.defaultModels).includes(modelId)) { return true }
+      if (Object.values(config.defaultModels).includes(modelId.toString())) { return true }
     }
 
     // Check if we're a pre-allowed origin
     if (config.permissionAlwaysAllowedOrigins.includes(channel.port.sender.origin)) { return true }
 
-    return await getSiteModelPermissionPref(channel.port.sender.origin, modelId)
+    return await getSiteModelPermissionPref(channel.port.sender.origin, modelId.toString())
   }
 
   /**
@@ -77,7 +78,7 @@ class PermissionProvider {
    * @param modelId: the id of the model
    * @return true if we have permission, false if not
    */
-  async hasModelPermission (channel: IPCInflightChannel, modelId: string | undefined) {
+  async hasModelPermission (channel: IPCInflightChannel, modelId: AIModelId) {
     return await this.#getModelPermission(channel, modelId) === true
   }
 
@@ -98,7 +99,7 @@ class PermissionProvider {
    * @param modelId: the id of the model
    * @returns true if we already have permission/the user grants, false otherwise
    */
-  async requestModelPermission (channel: IPCInflightChannel, modelId: string | undefined) {
+  async requestModelPermission (channel: IPCInflightChannel, modelId: AIModelId) {
     if (this.#isChannelFromExtension(channel)) { return true }
     if (this.#isChannelValidForPermission(channel) === false) { return false }
 
@@ -118,7 +119,7 @@ class PermissionProvider {
       windowId: channel.port.sender.tab.windowId,
       frameId: channel.port.sender.frameId,
       origin: channel.port.sender.origin,
-      modelId,
+      modelId: modelId.toString(),
       modelName: manifest.name,
       modelLicenseUrl: manifest.licenseUrl
     }

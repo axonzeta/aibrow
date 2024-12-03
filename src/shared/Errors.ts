@@ -2,6 +2,13 @@ export const kPermissionDenied = 'Permission denied.'
 export const kHelperNotInstalled = 'Helper not installed.'
 export const kModelNotAvailable = 'Model not available.'
 
+// Model Ids
+export const kUrlModelIdInvalid = 'Invalid URL for UrlModelId.'
+export const kUrlModelIdUnsupportedDomain = 'Unsupported domain for UrlModelId.'
+export const kUrlModelIdUnsupportedHuggingFacePath = 'Unsupported Hugging Face path for UrlModelId.'
+export const kModelIdInvalid = 'Invalid model id.'
+export const kModelIdProviderUnsupported = 'Unsupported model id provider.'
+
 // Generic model
 export const kModelCreationAborted = 'Model creation was aborted.'
 export const kModelPromptAborted = 'Model prompt aborted.'

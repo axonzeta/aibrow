@@ -1,4 +1,4 @@
-import { clamp, getNonEmptyString, getEnum } from '#Shared/API/Untrusted/UntrustedParser'
+import { clamp } from '#Shared/API/Untrusted/UntrustedParser'
 import {
   getDefaultModel,
   getDefaultModelEngine,
@@ -14,7 +14,12 @@ import {
   kModelCreationAborted,
   kGpuEngineNotSupported,
   kModelPromptAborted,
-  kModelPromptTypeNotSupported
+  kModelPromptTypeNotSupported,
+  kModelIdProviderUnsupported,
+  kUrlModelIdInvalid,
+  kUrlModelIdUnsupportedDomain,
+  kUrlModelIdUnsupportedHuggingFacePath,
+  kModelIdInvalid
 } from '#Shared/Errors'
 import { NativeInstallHelper, NativeInstallHelperShowReason } from '../NativeInstallHelper'
 import { kNativeMessagingHostNotFound } from '#Shared/BrowserErrors'
@@ -27,6 +32,7 @@ import {
   AIRootModelProps,
   AIModelType
 } from '#Shared/API/AI'
+import AIModelId from '#Shared/AIModelId'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import PermissionProvider from '../PermissionProvider'
 import AILlmSession from '../AI/AILlmSession'
@@ -45,8 +51,10 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  async getModelId (modelId: any, modelType: AIModelType): Promise<string> {
-    return getNonEmptyString(modelId, await getDefaultModel(modelType))
+  async getModelId (modelId: any, modelType: AIModelType): Promise<AIModelId> {
+    return typeof (modelId) === 'string' && modelId.length
+      ? new AIModelId(modelId)
+      : new AIModelId(await getDefaultModel(modelType))
   }
 
   /**
@@ -55,7 +63,9 @@ class APIHelper {
    * @returns the model id or the default
    */
   async getGpuEngine (gpuEngine: any): Promise<AICapabilityGpuEngine> {
-    return getEnum(gpuEngine, AICapabilityGpuEngine, await getDefaultModelEngine())
+    return Object.values(AICapabilityGpuEngine).includes(gpuEngine)
+      ? gpuEngine
+      : await getDefaultModelEngine()
   }
 
   /**
@@ -77,7 +87,7 @@ class APIHelper {
    * @param promptType: the type of prompt to check is available
    * @returns the model availablility and manifest in the format { availability, manifest }
    */
-  async getAIModelAvailability (channel: IPCInflightChannel, modelId: string, promptType: AICapabilityPromptType) {
+  async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AICapabilityPromptType) {
     let manifest: AIModelManifest
     let availability: AICapabilityAvailability
     let score: number
@@ -127,9 +137,13 @@ class APIHelper {
           NativeInstallHelper.show(NativeInstallHelperShowReason.ApiUsage)
           return createIPCErrorResponse(kHelperNotInstalled)
         case kPermissionDenied:
-          return createIPCErrorResponse(kPermissionDenied)
         case kModelPromptTypeNotSupported:
-          return createIPCErrorResponse(kModelPromptTypeNotSupported)
+        case kModelIdProviderUnsupported:
+        case kUrlModelIdInvalid:
+        case kUrlModelIdUnsupportedDomain:
+        case kUrlModelIdUnsupportedHuggingFacePath:
+        case kModelIdInvalid:
+          return createIPCErrorResponse(ex.message)
       }
 
       throw ex
@@ -195,10 +209,10 @@ class APIHelper {
    * @param modelProps: the model props
    * @returns the core llm prompt options
    */
-  async #sanitizeModelProps (modelId: string, gpuEngine: AICapabilityGpuEngine, manifest: AIModelManifest, modelProps: any) {
+  async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AICapabilityGpuEngine, manifest: AIModelManifest, modelProps: any) {
     const props = new UntrustedParser(modelProps)
     return {
-      model: modelId,
+      model: modelId.toString(),
       gpuEngine,
       topK: props.getRange('topK', manifest.config.topK),
       topP: props.getRange('topP', manifest.config.topP),

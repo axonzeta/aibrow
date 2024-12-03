@@ -6,7 +6,7 @@
     "safeName": "AiBrow",
     "description": "AiBrow on-device AI provider",
     "updateUrl": "https://download.aibrow.ai/releases",
-    "apiVersion": "3",
+    "apiVersion": "4",
     "useModelDownloader": true
   },
   "extension": {

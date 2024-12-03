@@ -87,7 +87,8 @@ class AILanguageModelHandler {
       const prompt = template.render({
         messages: history,
         bos_token: manifest.tokens.bosToken,
-        eos_token: manifest.tokens.eosToken
+        eos_token: manifest.tokens.eosToken,
+        add_generation_prompt: true
       })
 
       const tokenCount = await AILlmSession.countTokens(prompt, props, {})

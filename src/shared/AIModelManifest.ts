@@ -10,7 +10,7 @@ export type AIModelAsset = {
   url: string
 }
 
-export type AIModelManifestConfigRange = [number, number, number]
+export type AIModelManifestConfigRange = [number, number, number] // [min, default, max]
 
 export type AIModelManifestConfig = {
   topK: AIModelManifestConfigRange
@@ -45,7 +45,7 @@ export type AIModelManifest = {
     writer?: AIModelPromptConfig
   }
   assets: AIModelAsset[]
-  adapter: AIModelAssetId
+  adapter?: AIModelAssetId
 }
 
 export type AIModelStats = {

@@ -10,6 +10,7 @@ import {
   kModelFileSystemUpdateModelStats
 } from '#Shared/NativeAPI/ModelFileSystemIPC'
 import NativeIPC from '../NativeIPC'
+import AIModelId from '#Shared/AIModelId'
 
 class AIModelFileSystem {
   /* **************************************************************************/
@@ -21,16 +22,20 @@ class AIModelFileSystem {
    * @param modelId: the id of the model
    * @returns true if it's available, false otherwise
    */
-  async hasModelInstalled (modelId: string): Promise<AIModelManifest | false> {
-    return await NativeIPC.request(kModelFileSystemHasModelInstalled, { modelId })
+  async hasModelInstalled (modelId: AIModelId): Promise<AIModelManifest | false> {
+    return await NativeIPC.request(kModelFileSystemHasModelInstalled, {
+      modelId: modelId.toJSON()
+    })
   }
 
   /**
    * Removes a model from disk
    * @param modelId: the id of the model
    */
-  async removeModelRepo (modelId: string) {
-    return await NativeIPC.request(kModelFileSystemRemoveModelRepo, { modelId })
+  async removeModelRepo (modelId: AIModelId) {
+    return await NativeIPC.request(kModelFileSystemRemoveModelRepo, {
+      modelId: modelId.toJSON()
+    })
   }
 
   /**
@@ -51,8 +56,10 @@ class AIModelFileSystem {
    * @param modelId: the id of the model
    * @returns the model manifest or false if it's not available
    */
-  async readModelManifest (modelId: string): Promise<AIModelManifest> {
-    const manifest = (await NativeIPC.request(kModelFileSystemReadModelManifest, { modelId })) as AIModelManifest | false
+  async readModelManifest (modelId: AIModelId): Promise<AIModelManifest> {
+    const manifest = (await NativeIPC.request(kModelFileSystemReadModelManifest, {
+      modelId: modelId.toJSON()
+    })) as AIModelManifest | false
     if (manifest === false) {
       throw new Error('Failed to read model manifest')
     }
@@ -76,8 +83,10 @@ class AIModelFileSystem {
    * @param modelId: the id of the model
    * @returns the model stats or an empty object
    */
-  async readModelStats (modelId: string): Promise<AIModelStats> {
-    return NativeIPC.request(kModelFileSystemReadModelStats, { modelId })
+  async readModelStats (modelId: AIModelId): Promise<AIModelStats> {
+    return NativeIPC.request(kModelFileSystemReadModelStats, {
+      modelId: modelId.toJSON()
+    })
   }
 
   /**
@@ -85,8 +94,11 @@ class AIModelFileSystem {
    * @param modelId: the id of the model
    * @param update: the update to merge
    */
-  async updateModelStats (modelId: string, update: Partial<AIModelStats>) {
-    return NativeIPC.request(kModelFileSystemUpdateModelStats, { modelId, update })
+  async updateModelStats (modelId: AIModelId, update: Partial<AIModelStats>) {
+    return NativeIPC.request(kModelFileSystemUpdateModelStats, {
+      modelId: modelId.toJSON(),
+      update
+    })
   }
 
   /* **************************************************************************/

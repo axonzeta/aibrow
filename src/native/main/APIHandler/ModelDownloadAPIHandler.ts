@@ -1,11 +1,13 @@
 import BrowserIPC from '../BrowserIPC'
 import {
-  kModelDownloadAsset
+  kModelDownloadAsset,
+  kModelFetchManifestHuggingFace
 } from '#Shared/NativeAPI/ModelDownloadIPC'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 import {
-  AIModelAsset
+  AIModelAsset,
+  AIModelManifest
 } from '#Shared/AIModelManifest'
 import { throttle } from 'throttle-debounce'
 import fs from 'fs-extra'
@@ -15,6 +17,8 @@ import { finished } from 'stream/promises'
 import { withDir, withFile } from 'tmp-promise'
 import config from '#Shared/Config'
 import { importLlama } from '#R/Llama'
+import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
+import AIModelId, { AIModelIdProvider } from '#Shared/AIModelId'
 
 class ModelDownloadAPIHandler {
   /* **************************************************************************/
@@ -24,6 +28,7 @@ class ModelDownloadAPIHandler {
   constructor () {
     BrowserIPC
       .addRequestHandler(kModelDownloadAsset, this.#handleDownloadAsset)
+      .addRequestHandler(kModelFetchManifestHuggingFace, this.#handleFetchManifestHuggingFace)
   }
 
   /* **************************************************************************/
@@ -80,6 +85,92 @@ class ModelDownloadAPIHandler {
     }
 
     reportProgress.cancel()
+  }
+
+  /* **************************************************************************/
+  // MARK: Huggingface
+  /* **************************************************************************/
+
+  #handleFetchManifestHuggingFace = async (channel: IPCInflightChannel) => {
+    // We can support huggingface models by generating a dynamic manifest from the gguf metadata
+
+    // Extract and validate the owner, repo, and model
+    const owner = getNonEmptyString(channel.payload.owner, undefined)
+    const repo = getNonEmptyString(channel.payload.repo, undefined)
+    const model = getNonEmptyString(channel.payload.model, undefined)
+    if (!owner || !repo || !model) { throw new Error('Huggingface params invalid') }
+    if (!model.endsWith('.gguf')) { throw new Error('Huggingface model must be in .gguf format') }
+    const ggufUrl = `https://huggingface.co/${owner}/${repo}/resolve/main/${model}`
+
+    // Fetch the gguf metadata
+    const {
+      fileSize,
+      modelInfo,
+      resolvedConfig,
+      flashAttentionConfig
+    } = Object.assign({}, ...await Promise.all([
+      (async () => {
+        const { getLlama, readGgufFileInfo, GgufInsights } = await importLlama()
+        const llama = await getLlama({ build: 'never' })
+        const modelInfo = await readGgufFileInfo(ggufUrl)
+        const insights = await GgufInsights.from(modelInfo, llama)
+        const resolvedConfig = await insights.configurationResolver.resolveAndScoreConfig()
+        const flashAttentionConfig = await insights.configurationResolver.resolveAndScoreConfig({ flashAttention: true })
+
+        return {
+          modelInfo,
+          resolvedConfig,
+          flashAttentionConfig
+        }
+      })(),
+      (async () => {
+        const res = await fetch(ggufUrl)
+        const fileSize = parseInt(res.headers.get('content-length'))
+        return { fileSize: isNaN(fileSize) ? 0 : fileSize }
+      })()
+    ]))
+    const modelMetadata = modelInfo.metadata
+    const modelTokenizer = modelInfo.metadata.tokenizer.ggml
+
+    // Generate the manifest
+    const modelId = new AIModelId({ provider: AIModelIdProvider.HuggingFace, owner, repo, model })
+    const modelAssetId = [modelId.provider, modelId.owner, modelId.repo, modelId.model].join('/')
+    const manifest: AIModelManifest = {
+      id: modelId.toString(),
+      name: `HuggingFace: ${path.basename(modelId.model, path.extname(modelId.model))}`,
+      version: `${modelInfo.version}.0.0`,
+      licenseUrl: modelMetadata.general['license.link']
+        ? modelMetadata.general['license.link']
+        : modelMetadata.general.license
+          ? `https://www.google.com/search?q=${encodeURIComponent(modelMetadata.general.license)}`
+          : '',
+      model: modelAssetId,
+      assets: [{
+        id: modelAssetId,
+        url: ggufUrl,
+        size: fileSize
+      }],
+      config: {
+        topK: [1, 50, 100],
+        topP: [0.0, 0.9, 1.0],
+        temperature: [0.0, 0.6, 1.0],
+        repeatPenalty: [-2.0, 1.5, 2.0],
+        flashAttention: flashAttentionConfig.compatibilityScore >= 1
+      },
+      tokens: {
+        max: resolvedConfig.resolvedValues.contextSize,
+        default: Math.min(2048, resolvedConfig.resolvedValues.contextSize),
+        stop: [modelTokenizer.tokens[modelTokenizer.eos_token_id]],
+        bosToken: modelTokenizer.tokens[modelTokenizer.bos_token_id],
+        eosToken: modelTokenizer.tokens[modelTokenizer.eos_token_id]
+      },
+      prompts: {
+        languageModel: {
+          template: modelMetadata.tokenizer.chat_template
+        }
+      }
+    }
+    return manifest
   }
 }
 

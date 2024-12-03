@@ -11,6 +11,7 @@ import {
 } from '#Shared/NativeAPI/ModelFileSystemIPC'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import AIModelFileSystem from '#R/AI/AIModelFileSystem'
+import AIModelId from '#Shared/AIModelId'
 
 class ModelFileSystemAPIHandler {
   /* **************************************************************************/
@@ -34,11 +35,13 @@ class ModelFileSystemAPIHandler {
   /* **************************************************************************/
 
   #handleHasModelInstalled = async (channel: IPCInflightChannel) => {
-    return await AIModelFileSystem.hasModel(channel.payload.modelId)
+    const modelId = new AIModelId(channel.payload.modelId)
+    return await AIModelFileSystem.hasModel(modelId)
   }
 
   #handleRemoveModelRepo = async (channel: IPCInflightChannel) => {
-    return await AIModelFileSystem.removeModelRepo(channel.payload.modelId)
+    const modelId = new AIModelId(channel.payload.modelId)
+    return await AIModelFileSystem.removeModelRepo(modelId)
   }
 
   #handleGetInstalledModels = async (channel: IPCInflightChannel) => {
@@ -51,7 +54,8 @@ class ModelFileSystemAPIHandler {
 
   #handleReadModelManifest = async (channel: IPCInflightChannel) => {
     try {
-      return await AIModelFileSystem.readModelManifest(channel.payload.modelId)
+      const modelId = new AIModelId(channel.payload.modelId)
+      return await AIModelFileSystem.readModelManifest(modelId)
     } catch (ex) {
       return false
     }
@@ -74,11 +78,13 @@ class ModelFileSystemAPIHandler {
   /* **************************************************************************/
 
   #handleReadModelStats = async (channel: IPCInflightChannel) => {
-    return AIModelFileSystem.readModelStats(channel.payload.modelId)
+    const modelId = new AIModelId(channel.payload.modelId)
+    return AIModelFileSystem.readModelStats(modelId)
   }
 
   #handleUpdateModelStats = async (channel: IPCInflightChannel) => {
-    return AIModelFileSystem.updateModelStats(channel.payload.modelId, channel.payload.update)
+    const modelId = new AIModelId(channel.payload.modelId)
+    return AIModelFileSystem.updateModelStats(modelId, channel.payload.update)
   }
 }
 
