@@ -5,7 +5,7 @@ import { NativeInstallHelper } from './NativeInstallHelper'
 import System from './System'
 
 // API Handlers
-const apiHandlerFactory = new APIHandlerFactory() // eslint-disable-line @typescript-eslint/no-unused-vars
+const apiHandlerFactory = new APIHandlerFactory()
 apiHandlerFactory.start()
 
 // IPC helpers
