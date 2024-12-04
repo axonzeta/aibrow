@@ -44,6 +44,10 @@ export type AIModelManifest = {
     rewriter?: AIModelPromptConfig
     writer?: AIModelPromptConfig
   }
+  generated?: {
+    ts: number
+    version: string
+  }
   assets: AIModelAsset[]
   adapter?: AIModelAssetId
 }

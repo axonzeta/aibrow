@@ -139,6 +139,10 @@ class ModelDownloadAPIHandler {
       id: modelId.toString(),
       name: `HuggingFace: ${path.basename(modelId.model, path.extname(modelId.model))}`,
       version: `${modelInfo.version}.0.0`,
+      generated: {
+        ts: Date.now(),
+        version: config.version
+      },
       licenseUrl: modelMetadata.general['license.link']
         ? modelMetadata.general['license.link']
         : modelMetadata.general.license

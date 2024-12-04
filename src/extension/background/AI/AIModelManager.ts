@@ -241,18 +241,24 @@ class AIModelManagerImpl extends EventEmitter {
           throw new Error(`Model ${modelId} not installed`)
         }
 
-        const shouldCheck = force || (
-          (Date.now() - ((await AIModelFileSystem.readModelStats(modelId)).updateTS ?? 0)) >
-          ModelUpdateMillis[await getModelUpdatePeriod()]
+        const shouldCheck = (
+          force ||
+          (
+            (Date.now() - ((await AIModelFileSystem.readModelStats(modelId)).updateTS ?? 0)) >
+            ModelUpdateMillis[await getModelUpdatePeriod()]
+          )
         )
 
         if (shouldCheck) {
           console.log(`Model update check needed ${modelId}`)
-          const remoteManifest = await AIModelDownload.fetchModelManifest(modelId)
           const localManifest = await AIModelFileSystem.readModelManifest(modelId)
+          const remoteManifest = await AIModelDownload.fetchModelManifest(modelId)
           await AIModelFileSystem.updateModelStats(modelId, { updateTS: Date.now() })
 
-          if (semver.gt(remoteManifest.version, localManifest.version)) {
+          if (
+            semver.gt(remoteManifest.version, localManifest.version) ||
+            (localManifest.generated && remoteManifest.generated && localManifest.generated.version !== remoteManifest.generated.version)
+          ) {
             console.log(`Model updating ${modelId}`)
             await this.#installManifest(remoteManifest)
             await AIModelFileSystem.removeUnusedAssets()
