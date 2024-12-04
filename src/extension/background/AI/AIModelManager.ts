@@ -9,7 +9,7 @@ import {
 } from '#Shared/Prefs'
 import { nanoid } from 'nanoid'
 import { EventEmitter } from 'events'
-import AIModelId, { AIModelIdProvider } from '#Shared/AIModelId'
+import AIModelId from '#Shared/AIModelId'
 
 export enum TaskType {
   Install = 'install',
@@ -231,11 +231,6 @@ class AIModelManagerImpl extends EventEmitter {
     return this.#queueTask(TaskType.Update, async (): Promise<boolean> => {
       try {
         console.log(`Updating model ${modelId}`)
-        // Only AiBrow models can be updated
-        if (modelId.provider !== AIModelIdProvider.AiBrow) {
-          console.log(`Model ${modelId} cannot is not updatable`)
-          return false
-        }
 
         if (!await AIModelFileSystem.hasModelInstalled(modelId)) {
           throw new Error(`Model ${modelId} not installed`)

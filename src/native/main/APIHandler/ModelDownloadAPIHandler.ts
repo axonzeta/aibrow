@@ -19,6 +19,7 @@ import config from '#Shared/Config'
 import { importLlama } from '#R/Llama'
 import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
 import AIModelId, { AIModelIdProvider } from '#Shared/AIModelId'
+import AIModelAssetId from '#Shared/AIModelAssetId'
 
 class ModelDownloadAPIHandler {
   /* **************************************************************************/
@@ -37,9 +38,26 @@ class ModelDownloadAPIHandler {
 
   #handleDownloadAsset = async (channel: IPCInflightChannel) => {
     const asset = channel.payload.asset as AIModelAsset
+    const assetPath = AIModelFileSystem.getAssetPath(asset.id)
 
-    if (await fs.exists(AIModelFileSystem.getAssetPath(asset.id))) {
-      return
+    // Normally we don't update assets that are on disk, rather we change the endpoint
+    // and name of them with a new version. There are some special cases though
+    if (await fs.exists(assetPath)) {
+      if (
+        AIModelAssetId.isProvider(asset.id, AIModelIdProvider.HuggingFace) &&
+        asset.id.endsWith('.gguf')
+      ) {
+        // Huggingface guff assets can be updated but need to be handled differently
+        const { readGgufFileInfo } = await importLlama()
+        const remoteModelInfo = await readGgufFileInfo(asset.url)
+        const localModelInfo = await readGgufFileInfo(assetPath)
+        if (remoteModelInfo.version === localModelInfo.version) {
+          return
+        }
+      } else {
+        // Asset doesn't update, so if it's on disk it's up to date
+        return
+      }
     }
 
     let loadedSize = 0
@@ -62,7 +80,6 @@ class ModelDownloadAPIHandler {
           }
         })
         const modelPath = await downloader.download()
-        const assetPath = AIModelFileSystem.getAssetPath(asset.id)
         await fs.ensureDir(path.dirname(assetPath))
         await fs.move(modelPath, assetPath, { overwrite: true })
       })
@@ -78,7 +95,6 @@ class ModelDownloadAPIHandler {
           reportProgress()
         })
         await finished(reader.pipe(writer))
-        const assetPath = AIModelFileSystem.getAssetPath(asset.id)
         await fs.ensureDir(path.dirname(assetPath))
         await fs.move(file.path, assetPath, { overwrite: true })
       })
@@ -99,8 +115,10 @@ class ModelDownloadAPIHandler {
     const repo = getNonEmptyString(channel.payload.repo, undefined)
     const model = getNonEmptyString(channel.payload.model, undefined)
     if (!owner || !repo || !model) { throw new Error('Huggingface params invalid') }
-    if (!model.endsWith('.gguf')) { throw new Error('Huggingface model must be in .gguf format') }
-    const ggufUrl = `https://huggingface.co/${owner}/${repo}/resolve/main/${model}`
+
+    const modelId = new AIModelId({ provider: AIModelIdProvider.HuggingFace, owner, repo, model })
+    const ggufAssetId = AIModelAssetId.generate(modelId.provider, modelId.owner, modelId.repo, modelId.model)
+    const ggufUrl = AIModelAssetId.getRemoteUrl(ggufAssetId)
 
     // Fetch the gguf metadata
     const {
@@ -133,8 +151,6 @@ class ModelDownloadAPIHandler {
     const modelTokenizer = modelInfo.metadata.tokenizer.ggml
 
     // Generate the manifest
-    const modelId = new AIModelId({ provider: AIModelIdProvider.HuggingFace, owner, repo, model })
-    const modelAssetId = [modelId.provider, modelId.owner, modelId.repo, modelId.model].join('/')
     const manifest: AIModelManifest = {
       id: modelId.toString(),
       name: `HuggingFace: ${path.basename(modelId.model, path.extname(modelId.model))}`,
@@ -148,9 +164,9 @@ class ModelDownloadAPIHandler {
         : modelMetadata.general.license
           ? `https://www.google.com/search?q=${encodeURIComponent(modelMetadata.general.license)}`
           : '',
-      model: modelAssetId,
+      model: ggufAssetId,
       assets: [{
-        id: modelAssetId,
+        id: ggufAssetId,
         url: ggufUrl,
         size: fileSize
       }],
