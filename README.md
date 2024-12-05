@@ -11,7 +11,7 @@ aiBrow
 </p>
 
 <p align="center">
-<a href="https://www.youtube.com/watch?v=sbcCsT9Ab9U"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/install_preview.png?raw=true" width="400" height="300" alt="Step by step install" /></a>
+<a href="https://www.youtube.com/watch?v=ATybwD79jUI"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/install_preview.png?raw=true" width="400" height="300" alt="Step by step install" /></a>
 </p>
 
 ***
