@@ -22,8 +22,6 @@ import IPCBackgroundMessager from '#Shared/IPC/IPCBackgroundMessager'
 import {
   getDefaultModel,
   setDefaultModel,
-  getUseBrowserAI,
-  setUseBrowserAI,
   setDefaultModelEngine,
   getDefaultModelEngine,
   setModelUpdatePeriod,
@@ -43,37 +41,19 @@ import { AIModelType } from '#Shared/API/AI'
 // MARK: Settings
 /* **************************************************************************/
 
-const kBrowserAiModelId = '__browser__'
-
 function renderDefaultModelOptions (
   $el: HTMLSelectElement,
   selectedModelId: string,
-  modelList: Array<{ id: string, name: string }>,
-  hasBrowserAI: boolean,
-  useBrowserAI: boolean
+  modelList: Array<{ id: string, name: string }>
 ) {
   UI.empty($el)
-
-  if (hasBrowserAI) {
-    modelList = [{ id: kBrowserAiModelId, name: 'Browser AI' }, ...modelList]
-  } else {
-    useBrowserAI = false
-  }
 
   for (const model of modelList) {
     const $option = document.createElement('option')
     $option.value = model.id
     $option.textContent = model.name
-    if (model.id === kBrowserAiModelId) {
-      if (useBrowserAI) {
-        $option.selected = true
-      }
-    } else {
-      if (model.id === selectedModelId) {
-        if ((useBrowserAI && modelList.some(({ id }) => id === kBrowserAiModelId)) === false) {
-          $option.selected = true
-        }
-      }
+    if (model.id === selectedModelId) {
+      $option.selected = true
     }
     $el.appendChild($option)
   }
@@ -111,27 +91,20 @@ async function renderSettings () {
   const $defaultTextModelOpt = document.getElementById('opt-model-text-default') as HTMLSelectElement
   $defaultTextModelOpt.addEventListener('change', async () => {
     const modelId = $defaultTextModelOpt.value
-
-    if (modelId === kBrowserAiModelId) {
-      await setUseBrowserAI(true)
-    } else {
-      await setUseBrowserAI(false)
-      await setDefaultModel(AIModelType.Text, modelId)
-    }
+    await setDefaultModel(AIModelType.Text, modelId)
   })
   ;(async () => {
-    const useBrowserAI = await getUseBrowserAI()
     const defaultModelId = await getDefaultModel(AIModelType.Text)
     const defaultModelList = [
       ...new Set([defaultModelId, Object.values(config.defaultModels)])
     ].map((modelId) => ({ id: modelId, name: modelId }))
 
-    renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, defaultModelList, Boolean(window.ai?.languageModel), useBrowserAI)
+    renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, defaultModelList)
 
     const res = await fetch('https://aibrow.ai/api/model/list.json')
     if (res.ok) {
       const { models } = await res.json()
-      renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, models, Boolean(window.ai?.languageModel), useBrowserAI)
+      renderDefaultModelOptions($defaultTextModelOpt, defaultModelId, models)
     }
   })()
 
@@ -146,12 +119,12 @@ async function renderSettings () {
     const defaultModelList = [
       ...new Set([defaultModelId, Object.values(config.defaultModels)])
     ].map((modelId) => ({ id: modelId, name: modelId }))
-    renderDefaultModelOptions($defaultEmbeddingModelOpt, defaultModelId, defaultModelList, false, false)
+    renderDefaultModelOptions($defaultEmbeddingModelOpt, defaultModelId, defaultModelList)
 
     const res = await fetch('https://aibrow.ai/api/model/list.json')
     if (res.ok) {
       const { models } = await res.json()
-      renderDefaultModelOptions($defaultEmbeddingModelOpt, defaultModelId, models, false, false)
+      renderDefaultModelOptions($defaultEmbeddingModelOpt, defaultModelId, models)
     }
   })()
 

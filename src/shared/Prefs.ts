@@ -43,10 +43,6 @@ const kDefaultModelsPrefixKey = `${kPrefKeyPrefix}:defaultModels:`
 export async function getDefaultModel (modelType: AIModelType) { return getPref(`${kDefaultModelsPrefixKey}${modelType}`, config.defaultModels[modelType]) }
 export async function setDefaultModel (modelType: AIModelType, modelId: string) { return setPref(`${kDefaultModelsPrefixKey}${modelType}`, modelId) }
 
-const kDefaultUseBrowserAIKey = `${kPrefKeyPrefix}:useBrowserAI`
-export async function getUseBrowserAI () { return getPref(kDefaultUseBrowserAIKey, false) }
-export async function setUseBrowserAI (use: boolean) { return setPref(kDefaultUseBrowserAIKey, use) }
-
 const kOverrideBrowserAIKey = `${kPrefKeyPrefix}:overrideBrowserAI`
 const kContentscriptMainOverrideId = 'contentscript-main-override'
 export async function getOverrideBrowserAI () { return getPref(kOverrideBrowserAIKey, false) }

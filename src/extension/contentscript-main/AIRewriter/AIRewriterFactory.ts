@@ -6,7 +6,6 @@ import {
   AIRewriterData
 } from '#Shared/API/AIRewriter/AIRewriterTypes'
 import AIRewriterCapabilities from './AIRewriterCapabilities'
-import Prefs from '../Prefs'
 import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
@@ -32,25 +31,10 @@ class AIRewriterFactory {
   }
 
   /* **************************************************************************/
-  // MARK: Utils
-  /* **************************************************************************/
-
-  /**
-   * @returns true if we should be using the browsers built-in ai for this factory
-   */
-  async #shouldUseBrowserAI () {
-    return typeof (this.#browserAI?.rewriter) === 'object' && await Prefs.getUseBrowserAI()
-  }
-
-  /* **************************************************************************/
   // MARK: Capabilities
   /* **************************************************************************/
 
   capabilities = async (options: AIRewriterCapabilitiesOptions): Promise<AIRewriterCapabilities> => {
-    if (await this.#shouldUseBrowserAI()) {
-      return this.#browserAI.rewriter.capabilities(options)
-    }
-
     const data = throwIPCErrorResponse(
       await IPC.request(kRewriterGetCapabilities, options)
     ) as AIRewriterCapabilitiesData
@@ -63,10 +47,6 @@ class AIRewriterFactory {
   /* **************************************************************************/
 
   create = async (options: AIRewriterCreateOptions = {}) => {
-    if (await this.#shouldUseBrowserAI()) {
-      return this.#browserAI.rewriter.create(options)
-    }
-
     const monitorTarget = new EventTarget()
     const {
       monitor,

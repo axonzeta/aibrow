@@ -6,7 +6,6 @@ import {
   AISummarizerData
 } from '#Shared/API/AISummarizer/AISummarizerTypes'
 import AISummarizerCapabilities from './AISummarizerCapabilities'
-import Prefs from '../Prefs'
 import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
@@ -32,25 +31,10 @@ class AISummarizerFactory {
   }
 
   /* **************************************************************************/
-  // MARK: Utils
-  /* **************************************************************************/
-
-  /**
-   * @returns true if we should be using the browsers built-in ai for this factory
-   */
-  async #shouldUseBrowserAI () {
-    return typeof (this.#browserAI?.summarizer) === 'object' && await Prefs.getUseBrowserAI()
-  }
-
-  /* **************************************************************************/
   // MARK: Capabilities
   /* **************************************************************************/
 
   capabilities = async (options: AISummarizerCapabilitiesOptions): Promise<AISummarizerCapabilities> => {
-    if (await this.#shouldUseBrowserAI()) {
-      return this.#browserAI.summarizer.capabilities(options)
-    }
-
     const data = throwIPCErrorResponse(
       await IPC.request(kSummarizerGetCapabilities, options)
     ) as AISummarizerCapabilitiesData
@@ -63,10 +47,6 @@ class AISummarizerFactory {
   /* **************************************************************************/
 
   create = async (options: AISummarizerCreateOptions = {}) => {
-    if (await this.#shouldUseBrowserAI()) {
-      return this.#browserAI.summarizer.create(options)
-    }
-
     const monitorTarget = new EventTarget()
     const {
       monitor,

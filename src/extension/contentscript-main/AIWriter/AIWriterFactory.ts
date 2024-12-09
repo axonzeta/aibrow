@@ -6,7 +6,6 @@ import {
   AIWriterData
 } from '#Shared/API/AIWriter/AIWriterTypes'
 import AIWriterCapabilities from './AIWriterCapabilities'
-import Prefs from '../Prefs'
 import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
@@ -32,25 +31,10 @@ class AIWriterFactory {
   }
 
   /* **************************************************************************/
-  // MARK: Utils
-  /* **************************************************************************/
-
-  /**
-   * @returns true if we should be using the browsers built-in ai for this factory
-   */
-  async #shouldUseBrowserAI () {
-    return typeof (this.#browserAI?.writer) === 'object' && await Prefs.getUseBrowserAI()
-  }
-
-  /* **************************************************************************/
   // MARK: Capabilities
   /* **************************************************************************/
 
   capabilities = async (options: AIWriterCapabilitiesOptions): Promise<AIWriterCapabilities> => {
-    if (await this.#shouldUseBrowserAI()) {
-      return this.#browserAI.writer.capabilities(options)
-    }
-
     const data = throwIPCErrorResponse(
       await IPC.request(kWriterGetCapabilities, options)
     ) as AIWriterCapabilitiesData
@@ -63,10 +47,6 @@ class AIWriterFactory {
   /* **************************************************************************/
 
   create = async (options: AIWriterCreateOptions = {}) => {
-    if (await this.#shouldUseBrowserAI()) {
-      return this.#browserAI.writer.create(options)
-    }
-
     const monitorTarget = new EventTarget()
     const {
       monitor,

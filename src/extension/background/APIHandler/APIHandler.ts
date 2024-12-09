@@ -7,8 +7,6 @@ import AICoreModelHandler from './AICoreModelHandler'
 import AIEmbeddingHandler from './AIEmbeddingHandler'
 import AILanguageDetectorHandler from './AILanguageDetectorHandler'
 import AITranslatorHandler from './AITranslatorHandler'
-import { kPrefGetUseBrowserAI } from '#Shared/API/PrefIPCMessageTypes'
-import { getUseBrowserAI } from '#Shared/Prefs'
 import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
 import System from '../System'
 import { AICapabilities, AIHelperInstalledState } from '#Shared/API/AI'
@@ -48,17 +46,8 @@ class APIHandler {
     this.#translatorHandler = new AITranslatorHandler(this.#server)
 
     this.#server
-      .addRequestHandler(kPrefGetUseBrowserAI, this.#handleGetUseBrowserAI)
       .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
       .addRequestHandler(kAIGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)
-  }
-
-  /* **************************************************************************/
-  // MARK: Handlers: Prefs
-  /* **************************************************************************/
-
-  #handleGetUseBrowserAI = async () => {
-    return await getUseBrowserAI()
   }
 
   /* **************************************************************************/
