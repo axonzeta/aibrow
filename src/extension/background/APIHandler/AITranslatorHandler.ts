@@ -1,4 +1,4 @@
-import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
+import { getNonEmptyString } from '#Shared/Typo/TypoParser'
 import { AITranslatorData } from '#Shared/API/AITranslator/AITranslatorTypes'
 import {
   kTranslatorGetCapabilities,

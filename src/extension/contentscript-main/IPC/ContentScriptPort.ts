@@ -1,7 +1,7 @@
 import {
   kContentScriptMessageChannel,
   kContentScriptDisconnectChannel
-} from '#Shared/API/ContentScript'
+} from '#Shared/IPC/ContentScriptIPC'
 import { PortEventHandler } from './PortEventHandler'
 
 export default class ContentScriptPort {

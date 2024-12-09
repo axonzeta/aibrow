@@ -16,9 +16,9 @@ import config from '#Shared/Config'
 import type { Llama, LlamaCompletion, LlamaContext, LlamaModel, LlamaGrammar, LlamaEmbeddingContext } from 'node-llama-cpp'
 import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 import { kModelPromptAborted } from '#Shared/Errors'
-import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
+import TypoParser from '#Shared/Typo/TypoObject'
 import { nanoid } from 'nanoid'
-import { clamp } from '#Shared/API/Untrusted/UntrustedParser'
+import { clamp } from '#Shared/Typo/TypoParser'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import AsyncQueue from '#Shared/AsyncQueue'
 import AIModelId from '#Shared/AIModelId'
@@ -112,7 +112,7 @@ class LlmSessionAPIHandler {
   }
 
   #handleGetModelScore = async (channel: IPCInflightChannel) => {
-    const props = new UntrustedParser(channel.payload)
+    const props = new TypoParser(channel.payload)
     const gpuEngine = props.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
     const flashAttention = props.getBool('flashAttention', false)
     const contextSize = props.getNumber('contextSize', 2048)
@@ -365,7 +365,7 @@ class LlmSessionAPIHandler {
    * @returns the model props sanitized with the manifest
    */
   #sanitizeModelProps = (modelProps: any, manifest: AIModelManifest) => {
-    const props = new UntrustedParser(modelProps)
+    const props = new TypoParser(modelProps)
     return {
       model: manifest.id,
       gpuEngine: props.getEnum('gpuEngine', AICapabilityGpuEngine, undefined),
@@ -386,7 +386,7 @@ class LlmSessionAPIHandler {
 
       try {
         // Extract the options
-        const payload = new UntrustedParser(channel.payload)
+        const payload = new TypoParser(channel.payload)
         const modelId = new AIModelId(payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text]))
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
@@ -456,7 +456,7 @@ class LlmSessionAPIHandler {
     return await this.#requestQueue.push(async () => {
       try {
         // Extract the options
-        const payload = new UntrustedParser(channel.payload)
+        const payload = new TypoParser(channel.payload)
         const modelId = new AIModelId(payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Embedding]))
         const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
@@ -498,7 +498,7 @@ class LlmSessionAPIHandler {
     return await this.#requestQueue.push(async () => {
       try {
         // Extract the options
-        const payload = new UntrustedParser(channel.payload)
+        const payload = new TypoParser(channel.payload)
         const modelId = new AIModelId(payload.getNonEmptyString('props.model', config.defaultModels[AIModelType.Text]))
         const input = payload.getString('input')
         const manifest = await AIModelFileSystem.readModelManifest(modelId)

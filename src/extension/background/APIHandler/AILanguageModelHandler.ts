@@ -15,7 +15,7 @@ import {
   AILanguageModelPrompt,
   AILanguageModelPromptRole
 } from '#Shared/API/AILanguageModel/AILanguageModelTypes'
-import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
+import { getNonEmptyString } from '#Shared/Typo/TypoParser'
 import { kModelPromptAborted, kModelPromptTypeNotSupported } from '#Shared/Errors'
 import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'

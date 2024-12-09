@@ -1,4 +1,4 @@
-import { kContentScriptPortName, kExtensionLibPortName } from '#Shared/API/ContentScript'
+import { kContentScriptPortName, kExtensionLibPortName } from '#Shared/IPC/ContentScriptIPC'
 import APIHandler from './APIHandler'
 import NativeIPC from '../NativeIPC'
 import { updateOverrideBrowserAIScriptInjection, getOverrideBrowserAI } from '#Shared/Prefs'

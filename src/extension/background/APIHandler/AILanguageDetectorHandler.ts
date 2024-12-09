@@ -1,4 +1,4 @@
-import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
+import { getNonEmptyString } from '#Shared/Typo/TypoParser'
 import {
   AILanguageDetectorData,
   AILanguageDetectorDetectResult,

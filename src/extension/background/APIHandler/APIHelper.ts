@@ -1,4 +1,4 @@
-import { clamp } from '#Shared/API/Untrusted/UntrustedParser'
+import { clamp } from '#Shared/Typo/TypoParser'
 import {
   getDefaultModel,
   getDefaultModelEngine,
@@ -37,7 +37,7 @@ import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import PermissionProvider from '../PermissionProvider'
 import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
-import UntrustedParser from '#Shared/API/Untrusted/UntrustedObject'
+import TypoParser from '#Shared/Typo/TypoObject'
 import AIModelManager from '../AI/AIModelManager'
 import config from '#Shared/Config'
 
@@ -210,7 +210,7 @@ class APIHelper {
    * @returns the core llm prompt options
    */
   async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AICapabilityGpuEngine, manifest: AIModelManifest, modelProps: any) {
-    const props = new UntrustedParser(modelProps)
+    const props = new TypoParser(modelProps)
     return {
       model: modelId.toString(),
       gpuEngine,
@@ -239,7 +239,7 @@ class APIHelper {
     promptType: AICapabilityPromptType,
     postflightFn: (
       manifest: AIModelManifest,
-      payload: UntrustedParser,
+      payload: TypoParser,
       props: AIRootModelProps
     ) => Promise<any>
   ) {
@@ -251,7 +251,7 @@ class APIHelper {
       throw new Error(kGpuEngineNotSupported)
     }
 
-    const payload = new UntrustedParser(rawPayload)
+    const payload = new TypoParser(rawPayload)
     return await this.captureCommonErrorsForResponse(async () => {
       // Values with user-defined defaults
       const modelId = await this.getModelId(rawPayload?.model, modelType)
@@ -314,12 +314,12 @@ class APIHelper {
     modelType: AIModelType,
     postflightFn: (
       manifest: AIModelManifest,
-      payload: UntrustedParser,
+      payload: TypoParser,
       props: AIRootModelProps
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
-    const payload = new UntrustedParser(rawPayload)
+    const payload = new TypoParser(rawPayload)
 
     // Values with user-defined defaults
     const modelId = await this.getModelId(rawPayload?.props?.model, modelType)

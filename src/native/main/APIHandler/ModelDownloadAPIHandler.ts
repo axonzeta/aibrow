@@ -17,7 +17,7 @@ import { finished } from 'stream/promises'
 import { withDir, withFile } from 'tmp-promise'
 import config from '#Shared/Config'
 import { importLlama } from '#R/Llama'
-import { getNonEmptyString } from '#Shared/API/Untrusted/UntrustedParser'
+import { getNonEmptyString } from '#Shared/Typo/TypoParser'
 import AIModelId, { AIModelIdProvider } from '#Shared/AIModelId'
 import AIModelAssetId from '#Shared/AIModelAssetId'
 

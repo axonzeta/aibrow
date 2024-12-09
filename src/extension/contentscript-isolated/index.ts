@@ -2,7 +2,7 @@ import {
   kContentScriptMessageChannel,
   kContentScriptDisconnectChannel,
   kContentScriptPortName
-} from '#Shared/API/ContentScript'
+} from '#Shared/IPC/ContentScriptIPC'
 
 let port: chrome.runtime.Port | undefined
 

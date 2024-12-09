@@ -1,6 +1,6 @@
 import {
   kExtensionLibPortName
-} from '#Shared/API/ContentScript'
+} from '#Shared/IPC/ContentScriptIPC'
 import config from '#Shared/Config'
 import { PortEventHandler } from './PortEventHandler'
 import { kExtensionNotFound } from '#Shared/BrowserErrors'

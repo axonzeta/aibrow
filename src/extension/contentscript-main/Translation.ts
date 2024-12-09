@@ -1,6 +1,6 @@
 import AI from './AI'
-import AILanguageDetector from './AILanguageDetector/AILanguageDetector'
-import AITranslator from './AITranslator/AITranslator'
+import AILanguageDetector from '#Shared/API/AILanguageDetector/AILanguageDetector'
+import AITranslator from '#Shared/API/AITranslator/AITranslator'
 import { AICapabilityAvailability } from '#Shared/API/AI'
 
 type DetectorBridge = {
