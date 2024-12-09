@@ -9,12 +9,14 @@ import { kCoreModelCreate, kCoreModelPrompt, kCoreModelCountTokens } from '#Shar
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AICoreModel extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AICoreModelProps
   #signal?: AbortSignal
@@ -24,8 +26,9 @@ class AICoreModel extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AICoreModelData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AICoreModelData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -40,7 +43,7 @@ class AICoreModel extends AIRootModel {
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
     const data = (await IPC.request(kCoreModelCreate, this.#props, { signal })) as AICoreModelData
-    const session = new AICoreModel(data)
+    const session = new AICoreModel(this.#ipc, data)
     return session
   }
 

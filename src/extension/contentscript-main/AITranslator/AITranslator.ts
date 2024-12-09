@@ -5,16 +5,17 @@ import {
   AITranslatorTranslateOptions
 } from '#Shared/API/AITranslator/AITranslatorTypes'
 import { kTranslatorCreate, kTranslatorTranslate } from '#Shared/API/AITranslator/AITranslatorIPCTypes'
-import IPC from '../IPC'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AITranslator extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AITranslatorProps
   #signal?: AbortSignal
@@ -24,8 +25,9 @@ class AITranslator extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AITranslatorData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AITranslatorData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -39,8 +41,8 @@ class AITranslator extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kTranslatorCreate, this.#props, { signal })) as AITranslatorData
-    const session = new AITranslator(data)
+    const data = (await this.#ipc.request(kTranslatorCreate, this.#props, { signal })) as AITranslatorData
+    const session = new AITranslator(this.#ipc, data)
     return session
   }
 
@@ -68,7 +70,7 @@ class AITranslator extends AIRootModel {
 
     return new ReadableStream({
       start: (controller) => {
-        IPC.stream(
+        this.#ipc.stream(
           kTranslatorTranslate,
           {
             sessionId: this.#sessionId,

@@ -8,21 +8,35 @@ import {
   kCoreModelGetCapabilities,
   kCoreModelCreate
 } from '#Shared/API/AICoreModel/AICoreModelIPCTypes'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import AICoreModelCapabilities from './AICoreModelCapabilities'
 import AICoreModel from './AICoreModel'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AICoreModelFactory {
+  /* **************************************************************************/
+  // MARK: Private
+  /* **************************************************************************/
+
+  #ipc: IPCClient
+
+  /* **************************************************************************/
+  // MARK: Lifecycle
+  /* **************************************************************************/
+
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
+  }
+
   /* **************************************************************************/
   // MARK: Capabilities
   /* **************************************************************************/
 
   capabilities = async (options: AICoreModelCapabilitiesOptions = {}): Promise<AICoreModelCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kCoreModelGetCapabilities, options)
+      await this.#ipc.request(kCoreModelGetCapabilities, options)
     ) as AICoreModelCapabilitiesData
 
     return new AICoreModelCapabilities(data)
@@ -42,7 +56,7 @@ class AICoreModelFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kCoreModelCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -52,7 +66,7 @@ class AICoreModelFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AICoreModel(data, options.signal)
+    return new AICoreModel(this.#ipc, data, options.signal)
   }
 }
 

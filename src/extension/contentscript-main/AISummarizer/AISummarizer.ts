@@ -5,16 +5,17 @@ import {
   AISummarizerSummarizeOptions
 } from '#Shared/API/AISummarizer/AISummarizerTypes'
 import { kSummarizerCreate, kSummarizerSummarize } from '#Shared/API/AISummarizer/AISummarizerIPCTypes'
-import IPC from '../IPC'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AISummarizer extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AISummarizerProps
   #signal?: AbortSignal
@@ -24,8 +25,9 @@ class AISummarizer extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AISummarizerData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AISummarizerData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -39,8 +41,8 @@ class AISummarizer extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kSummarizerCreate, this.#props, { signal })) as AISummarizerData
-    const session = new AISummarizer(data)
+    const data = (await this.#ipc.request(kSummarizerCreate, this.#props, { signal })) as AISummarizerData
+    const session = new AISummarizer(this.#ipc, data)
     return session
   }
 
@@ -81,7 +83,7 @@ class AISummarizer extends AIRootModel {
     return new ReadableStream({
       start: (controller) => {
         let buffer = ''
-        IPC.stream(
+        this.#ipc.stream(
           kSummarizerSummarize,
           {
             sessionId: this.#sessionId,

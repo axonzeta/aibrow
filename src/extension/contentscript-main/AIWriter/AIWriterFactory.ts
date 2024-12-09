@@ -6,7 +6,6 @@ import {
   AIWriterData
 } from '#Shared/API/AIWriter/AIWriterTypes'
 import AIWriterCapabilities from './AIWriterCapabilities'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
   kWriterCreate,
@@ -14,20 +13,21 @@ import {
 } from '#Shared/API/AIWriter/AIWriterIPCTypes'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AIWriterFactory {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
-  #browserAI: any
+  #ipc: IPCClient
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (browserAI: any) {
-    this.#browserAI = browserAI
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
   }
 
   /* **************************************************************************/
@@ -36,7 +36,7 @@ class AIWriterFactory {
 
   capabilities = async (options: AIWriterCapabilitiesOptions): Promise<AIWriterCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kWriterGetCapabilities, options)
+      await this.#ipc.request(kWriterGetCapabilities, options)
     ) as AIWriterCapabilitiesData
 
     return new AIWriterCapabilities(data)
@@ -56,7 +56,7 @@ class AIWriterFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kWriterCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -66,7 +66,7 @@ class AIWriterFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AIWriter(data, options.signal)
+    return new AIWriter(this.#ipc, data, options.signal)
   }
 }
 

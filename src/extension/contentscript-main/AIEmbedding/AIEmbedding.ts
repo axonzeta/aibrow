@@ -5,17 +5,18 @@ import {
   AIEmbeddingProps,
   AIEmbeddingCloneOptions
 } from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
-import IPC from '../IPC'
 import { kEmbeddingCreate, kEmbeddingGet } from '#Shared/API/AIEmbedding/AIEmbeddingIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import AIRootModel from '../AIRootModel'
 import { calculateCosineSimilarity, findSimilar } from './AIEmbeddingUtil'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AIEmbedding extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AIEmbeddingProps
   #signal?: AbortSignal
@@ -25,8 +26,9 @@ class AIEmbedding extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AIEmbeddingData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AIEmbeddingData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -40,8 +42,8 @@ class AIEmbedding extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kEmbeddingCreate, this.#props, { signal })) as AIEmbeddingData
-    const session = new AIEmbedding(data)
+    const data = (await this.#ipc.request(kEmbeddingCreate, this.#props, { signal })) as AIEmbeddingData
+    const session = new AIEmbedding(this.#ipc, data)
     return session
   }
 
@@ -64,7 +66,7 @@ class AIEmbedding extends AIRootModel {
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
 
     const inputs = Array.isArray(input) ? input : [input]
-    const embedding = (await IPC.request(kEmbeddingGet, { props: this.#props, inputs }, { signal })) as AIEmbeddingVector | AIEmbeddingVector[]
+    const embedding = (await this.#ipc.request(kEmbeddingGet, { props: this.#props, inputs }, { signal })) as AIEmbeddingVector | AIEmbeddingVector[]
 
     return Array.isArray(input)
       ? embedding as AIEmbeddingVector[]

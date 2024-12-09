@@ -6,7 +6,6 @@ import {
   AISummarizerData
 } from '#Shared/API/AISummarizer/AISummarizerTypes'
 import AISummarizerCapabilities from './AISummarizerCapabilities'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
   kSummarizerCreate,
@@ -14,20 +13,21 @@ import {
 } from '#Shared/API/AISummarizer/AISummarizerIPCTypes'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AISummarizerFactory {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
-  #browserAI: any
+  #ipc: IPCClient
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (browserAI: any) {
-    this.#browserAI = browserAI
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
   }
 
   /* **************************************************************************/
@@ -36,7 +36,7 @@ class AISummarizerFactory {
 
   capabilities = async (options: AISummarizerCapabilitiesOptions): Promise<AISummarizerCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kSummarizerGetCapabilities, options)
+      await this.#ipc.request(kSummarizerGetCapabilities, options)
     ) as AISummarizerCapabilitiesData
 
     return new AISummarizerCapabilities(data)
@@ -56,7 +56,7 @@ class AISummarizerFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kSummarizerCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -66,7 +66,7 @@ class AISummarizerFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AISummarizer(data, options.signal)
+    return new AISummarizer(this.#ipc, data, options.signal)
   }
 }
 

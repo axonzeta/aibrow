@@ -4,17 +4,18 @@ import {
   AIRewriterProps,
   AIRewriterCloneOptions
 } from '#Shared/API/AIRewriter/AIRewriterTypes'
-import IPC from '../IPC'
 import { kRewriterCreate, kRewriterRewrite } from '#Shared/API/AIRewriter/AIRewriterIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AIRewriter extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AIRewriterProps
   #signal?: AbortSignal
@@ -24,8 +25,9 @@ class AIRewriter extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AIRewriterData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AIRewriterData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -39,8 +41,8 @@ class AIRewriter extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kRewriterCreate, this.#props, { signal })) as AIRewriterData
-    const session = new AIRewriter(data)
+    const data = (await this.#ipc.request(kRewriterCreate, this.#props, { signal })) as AIRewriterData
+    const session = new AIRewriter(this.#ipc, data)
     return session
   }
 
@@ -81,7 +83,7 @@ class AIRewriter extends AIRootModel {
     return new ReadableStream({
       start: (controller) => {
         let buffer = ''
-        IPC.stream(
+        this.#ipc.stream(
           kRewriterRewrite,
           {
             sessionId: this.#sessionId,

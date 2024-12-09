@@ -38,14 +38,14 @@ class AI extends EventTarget {
     super()
 
     this.#browserAI = browserAI
-    this.#summarizer = new AISummarizerFactory(this.#browserAI)
-    this.#writer = new AIWriterFactory(this.#browserAI)
-    this.#rewriter = new AIRewriterFactory(this.#browserAI)
-    this.#languageModel = new AILanguageModelFactory(this.#browserAI)
-    this.#coreModel = new AICoreModelFactory()
-    this.#embedding = new AIEmbeddingFactory()
-    this.#translator = new AITranslatorFactory()
-    this.#languageDetector = new AILanguageDetectorFactory()
+    this.#summarizer = new AISummarizerFactory(IPC)
+    this.#writer = new AIWriterFactory(IPC)
+    this.#rewriter = new AIRewriterFactory(IPC)
+    this.#languageModel = new AILanguageModelFactory(IPC)
+    this.#coreModel = new AICoreModelFactory(IPC)
+    this.#embedding = new AIEmbeddingFactory(IPC)
+    this.#translator = new AITranslatorFactory(IPC)
+    this.#languageDetector = new AILanguageDetectorFactory(IPC)
   }
 
   /* **************************************************************************/

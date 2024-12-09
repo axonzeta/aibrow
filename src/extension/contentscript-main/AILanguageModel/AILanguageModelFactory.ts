@@ -8,26 +8,26 @@ import {
   kLanguageModelGetCapabilities,
   kLanguageModelCreate
 } from '#Shared/API/AILanguageModel/AILanguageModelIPCTypes'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import AILanguageModelCapabilities from './AILanguageModelCapabilities'
 import AILanguageModel from './AILanguageModel'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AILanguageModelFactory {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
-  #browserAI: any
+  #ipc: IPCClient
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (browserAI: any) {
-    this.#browserAI = browserAI
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
   }
 
   /* **************************************************************************/
@@ -36,7 +36,7 @@ class AILanguageModelFactory {
 
   capabilities = async (options: AILanguageModelCapabilitiesOptions = {}): Promise<AILanguageModelCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kLanguageModelGetCapabilities, options)
+      await this.#ipc.request(kLanguageModelGetCapabilities, options)
     ) as AILanguageModelCapabilitiesData
 
     return new AILanguageModelCapabilities(data)
@@ -56,7 +56,7 @@ class AILanguageModelFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kLanguageModelCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -66,7 +66,7 @@ class AILanguageModelFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AILanguageModel(data, options.signal)
+    return new AILanguageModel(this.#ipc, data, options.signal)
   }
 }
 

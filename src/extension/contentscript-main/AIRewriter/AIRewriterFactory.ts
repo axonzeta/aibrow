@@ -6,7 +6,6 @@ import {
   AIRewriterData
 } from '#Shared/API/AIRewriter/AIRewriterTypes'
 import AIRewriterCapabilities from './AIRewriterCapabilities'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
   kRewriterCreate,
@@ -14,20 +13,21 @@ import {
 } from '#Shared/API/AIRewriter/AIRewriterIPCTypes'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AIRewriterFactory {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
-  #browserAI: any
+  #ipc: IPCClient
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (browserAI: any) {
-    this.#browserAI = browserAI
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
   }
 
   /* **************************************************************************/
@@ -36,7 +36,7 @@ class AIRewriterFactory {
 
   capabilities = async (options: AIRewriterCapabilitiesOptions): Promise<AIRewriterCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kRewriterGetCapabilities, options)
+      await this.#ipc.request(kRewriterGetCapabilities, options)
     ) as AIRewriterCapabilitiesData
 
     return new AIRewriterCapabilities(data)
@@ -56,7 +56,7 @@ class AIRewriterFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kRewriterCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -66,7 +66,7 @@ class AIRewriterFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AIRewriter(data, options.signal)
+    return new AIRewriter(this.#ipc, data, options.signal)
   }
 }
 

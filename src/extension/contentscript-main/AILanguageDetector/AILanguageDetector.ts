@@ -6,15 +6,16 @@ import {
   AILanguageDetectorDetectResult
 } from '#Shared/API/AILanguageDetector/AILanguageDetectorTypes'
 import { kLanguageDetectorCreate, kLanguageDetectorDetect } from '#Shared/API/AILanguageDetector/AILanguageDetectorIPCTypes'
-import IPC from '../IPC'
 import { kSessionDestroyed } from '#Shared/Errors'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AILanguageDetector extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AILanguageDetectorProps
   #signal?: AbortSignal
@@ -24,8 +25,9 @@ class AILanguageDetector extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AILanguageDetectorData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AILanguageDetectorData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -39,8 +41,8 @@ class AILanguageDetector extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kLanguageDetectorCreate, this.#props, { signal })) as AILanguageDetectorData
-    const session = new AILanguageDetector(data)
+    const data = (await this.#ipc.request(kLanguageDetectorCreate, this.#props, { signal })) as AILanguageDetectorData
+    const session = new AILanguageDetector(this.#ipc, data)
     return session
   }
 
@@ -63,7 +65,7 @@ class AILanguageDetector extends AIRootModel {
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
 
-    const result = (await IPC.request(kLanguageDetectorDetect, { props: this.#props, input }, { signal })) as AILanguageDetectorDetectResult[]
+    const result = (await this.#ipc.request(kLanguageDetectorDetect, { props: this.#props, input }, { signal })) as AILanguageDetectorDetectResult[]
     return result
   }
 }

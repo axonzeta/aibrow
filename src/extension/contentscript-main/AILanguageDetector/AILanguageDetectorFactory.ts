@@ -8,21 +8,35 @@ import {
   kLanguageDetectorGetCapabilities,
   kLanguageDetectorCreate
 } from '#Shared/API/AILanguageDetector/AILanguageDetectorIPCTypes'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import AILanguageDetectorCapabilities from './AILanguageDetectorCapabilities'
 import AILanguageDetector from './AILanguageDetector'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AILanguageDetectorFactory {
+  /* **************************************************************************/
+  // MARK: Private
+  /* **************************************************************************/
+
+  #ipc: IPCClient
+
+  /* **************************************************************************/
+  // MARK: Lifecycle
+  /* **************************************************************************/
+
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
+  }
+
   /* **************************************************************************/
   // MARK: Capabilities
   /* **************************************************************************/
 
   capabilities = async (options: AILanguageDetectorCapabilitiesOptions = {}): Promise<AILanguageDetectorCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kLanguageDetectorGetCapabilities, options)
+      await this.#ipc.request(kLanguageDetectorGetCapabilities, options)
     ) as AILanguageDetectorCapabilitiesData
 
     return new AILanguageDetectorCapabilities(data)
@@ -42,7 +56,7 @@ class AILanguageDetectorFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kLanguageDetectorCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -52,7 +66,7 @@ class AILanguageDetectorFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AILanguageDetector(data, options.signal)
+    return new AILanguageDetector(this.#ipc, data, options.signal)
   }
 }
 

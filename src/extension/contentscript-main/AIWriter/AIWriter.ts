@@ -4,17 +4,18 @@ import {
   AIWriterProps,
   AIWriterCloneOptions
 } from '#Shared/API/AIWriter/AIWriterTypes'
-import IPC from '../IPC'
 import { kWriterCreate, kWriterWrite } from '#Shared/API/AIWriter/AIWriterIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AIWriter extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AIWriterProps
   #signal?: AbortSignal
@@ -24,8 +25,9 @@ class AIWriter extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AIWriterData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AIWriterData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#signal = signal
@@ -39,8 +41,8 @@ class AIWriter extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kWriterCreate, this.#props, { signal })) as AIWriterData
-    const session = new AIWriter(data)
+    const data = (await this.#ipc.request(kWriterCreate, this.#props, { signal })) as AIWriterData
+    const session = new AIWriter(this.#ipc, data)
     return session
   }
 
@@ -81,7 +83,7 @@ class AIWriter extends AIRootModel {
     return new ReadableStream({
       start: (controller) => {
         let buffer = ''
-        IPC.stream(
+        this.#ipc.stream(
           kWriterWrite,
           {
             sessionId: this.#sessionId,

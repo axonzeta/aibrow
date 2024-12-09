@@ -13,16 +13,17 @@ import {
   kLanguageModelCountTokens,
   kLanguageModelPrompt
 } from '#Shared/API/AILanguageModel/AILanguageModelIPCTypes'
-import IPC from '../IPC'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
 import AIRootModel from '../AIRootModel'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 export class AILanguageModel extends AIRootModel {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/
 
+  #ipc: IPCClient
   #sessionId: string
   #props: AILanguageModelProps
   #state: AILanguageModelState
@@ -33,8 +34,9 @@ export class AILanguageModel extends AIRootModel {
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (data: AILanguageModelData, signal?: AbortSignal) {
+  constructor (ipc: IPCClient, data: AILanguageModelData, signal?: AbortSignal) {
     super(data.props)
+    this.#ipc = ipc
     this.#sessionId = data.sessionId
     this.#props = data.props
     this.#state = data.state
@@ -49,14 +51,14 @@ export class AILanguageModel extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kLanguageModelCreate, this.#props, { signal })) as AILanguageModelData
-    const session = new AILanguageModel(data)
+    const data = (await this.#ipc.request(kLanguageModelCreate, this.#props, { signal })) as AILanguageModelData
+    const session = new AILanguageModel(this.#ipc, data)
     return session
   }
 
   destroy = () => {
     this.#destroyed = true
-    IPC.request(kLanguageModelDestroy, { sessionId: this.#sessionId })
+    this.#ipc.request(kLanguageModelDestroy, { sessionId: this.#sessionId })
   }
 
   #guardDestroyed () {
@@ -110,7 +112,7 @@ export class AILanguageModel extends AIRootModel {
     return new ReadableStream({
       start: (controller) => {
         let buffer = ''
-        IPC.stream(
+        this.#ipc.stream(
           kLanguageModelPrompt,
           {
             sessionId: this.#sessionId,
@@ -144,7 +146,7 @@ export class AILanguageModel extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const count = (await IPC.request(kLanguageModelCountTokens, { props: this.#props, input }, { signal })) as number
+    const count = (await this.#ipc.request(kLanguageModelCountTokens, { props: this.#props, input }, { signal })) as number
     return count
   }
 }

@@ -8,22 +8,36 @@ import {
   kEmbeddingGetCapabilities,
   kEmbeddingCreate
 } from '#Shared/API/AIEmbedding/AIEmbeddingIPCTypes'
-import IPC from '../IPC'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import AIEmbeddingCapabilities from './AIEmbeddingCapabilities'
 import AIEmbedding from './AIEmbedding'
 import { kModelCreationAborted } from '#Shared/Errors'
 import { createDownloadProgressFn } from '../AIHelpers'
 import { calculateCosineSimilarity, findSimilar } from './AIEmbeddingUtil'
+import IPCClient from '#Shared/IPC/IPCClient'
 
 class AIEmbeddingFactory {
+  /* **************************************************************************/
+  // MARK: Private
+  /* **************************************************************************/
+
+  #ipc: IPCClient
+
+  /* **************************************************************************/
+  // MARK: Lifecycle
+  /* **************************************************************************/
+
+  constructor (ipc: IPCClient) {
+    this.#ipc = ipc
+  }
+
   /* **************************************************************************/
   // MARK: Capabilities
   /* **************************************************************************/
 
   capabilities = async (options: AIEmbeddingCapabilitiesOptions = {}): Promise<AIEmbeddingCapabilities> => {
     const data = throwIPCErrorResponse(
-      await IPC.request(kEmbeddingGetCapabilities, options)
+      await this.#ipc.request(kEmbeddingGetCapabilities, options)
     ) as AIEmbeddingCapabilitiesData
 
     return new AIEmbeddingCapabilities(data)
@@ -43,7 +57,7 @@ class AIEmbeddingFactory {
 
     monitor?.(monitorTarget)
     const data = throwIPCErrorResponse(
-      await IPC.stream(
+      await this.#ipc.stream(
         kEmbeddingCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
@@ -53,7 +67,7 @@ class AIEmbeddingFactory {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AIEmbedding(data, options.signal)
+    return new AIEmbedding(this.#ipc, data, options.signal)
   }
 
   /* **************************************************************************/

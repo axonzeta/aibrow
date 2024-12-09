@@ -1,8 +1,8 @@
+import { AIModelManifestConfigRange } from '../AIModelManifest'
+
 /* **************************************************************************/
 // MARK: Enums
 /* **************************************************************************/
-
-import { AIModelManifestConfigRange } from '../AIModelManifest'
 
 export enum AICapabilityAvailability {
   Readily = 'readily',
