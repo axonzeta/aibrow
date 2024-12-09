@@ -4,7 +4,6 @@ import {
   AICoreModelProps,
   AICoreModelCloneOptions
 } from '#Shared/API/AICoreModel/AICoreModelTypes'
-import IPC from '../IPC'
 import { kCoreModelCreate, kCoreModelPrompt, kCoreModelCountTokens } from '#Shared/API/AICoreModel/AICoreModelIPCTypes'
 import { kSessionDestroyed } from '#Shared/Errors'
 import { readablePromptStreamToString } from '../AIHelpers'
@@ -42,7 +41,7 @@ class AICoreModel extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const data = (await IPC.request(kCoreModelCreate, this.#props, { signal })) as AICoreModelData
+    const data = (await this.#ipc.request(kCoreModelCreate, this.#props, { signal })) as AICoreModelData
     const session = new AICoreModel(this.#ipc, data)
     return session
   }
@@ -78,7 +77,7 @@ class AICoreModel extends AIRootModel {
     return new ReadableStream({
       start: (controller) => {
         let buffer = ''
-        IPC.stream(
+        this.#ipc.stream(
           kCoreModelPrompt,
           {
             sessionId: this.#sessionId,
@@ -106,7 +105,7 @@ class AICoreModel extends AIRootModel {
     this.#guardDestroyed()
 
     const signal = AbortSignal.any([options.signal, this.#signal].filter(Boolean))
-    const count = (await IPC.request(kCoreModelCountTokens, { props: this.#props, input: prompt }, { signal })) as number
+    const count = (await this.#ipc.request(kCoreModelCountTokens, { props: this.#props, input: prompt }, { signal })) as number
     return count
   }
 }
