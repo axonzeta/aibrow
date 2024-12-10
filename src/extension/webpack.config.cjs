@@ -1,5 +1,4 @@
 const path = require('path')
-const fs = require('fs-extra')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
 const CircularDependencyPlugin = require('circular-dependency-plugin')
@@ -9,68 +8,7 @@ const { pathsToWebpackAlias } = require('../../build/tsconfig_util.cjs')
 const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const childProcess = require('child_process')
-
-/**
- * Creates the contentscript types generator plugin
- * @param srcDir: the source directory
- * @param outDir: the output directory to place index.d.ts and tsconfig.json
- * @returns a new plugin instance
- */
-function rollupContentScriptTypesPlugin (srcDir, outDir) {
-  return {
-    apply: (compiler) => {
-      compiler.hooks.afterEmit.tapAsync('rollup-content-script-types-plugin', async (compilation, callback) => {
-        try {
-          const typesOutPath = path.join(outDir, 'index.d.ts')
-
-          // Build the definitions
-          await new Promise((resolve, reject) => {
-            const child = childProcess.spawn('npx', [
-              'rollup',
-              '--config', './types-rollup.config.js',
-              '--input', path.join(srcDir, 'contentscript-main/index.ts'),
-              '--format es',
-              '--file', typesOutPath
-            ], {
-              shell: true, stdio: 'inherit', detatched: true, cwd: __dirname
-            })
-            child.on('close', (code) => {
-              if (code === 0) {
-                resolve()
-              } else {
-                reject(new Error(`Failed to run rollup with exit code ${code}`))
-              }
-            })
-            child.on('error', (err) => {
-              reject(new Error(`Rollup failed to generate types ${err}`))
-            })
-          })
-
-          await fs.writeJSON(path.join(outDir, 'tsconfig.json'), {
-            compilerOptions: {
-              module: 'node16',
-              lib: ['es6'],
-              noImplicitAny: true,
-              noImplicitThis: true,
-              strictFunctionTypes: true,
-              strictNullChecks: true,
-              types: [],
-              noEmit: true,
-              forceConsistentCasingInFileNames: true
-            },
-            files: ['index.d.ts']
-          }, { spaces: 2 })
-
-          callback()
-        } catch (ex) {
-          compilation.errors.push(ex)
-          callback()
-        }
-      })
-    }
-  }
-}
+const rollupTypesPlugin = require('../../build/rollupTypesPlugin.cjs')
 
 module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
   const srcDir = __dirname
@@ -109,7 +47,11 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
           { from: path.join(srcDir, `${browser}-README.md`), to: 'README.md', force: true }
         ]
         plugins = [
-          rollupContentScriptTypesPlugin(srcDir, path.join(outDir, browser))
+          rollupTypesPlugin(
+            path.join(srcDir, 'contentscript-main/index.ts'),
+            path.join(__dirname, 'types-rollup.config.js'),
+            path.join(outDir, browser, 'index.d.ts')
+          )
         ]
         break
       default: {
@@ -226,7 +168,11 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
       path: path.join(outDir, 'domtypeslib')
     },
     plugins: [
-      rollupContentScriptTypesPlugin(srcDir, path.join(outDir, 'domtypeslib')),
+      rollupTypesPlugin(
+        path.join(srcDir, 'contentscript-main/index.ts'),
+        path.join(__dirname, 'types-rollup.config.js'),
+        path.join(outDir, 'domtypeslib', 'index.d.ts')
+      ),
       new CopyWebpackPlugin({
         patterns: [
           {
