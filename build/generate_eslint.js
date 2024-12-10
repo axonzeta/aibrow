@@ -90,6 +90,10 @@ await writeConfig(path.join(srcDir, 'extension'), {
   root: true,
   overrides: [jsEslint, mergeEnv(tsEslint, { browser: true })]
 })
+await writeConfig(path.join(srcDir, 'extlib'), {
+  root: true,
+  overrides: [jsEslint, mergeEnv(tsEslint, { browser: true })]
+})
 await writeConfig(path.join(srcDir, 'native/main'), {
   root: true,
   overrides: [jsEslint, mergeEnv(tsEslint, { node: true })]

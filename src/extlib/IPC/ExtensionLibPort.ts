@@ -2,7 +2,7 @@ import {
   kExtensionLibPortName
 } from '#Shared/IPC/ContentScriptIPC'
 import config from '#Shared/Config'
-import { PortEventHandler } from './PortEventHandler'
+import { PortEventHandler } from '#Shared/IPC/PortEventHandler'
 import { kExtensionNotFound } from '#Shared/BrowserErrors'
 
 export default class ExtensionLibPort {

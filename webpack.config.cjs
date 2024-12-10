@@ -7,6 +7,7 @@ const fs = require('fs-extra')
 
 const registry = {
   extension: require('./src/extension/webpack.config.cjs'),
+  extlib: require('./src/extlib/webpack.config.cjs'),
   native: require('./src/native/webpack.config.cjs')
 }
 

@@ -13,102 +13,53 @@ const rollupTypesPlugin = require('../../build/rollupTypesPlugin.cjs')
 module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
   const srcDir = __dirname
 
-  return ['crx', 'moz', 'extlib'].map((browser) => {
-    let entry
-    let output
-    let copyPatterns
-    let plugins
-    switch (browser) {
-      case 'extlib':
-        entry = {
-          index: path.join(srcDir, 'contentscript-main/index.ts')
-        }
-        output = {
-          filename: '[name].js',
-          path: path.join(outDir, browser),
-          library: config.extensionLibrary.name,
-          libraryTarget: 'umd',
-          umdNamedDefine: true
-        }
-        copyPatterns = [
-          {
-            from: path.join(srcDir, `${browser}-package.json`),
-            to: 'package.json',
-            force: true,
-            transform: (content) => {
-              const manifest = JSON.parse(content.toString())
-              manifest.name = config.extensionLibrary.name
-              for (const key of ['version', 'author', 'license', 'description', 'repository']) {
-                manifest[key] = pkg[key]
-              }
-              return JSON.stringify(manifest, null, 2)
-            }
-          },
-          { from: path.join(srcDir, `${browser}-README.md`), to: 'README.md', force: true }
-        ]
-        plugins = [
-          rollupTypesPlugin(
-            path.join(srcDir, 'contentscript-main/index.ts'),
-            path.join(__dirname, 'types-rollup.config.js'),
-            path.join(outDir, browser, 'index.d.ts')
-          )
-        ]
-        break
-      default: {
-        const uiEntryPoints = ['ui-permission-popup', 'ui-model-install-popup', 'ui-options']
-        entry = {
-          background: path.join(srcDir, 'background/index.ts'),
-          'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
-          'contentscript-main': path.join(srcDir, 'contentscript-main/index.ts'),
-          'contentscript-main-override': path.join(srcDir, 'contentscript-main-override/index.ts'),
-          ...uiEntryPoints.reduce((acc, key) => {
-            acc[key] = path.join(srcDir, `${key}/index.ts`)
-            return acc
-          }, {})
-        }
-        output = {
-          filename: '[name].js',
-          path: path.join(outDir, 'extension', browser)
-        }
-        copyPatterns = [
-          {
-            from: path.join(srcDir, `${browser}-manifest.json`),
-            to: 'manifest.json',
-            force: true,
-            transform: (content) => {
-              const manifest = JSON.parse(content.toString())
-              manifest.version = pkg.version
-              return JSON.stringify(manifest, null, 2)
-            }
-          },
-          { from: path.join(srcDir, 'icons'), to: 'icons', force: true }
-        ]
-        plugins = [
-          ...uiEntryPoints.map((key) => new HtmlWebpackPlugin({
-            chunks: [key],
-            filename: `${key}.html`,
-            template: path.join(srcDir, `${key}/index.html`),
-            title: 'AiBrow',
-            meta: {
-              viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no'
-            }
-          }))
-        ]
-        break
-      }
-    }
-
+  const uiEntryPoints = ['ui-permission-popup', 'ui-model-install-popup', 'ui-options']
+  return ['crx', 'moz'].map((browser) => {
     return {
-      entry,
-      output,
+      entry: {
+        background: path.join(srcDir, 'background/index.ts'),
+        'contentscript-isolated': path.join(srcDir, 'contentscript-isolated/index.ts'),
+        'contentscript-main': path.join(srcDir, 'contentscript-main/index.ts'),
+        'contentscript-main-override': path.join(srcDir, 'contentscript-main-override/index.ts'),
+        ...uiEntryPoints.reduce((acc, key) => {
+          acc[key] = path.join(srcDir, `${key}/index.ts`)
+          return acc
+        }, {})
+      },
+      output: {
+        filename: '[name].js',
+        path: path.join(outDir, 'extension', browser)
+      },
       devtool: mode === 'development' ? 'inline-cheap-source-map' : undefined,
       plugins: [
-        ...plugins,
+        ...uiEntryPoints.map((key) => new HtmlWebpackPlugin({
+          chunks: [key],
+          filename: `${key}.html`,
+          template: path.join(srcDir, `${key}/index.html`),
+          title: 'AiBrow',
+          meta: {
+            viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no'
+          }
+        })),
         new webpack.DefinePlugin({ 'process.env.BROWSER': JSON.stringify(browser) }),
         new CleanWebpackPlugin(),
         new CaseSensitivePathsPlugin(),
         new CircularDependencyPlugin({ exclude: /node_modules/, failOnError: true, allowAsyncCycles: false }),
-        new CopyWebpackPlugin({ patterns: copyPatterns }),
+        new CopyWebpackPlugin({
+          patterns: [
+            {
+              from: path.join(srcDir, `${browser}-manifest.json`),
+              to: 'manifest.json',
+              force: true,
+              transform: (content) => {
+                const manifest = JSON.parse(content.toString())
+                manifest.version = pkg.version
+                return JSON.stringify(manifest, null, 2)
+              }
+            },
+            { from: path.join(srcDir, 'icons'), to: 'icons', force: true }
+          ]
+        }),
         new MiniCssExtractPlugin()
       ],
       module: {

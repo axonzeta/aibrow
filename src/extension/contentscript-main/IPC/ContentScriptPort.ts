@@ -2,7 +2,7 @@ import {
   kContentScriptMessageChannel,
   kContentScriptDisconnectChannel
 } from '#Shared/IPC/ContentScriptIPC'
-import { PortEventHandler } from './PortEventHandler'
+import { PortEventHandler } from '#Shared/IPC/PortEventHandler'
 
 export default class ContentScriptPort {
   /* **************************************************************************/
