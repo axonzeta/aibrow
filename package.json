@@ -9,7 +9,7 @@
     "watch": "webpack --watch --mode=development",
     "start": "webpack --mode=development",
     "start:extension": "webpack --mode=development --env task=extension",
-    "start:extlib": "webpack --mode=development --env task=extlib",
+    "start:extension-library": "webpack --mode=development --env task=extension-library",
     "start:native": "webpack --mode=development --env task=native"
   },
   "engines": {

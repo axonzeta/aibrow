@@ -17,7 +17,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
     },
     output: {
       filename: '[name].js',
-      path: path.join(outDir, 'extlib'),
+      path: path.join(outDir, 'extension-library'),
       library: config.extensionLibrary.name,
       libraryTarget: 'umd',
       umdNamedDefine: true
@@ -27,7 +27,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
       rollupTypesPlugin(
         path.join(srcDir, 'index.ts'),
         path.join(__dirname, 'types-rollup.config.js'),
-        path.join(outDir, 'extlib/index.d.ts')
+        path.join(outDir, 'extension-library/index.d.ts')
       ),
       new CleanWebpackPlugin(),
       new CaseSensitivePathsPlugin(),
@@ -35,7 +35,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
       new CopyWebpackPlugin({
         patterns: [
           {
-            from: path.join(srcDir, 'extlib-package.json'),
+            from: path.join(srcDir, 'extension-library-package.json'),
             to: 'package.json',
             force: true,
             transform: (content) => {
@@ -47,7 +47,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
               return JSON.stringify(manifest, null, 2)
             }
           },
-          { from: path.join(srcDir, 'extlib-README.md'), to: 'README.md', force: true }
+          { from: path.join(srcDir, 'extension-library-README.md'), to: 'README.md', force: true }
         ]
       }),
       new MiniCssExtractPlugin()
