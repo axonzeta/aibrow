@@ -35,7 +35,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
       new CopyWebpackPlugin({
         patterns: [
           {
-            from: path.join(srcDir, 'extension-library-package.json'),
+            from: path.join(srcDir, 'template-package.json'),
             to: 'package.json',
             force: true,
             transform: (content) => {
@@ -47,7 +47,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
               return JSON.stringify(manifest, null, 2)
             }
           },
-          { from: path.join(srcDir, 'extension-library-README.md'), to: 'README.md', force: true }
+          { from: path.join(srcDir, 'template-README.md'), to: 'README.md', force: true }
         ]
       }),
       new MiniCssExtractPlugin()
