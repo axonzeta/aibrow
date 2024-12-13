@@ -1,2 +1,9 @@
-export default (window as any).aibrow //todo typings
-//export default window.aibrow
+import type AIBrow from '@aibrow/dom-types'
+
+declare global {
+  interface Window {
+    readonly aibrow: typeof AIBrow;
+  }
+}
+
+export default window.aibrow

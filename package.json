@@ -21,6 +21,7 @@
   "description": "A browser extension that brings AI to your device",
   "repository": "https://github.com/axonzeta/aibrow",
   "devDependencies": {
+    "@aibrow/dom-types": "^1.2.1",
     "@babel/core": "^7.26.0",
     "@babel/eslint-parser": "^7.25.9",
     "@babel/preset-env": "^7.26.0",
