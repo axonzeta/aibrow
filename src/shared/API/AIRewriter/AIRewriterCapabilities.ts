@@ -1,4 +1,4 @@
-import { AICapabilityAvailability } from '../AICapability'
+import { AICapabilityAvailability } from '../AI'
 import {
   AIRewriterTone,
   AIRewriterFormat,

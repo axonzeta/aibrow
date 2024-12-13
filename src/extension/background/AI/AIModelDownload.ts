@@ -1,4 +1,4 @@
-import { AIModelAsset, AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelAsset, AIModelManifest, updateManifestToV2 } from '#Shared/AIModelManifest'
 import {
   kModelDownloadAsset,
   kModelFetchManifestHuggingFace
@@ -34,7 +34,7 @@ class AIModelDownload {
           }
         }
 
-        const manifest: AIModelManifest = await res.json()
+        const manifest: AIModelManifest = updateManifestToV2(await res.json())
         return manifest
       }
       case AIModelIdProvider.HuggingFace: {

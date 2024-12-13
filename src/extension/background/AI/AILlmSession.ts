@@ -6,13 +6,13 @@ import {
   kLlmSessionExecPromptSession,
   kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
-  kLlmSessionDisposePromptSession
+  kLlmSessionDisposeSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
 import {
   AIEmbeddingVector
 } from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
-import { AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 
 type SupportedEngines = {
   engines: AICapabilityGpuEngine[] | undefined
@@ -96,13 +96,18 @@ class AILlmSession {
    * @returns the model score for this machine
    */
   async getModelScore (manifest: AIModelManifest) : Promise<number> {
-    const score = (await NativeIPC.request(kLlmSessionGetModelScore, {
-      gpuEngine: undefined,
-      flashAttention: manifest.config.flashAttention,
-      contextSize: manifest.tokens.max,
-      modelUrl: manifest.assets.find((asset) => asset.id === manifest.model)?.url
-    })) as number
-    return score
+    if (manifest.formats[AIModelFormat.GGUF]) {
+      const format = manifest.formats[AIModelFormat.GGUF]
+      const score = (await NativeIPC.request(kLlmSessionGetModelScore, {
+        gpuEngine: undefined,
+        flashAttention: manifest.config.flashAttention,
+        contextSize: manifest.tokens.max,
+        modelUrl: format.assets.find((asset) => asset.id === format.model)?.url
+      })) as number
+      return score
+    } else {
+      return 0
+    }
   }
 
   /* **************************************************************************/
@@ -154,8 +159,8 @@ class AILlmSession {
    * Disposes a prompt session freeing its memory
    * @param sessionId: the id of the session
    */
-  async disposePromptSession (sessionId: string) {
-    await NativeIPC.request(kLlmSessionDisposePromptSession, { sessionId })
+  async disposeSession (sessionId: string) {
+    await NativeIPC.request(kLlmSessionDisposeSession, { sessionId })
   }
 
   /* **************************************************************************/

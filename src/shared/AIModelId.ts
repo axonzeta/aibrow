@@ -91,12 +91,14 @@ class AIModelId {
   #fromString (modelId: string) {
     if (modelId.startsWith(AIModelIdProvider.HuggingFace)) {
       const parts = modelId.split('/')
-      if (parts.length !== 4) { throw new Error(kModelIdInvalid) }
+      if (parts.length !== 3 && parts.length !== 4) { throw new Error(kModelIdInvalid) }
       const [provider, owner, repo, model] = parts
       this.#provider = sanitizeFilename(provider) as AIModelIdProvider
       this.#owner = sanitizeFilename(owner)
       this.#repo = sanitizeFilename(repo)
-      this.#model = sanitizeFilename(model)
+      this.#model = model
+        ? sanitizeFilename(model)
+        : undefined
     } else if (modelId.startsWith(AIModelIdProvider.AiBrow)) {
       this.#provider = AIModelIdProvider.AiBrow
       this.#model = modelId
@@ -125,10 +127,13 @@ class AIModelId {
   #validate () {
     switch (this.#provider) {
       case AIModelIdProvider.HuggingFace: {
-        if (!this.#owner || !this.#repo || !this.#model) {
-          throw new Error(kModelIdInvalid)
-        }
-        if (!this.#model.endsWith('.gguf')) {
+        if (this.#owner && this.#repo && this.#model) { // Fully-qualified file
+          if (!this.#model.endsWith('.gguf')) {
+            throw new Error(kModelIdInvalid)
+          }
+        } else if (this.#owner && this.#repo) { // Points at a repo
+          // Onnx model. Some other validation?
+        } else { // Unknown?
           throw new Error(kModelIdInvalid)
         }
         break

@@ -1,7 +1,7 @@
 import IPCClient from '#Shared/IPC/IPCClient'
-import ExtensionLibPort from './ExtensionLibPort'
+import ExtensionPort from './ExtensionPort'
 
-const ipcClient = new IPCClient(new ExtensionLibPort(), {
+const ipcClient = new IPCClient(new ExtensionPort(), {
   // The port in contentscript-main automatically reconnects after it's been destroyed
   // and there's no persisted state in the background page between different ports
   portReconnects: true

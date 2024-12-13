@@ -14,7 +14,9 @@ export enum AICapabilityGpuEngine {
   Metal = 'metal',
   Cuda = 'cuda',
   Vulkan = 'vulkan',
-  Cpu = 'cpu'
+  Cpu = 'cpu',
+  WebGpu = 'webgpu',
+  Wasm = 'wasm'
 }
 
 export enum AICapabilityPromptType {

@@ -8,7 +8,8 @@ const fs = require('fs-extra')
 const registry = {
   extension: require('./src/extension/webpack.config.cjs'),
   'extension-library': require('./src/extension-library/webpack.config.cjs'),
-  native: require('./src/native/webpack.config.cjs')
+  native: require('./src/native/webpack.config.cjs'),
+  'web-library': require('./src/web-library/webpack.config.cjs')
 }
 
 module.exports = function (env, args) {

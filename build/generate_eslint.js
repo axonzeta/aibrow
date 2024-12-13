@@ -68,7 +68,16 @@ const tsEslint = {
   ],
   rules: {
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true, caughtErrors: 'none' }],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        ignoreRestSiblings: true,
+        caughtErrors: 'none',
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }
+    ],
     '@stylistic/quotes': ['error', 'single'],
     '@stylistic/spaced-comment': ['error', 'always']
   },
@@ -97,4 +106,8 @@ await writeConfig(path.join(srcDir, 'extension-library'), {
 await writeConfig(path.join(srcDir, 'native/main'), {
   root: true,
   overrides: [jsEslint, mergeEnv(tsEslint, { node: true })]
+})
+await writeConfig(path.join(srcDir, 'web-library'), {
+  root: true,
+  overrides: [jsEslint, mergeEnv(tsEslint, { browser: true })]
 })

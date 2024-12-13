@@ -9,7 +9,7 @@ import { isDevMode } from '../Env'
 import * as BrowserManifestInstaller from './BrowserManifestInstaller'
 import { importLlama } from '../Llama'
 import sanitizeFilename from 'sanitize-filename'
-import { AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelManifest, AIModelFormat, updateManifestToV2 } from '#Shared/AIModelManifest'
 import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 
 /* **************************************************************************/
@@ -60,13 +60,17 @@ export async function installLocalModel (rawModelPaths: (string | number)[]) {
         const modelPath = path.join(path.dirname(process.execPath), sanitizeFilename(rawModelPath))
         let modelManifest: AIModelManifest
         try {
-          modelManifest = await fs.readJSON(modelPath)
+          modelManifest = updateManifestToV2(await fs.readJSON(modelPath))
         } catch (ex) {
           throw new Error('Failed to load model manifest')
         }
 
+        if (!modelManifest.formats[AIModelFormat.GGUF]) {
+          throw new Error('Model has no GGUF format')
+        }
+
         // Install the assets
-        for (const { id } of modelManifest.assets) {
+        for (const { id } of modelManifest.formats[AIModelFormat.GGUF].assets) {
           try {
             const assetPath = AIModelFileSystem.getAssetPath(id)
             await fs.ensureDir(path.dirname(assetPath))

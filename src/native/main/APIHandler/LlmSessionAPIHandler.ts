@@ -5,7 +5,7 @@ import {
   kLlmSessionExecPromptSession,
   kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
-  kLlmSessionDisposePromptSession
+  kLlmSessionDisposeSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
 import { AICapabilityGpuEngine, AIRootModelProps, AIModelType } from '#Shared/API/AI'
 import { importLlama } from '#R/Llama'
@@ -19,7 +19,7 @@ import { kModelPromptAborted } from '#Shared/Errors'
 import TypoParser from '#Shared/Typo/TypoObject'
 import { nanoid } from 'nanoid'
 import { clamp } from '#Shared/Typo/TypoParser'
-import { AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelManifest, AIModelFormat } from '#Shared/AIModelManifest'
 import AsyncQueue from '#Shared/AsyncQueue'
 import AIModelId from '#Shared/AIModelId'
 
@@ -77,7 +77,7 @@ class LlmSessionAPIHandler {
       .addRequestHandler(kLlmSessionExecPromptSession, this.#handleExecPromptSession)
       .addRequestHandler(kLlmSessionGetEmbeddingVectors, this.#handleGetEmbeddingVectors)
       .addRequestHandler(kLlmSessionCountPromptTokens, this.#handleExecCountPromptTokens)
-      .addRequestHandler(kLlmSessionDisposePromptSession, this.#handleDisposePromptSession)
+      .addRequestHandler(kLlmSessionDisposeSession, this.#handleDisposeSession)
   }
 
   /* **************************************************************************/
@@ -86,12 +86,18 @@ class LlmSessionAPIHandler {
 
   #handleGetSupportedGpuEngines = async () => {
     const supportedEngines: AICapabilityGpuEngine[] = []
-    const possibleEngines = [
-      AICapabilityGpuEngine.Cuda,
-      AICapabilityGpuEngine.Vulkan,
-      AICapabilityGpuEngine.Cpu,
-      ...process.platform === 'darwin' ? [AICapabilityGpuEngine.Metal] : []
-    ]
+    const possibleEngines: Exclude<AICapabilityGpuEngine, AICapabilityGpuEngine.Wasm | AICapabilityGpuEngine.WebGpu>[] = process.platform === 'darwin'
+      ? [
+          AICapabilityGpuEngine.Cuda,
+          AICapabilityGpuEngine.Vulkan,
+          AICapabilityGpuEngine.Cpu,
+          AICapabilityGpuEngine.Metal
+        ]
+      : [
+          AICapabilityGpuEngine.Cuda,
+          AICapabilityGpuEngine.Vulkan,
+          AICapabilityGpuEngine.Cpu
+        ]
 
     const { getLlamaForOptions } = await importLlama()
     for (const engine of possibleEngines) {
@@ -126,7 +132,10 @@ class LlmSessionAPIHandler {
       modelId
         ? await (async () => {
           const manifest = await AIModelFileSystem.readModelManifest(new AIModelId(modelId))
-          return AIModelFileSystem.getAssetPath(manifest.model)
+          if (!manifest.formats[AIModelFormat.GGUF]) {
+            throw new Error('Model does not support GGUF format')
+          }
+          return AIModelFileSystem.getAssetPath(manifest.formats[AIModelFormat.GGUF].model)
         })()
         : modelUrl,
       { fetchHeaders: undefined }
@@ -154,13 +163,26 @@ class LlmSessionAPIHandler {
    */
   #getLlama = async (gpuEngine: AICapabilityGpuEngine | undefined) => {
     const { getLlama } = await importLlama()
+
+    let gpu
+    switch (gpuEngine) {
+      case AICapabilityGpuEngine.Cuda:
+      case AICapabilityGpuEngine.Vulkan:
+      case AICapabilityGpuEngine.Metal:
+        gpu = gpuEngine
+        break
+      case AICapabilityGpuEngine.Cpu:
+        gpu = false
+        break
+      case undefined:
+      default:
+        gpu = 'auto'
+        break
+    }
+
     return await getLlama({
       build: 'never',
-      gpu: gpuEngine === undefined
-        ? 'auto'
-        : gpuEngine === AICapabilityGpuEngine.Cpu
-          ? false
-          : gpuEngine
+      gpu
     })
   }
 
@@ -176,6 +198,10 @@ class LlmSessionAPIHandler {
       modelId,
       useMmap
     } = modelOptions
+
+    if (!manifest.formats[AIModelFormat.GGUF]) {
+      throw new Error('Model does not support GGUF format')
+    }
 
     // Clear the auto-dispose timer
     clearTimeout(this.#activeSession?.autoDispose)
@@ -195,7 +221,7 @@ class LlmSessionAPIHandler {
       const llama = await this.#getLlama(gpuEngine)
 
       const model = await llama.loadModel({
-        modelPath: AIModelFileSystem.getAssetPath(manifest.model),
+        modelPath: AIModelFileSystem.getAssetPath(manifest.formats[AIModelFormat.GGUF].model),
         useMmap
       })
 
@@ -238,8 +264,12 @@ class LlmSessionAPIHandler {
       const context = await this.#activeSession.model.createContext({
         contextSize: modelOptions.contextSize,
         flashAttention: chatOptions.flashAttention,
-        lora: manifest.adapter
-          ? { adapters: [{ filePath: AIModelFileSystem.getAssetPath(manifest.adapter) }] }
+        lora: manifest.formats[AIModelFormat.GGUF]?.adapter
+          ? {
+              adapters: [{
+                filePath: AIModelFileSystem.getAssetPath(manifest.formats[AIModelFormat.GGUF]?.adapter)
+              }]
+            }
           : undefined
       })
 
@@ -535,7 +565,7 @@ class LlmSessionAPIHandler {
     })
   }
 
-  #handleDisposePromptSession = async (channel: IPCInflightChannel) => {
+  #handleDisposeSession = async (channel: IPCInflightChannel) => {
     return await this.#requestQueue.push(async () => {
       const sessionId = channel.payload.session
       if (this.#activeSession?.sessionIds?.has?.(sessionId)) {

@@ -5,7 +5,9 @@ import sanitizeFilename from 'sanitize-filename'
 import {
   AIModelManifest,
   AIModelAssetId,
-  AIModelStats
+  AIModelStats,
+  updateManifestToV2,
+  AIModelFormat
 } from '#Shared/AIModelManifest'
 import lockfile from 'proper-lockfile'
 import { withFile } from 'tmp-promise'
@@ -102,7 +104,7 @@ class AIModelFileSystem {
    * @returns the models manifest
    */
   async readModelManifest (modelId: AIModelId) {
-    const manifest = await fs.readJSON(this.getModelManifestPath(modelId))
+    const manifest = updateManifestToV2(await fs.readJSON(this.getModelManifestPath(modelId)))
     return manifest as AIModelManifest
   }
 
@@ -195,7 +197,7 @@ class AIModelFileSystem {
   async removeUnusedAssets () {
     const usedAssetPaths = new Set<string>()
     for (const manifest of (await this.getModels(false)) as AIModelManifest[]) {
-      for (const asset of manifest.assets) {
+      for (const asset of manifest.formats[AIModelFormat.GGUF]?.assets ?? []) {
         usedAssetPaths.add(normalizePath(this.getAssetPath(asset.id)))
       }
     }
@@ -219,7 +221,8 @@ class AIModelFileSystem {
    */
   async getLLMPath (modelId: AIModelId) {
     const manifest = await this.readModelManifest(modelId)
-    return this.getAssetPath(manifest.model)
+    if (!manifest.formats[AIModelFormat.GGUF]) { throw new Error('Model has no GGUF format') }
+    return this.getAssetPath(manifest.formats[AIModelFormat.GGUF].model)
   }
 }
 

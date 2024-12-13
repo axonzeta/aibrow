@@ -10,7 +10,8 @@
     "start": "webpack --mode=development",
     "start:extension": "webpack --mode=development --env task=extension",
     "start:extension-library": "webpack --mode=development --env task=extension-library",
-    "start:native": "webpack --mode=development --env task=native"
+    "start:native": "webpack --mode=development --env task=native",
+    "start:web-library": "webpack --mode=development --env task=web-library"
   },
   "engines": {
     "node": ">=20.17.0"
@@ -68,6 +69,7 @@
   },
   "dependencies": {
     "@huggingface/jinja": "^0.3.2",
+    "@huggingface/transformers": "^3.1.2",
     "best-effort-json-parser": "^1.1.2",
     "bootstrap": "^5.3.3",
     "capitalize": "^2.0.4",

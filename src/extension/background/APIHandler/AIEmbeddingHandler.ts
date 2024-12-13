@@ -65,7 +65,7 @@ class AIEmbeddingHandler {
   }
 
   #handleDestroy = async (channel: IPCInflightChannel) => {
-    return await AILlmSession.disposePromptSession(getNonEmptyString(channel.payload.sessionId))
+    return await AILlmSession.disposeSession(getNonEmptyString(channel.payload.sessionId))
   }
 
   /* **************************************************************************/

@@ -1,4 +1,4 @@
-import { AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelManifest, AIModelFormat } from '#Shared/AIModelManifest'
 import semver from 'semver'
 import AIModelDownload from './AIModelDownload'
 import AIModelFileSystem from './AIModelFileSystem'
@@ -7,6 +7,7 @@ import {
   getModelUpdatePeriod,
   ModelUpdateMillis
 } from '#Shared/Prefs'
+import { kModelFormatNotSupported } from '#Shared/Errors'
 import { nanoid } from 'nanoid'
 import { EventEmitter } from 'events'
 import AIModelId from '#Shared/AIModelId'
@@ -156,6 +157,14 @@ class AIModelManagerImpl extends EventEmitter {
    * @param progressFn: the progress callback
    */
   async #installManifest (manifest: AIModelManifest, progressFn?: DownloadProgressFn) {
+    // Preflight checks
+    if (!manifest.formats[AIModelFormat.GGUF]) {
+      throw new Error(kModelFormatNotSupported)
+    }
+
+    // Extract some props
+    const { assets } = manifest.formats[AIModelFormat.GGUF]
+
     // Prep a progress reporting function
     const reportProgress = () => {
       if (progressFn) {
@@ -168,14 +177,14 @@ class AIModelManagerImpl extends EventEmitter {
         progressFn(manifest.id, loaded, total)
       }
     }
-    const progress: { [key: string]: { size: number, loaded: number }} = manifest.assets.reduce((acc, asset) => {
+    const progress: { [key: string]: { size: number, loaded: number }} = assets.reduce((acc, asset) => {
       acc[asset.id] = { size: asset.size, loaded: 0 }
       return acc
     }, {})
 
     // Download the assets
     reportProgress()
-    for (const asset of manifest.assets) {
+    for (const asset of assets) {
       await AIModelDownload.downloadAsset(asset, (assetId, loaded) => {
         progress[assetId].loaded = loaded
         reportProgress()

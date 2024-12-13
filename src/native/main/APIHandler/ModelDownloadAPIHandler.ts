@@ -7,7 +7,8 @@ import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import AIModelFileSystem from '#R/AI/AIModelFileSystem'
 import {
   AIModelAsset,
-  AIModelManifest
+  AIModelManifest,
+  AIModelFormat
 } from '#Shared/AIModelManifest'
 import { throttle } from 'throttle-debounce'
 import fs from 'fs-extra'
@@ -155,21 +156,22 @@ class ModelDownloadAPIHandler {
       id: modelId.toString(),
       name: `HuggingFace: ${path.basename(modelId.model, path.extname(modelId.model))}`,
       version: `${modelInfo.version}.0.0`,
+      manifestVersion: 2,
       generated: {
         ts: Date.now(),
         version: config.version
       },
-      licenseUrl: modelMetadata.general['license.link']
-        ? modelMetadata.general['license.link']
-        : modelMetadata.general.license
-          ? `https://www.google.com/search?q=${encodeURIComponent(modelMetadata.general.license)}`
-          : '',
-      model: ggufAssetId,
-      assets: [{
-        id: ggufAssetId,
-        url: ggufUrl,
-        size: fileSize
-      }],
+      formats: {
+        [AIModelFormat.GGUF]: {
+          licenseUrl: modelMetadata.general['license.link']
+            ? modelMetadata.general['license.link']
+            : modelMetadata.general.license
+              ? `https://www.google.com/search?q=${encodeURIComponent(modelMetadata.general.license)}`
+              : '',
+          model: ggufAssetId,
+          assets: [{ id: ggufAssetId, url: ggufUrl, size: fileSize }]
+        }
+      },
       config: {
         topK: [1, 50, 100],
         topP: [0.0, 0.9, 1.0],

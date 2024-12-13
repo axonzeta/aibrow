@@ -5,7 +5,7 @@ import config from '#Shared/Config'
 import { PortEventHandler } from '#Shared/IPC/PortEventHandler'
 import { kExtensionNotFound } from '#Shared/BrowserErrors'
 
-export default class ExtensionLibPort {
+export default class ExtensionPort {
   /* **************************************************************************/
   // MARK: Private
   /* **************************************************************************/

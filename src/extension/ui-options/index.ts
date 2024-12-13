@@ -11,7 +11,8 @@ import {
 import {
   AIModelManifest,
   AIModelStats,
-  getModelSize
+  getModelSize,
+  AIModelFormat
 } from '#Shared/AIModelManifest'
 import { filesize } from 'filesize'
 import {
@@ -33,9 +34,8 @@ import {
   setOverrideBrowserAI
 } from '#Shared/Prefs'
 import config from '#Shared/Config'
-import { AICapabilityGpuEngine } from '#Shared/API/AICapability'
+import { AICapabilityGpuEngine, AIModelType } from '#Shared/API/AI'
 import { UpdateResult } from '#Shared/Updater'
-import { AIModelType } from '#Shared/API/AI'
 
 /* **************************************************************************/
 // MARK: Settings
@@ -192,7 +192,7 @@ async function renderInstalledModels () {
         into: '#installed-models',
         text: {
           name: model.manifest.name,
-          filesize: `${filesize(getModelSize(model.manifest))}`,
+          filesize: `${filesize(getModelSize(model.manifest, AIModelFormat.GGUF))}`,
           usedTS: model.stats.usedTS ? new Date(model.stats.usedTS).toLocaleString() : 'Never'
         },
         click: {

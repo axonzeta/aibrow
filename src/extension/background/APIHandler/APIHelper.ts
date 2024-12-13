@@ -6,7 +6,6 @@ import {
   getUseMmap,
   ModelUpdatePeriod
 } from '#Shared/Prefs'
-import { AICapabilityGpuEngine } from '#Shared/API/AICapability'
 import { createIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
   kHelperNotInstalled,
@@ -15,6 +14,7 @@ import {
   kGpuEngineNotSupported,
   kModelPromptAborted,
   kModelPromptTypeNotSupported,
+  kModelFormatNotSupported,
   kModelIdProviderUnsupported,
   kUrlModelIdInvalid,
   kUrlModelIdUnsupportedDomain,
@@ -27,6 +27,7 @@ import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
 import {
   AICapabilityAvailability,
+  AICapabilityGpuEngine,
   AIRootModelCapabilitiesData,
   AICapabilityPromptType,
   AIRootModelProps,
@@ -36,7 +37,7 @@ import AIModelId from '#Shared/AIModelId'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import PermissionProvider from '../PermissionProvider'
 import AILlmSession from '../AI/AILlmSession'
-import { AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 import TypoParser from '#Shared/Typo/TypoObject'
 import AIModelManager from '../AI/AIModelManager'
 import config from '#Shared/Config'
@@ -110,6 +111,7 @@ class APIHelper {
     if (
       !manifest ||
       !this.modelSupportsPromptType(manifest, promptType) ||
+      !manifest.formats[AIModelFormat.GGUF] ||
       score <= config.modelMinMachineScore
     ) {
       availability = AICapabilityAvailability.No
@@ -138,6 +140,7 @@ class APIHelper {
           return createIPCErrorResponse(kHelperNotInstalled)
         case kPermissionDenied:
         case kModelPromptTypeNotSupported:
+        case kModelFormatNotSupported:
         case kModelIdProviderUnsupported:
         case kUrlModelIdInvalid:
         case kUrlModelIdUnsupportedDomain:
@@ -291,6 +294,9 @@ class APIHelper {
       const manifest = await AIModelFileSystem.readModelManifest(modelId)
       if (!this.modelSupportsPromptType(manifest, promptType)) {
         throw new Error(kModelPromptTypeNotSupported)
+      }
+      if (!manifest.formats[AIModelFormat.GGUF]) {
+        throw new Error(kModelFormatNotSupported)
       }
 
       // Return builder

@@ -1,4 +1,4 @@
-export const kContentScriptMessageChannel = 'azai-ipc-message'
-export const kContentScriptDisconnectChannel = 'azai-ipc-disconnect'
+export const kContentScriptMessageChannel = 'aibrow-csipc-message'
+export const kContentScriptDisconnectChannel = 'aibrow-csipc-disconnect'
 export const kContentScriptPortName = 'contentscript'
 export const kExtensionLibPortName = 'extension'

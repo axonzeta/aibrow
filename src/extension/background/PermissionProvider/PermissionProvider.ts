@@ -6,7 +6,7 @@ import config from '#Shared/Config'
 import { kPermissionDenied } from '#Shared/Errors'
 import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
-import { AIModelManifest } from '#Shared/AIModelManifest'
+import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import AIModelId from '#Shared/AIModelId'
 
@@ -114,6 +114,10 @@ class PermissionProvider {
     } catch (ex) {
       manifest = await AIModelDownload.fetchModelManifest(modelId)
     }
+
+    // The model doesn't support the required format
+    if (!manifest.formats[AIModelFormat.GGUF]) { return false }
+
     const request = {
       tabId: channel.port.sender.tab.id,
       windowId: channel.port.sender.tab.windowId,
@@ -121,7 +125,7 @@ class PermissionProvider {
       origin: channel.port.sender.origin,
       modelId: modelId.toString(),
       modelName: manifest.name,
-      modelLicenseUrl: manifest.licenseUrl
+      modelLicenseUrl: manifest.formats[AIModelFormat.GGUF].licenseUrl
     }
     this.#bindTabListeners()
 
