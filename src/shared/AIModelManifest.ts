@@ -111,7 +111,7 @@ export type AIModelStats = {
  */
 export function updateManifestToV2 (manifest: any) {
   //TODO: remove once the models on the server update this
-  if (manifest.version === 2) {
+  if (manifest.manifestVersion === 2) {
     return manifest
   }
 

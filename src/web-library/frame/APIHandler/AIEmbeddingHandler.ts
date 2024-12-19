@@ -1,7 +1,6 @@
 import { getNonEmptyString } from '#Shared/Typo/TypoParser'
 import {
-  AIEmbeddingData,
-  AIEmbeddingVector
+  AIEmbeddingData
 } from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
 import {
   kEmbeddingGetCapabilities,

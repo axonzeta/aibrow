@@ -9,7 +9,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const rollupTypesPlugin = require('../../build/rollupTypesPlugin.cjs')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
-module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
+module.exports = function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
   return ['library', 'frame'].map((component) => {
     const srcDir = __dirname
 
@@ -60,7 +60,12 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
           new HtmlWebpackPlugin({
             title: 'AiBrow',
             scriptLoading: 'blocking'
-          })
+          }),
+          ...(env.WEBPACK_WATCH === true
+            ? [
+              //todo run a watch server?
+            ]
+            : [])
         ]
         alias = {
           '@huggingface/transformers': path.resolve(path.join(nodeModulesDir, '@huggingface/transformers'))
