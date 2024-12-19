@@ -33,7 +33,7 @@ class AIModelManager {
    */
   async fetchModelManifest (modelId: AIModelId): Promise<AIModelManifest> {
 
-    /*return {
+    return {
       formats: {
         [AIModelFormat.ONNX]: {
           assets: [
@@ -107,7 +107,7 @@ class AIModelManager {
         stop: ['<|im_end|>']
       },
       version: '1.4.2'
-    }*/
+    }
 /*
 
     return {
