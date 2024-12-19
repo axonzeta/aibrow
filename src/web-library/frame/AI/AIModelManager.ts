@@ -1,4 +1,4 @@
-import { AIModelManifest, AIModelFormat } from '#Shared/AIModelManifest'
+import { AIModelManifest, AIModelFormat, updateManifestToV2 } from '#Shared/AIModelManifest'
 import AIModelId, { AIModelIdProvider } from '#Shared/AIModelId'
 import config from '#Shared/Config'
 import { kModelIdProviderUnsupported } from '#Shared/Errors'
@@ -32,8 +32,8 @@ class AIModelManager {
    * @returns the model manifest or false if it's not available
    */
   async fetchModelManifest (modelId: AIModelId): Promise<AIModelManifest> {
-/*
-    return {
+
+    /*return {
       formats: {
         [AIModelFormat.ONNX]: {
           assets: [
@@ -107,8 +107,8 @@ class AIModelManager {
         stop: ['<|im_end|>']
       },
       version: '1.4.2'
-    }
-
+    }*/
+/*
 
     return {
       formats: {
@@ -204,7 +204,7 @@ class AIModelManager {
           }
 
           const manifest: AIModelManifest = await res.json()
-          this.#manifestCache.set(modelId.toString(), manifest)
+          this.#manifestCache.set(modelId.toString(), updateManifestToV2(manifest))
           break
         }
         //TODO: can we support huggingface?
