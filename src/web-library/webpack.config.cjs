@@ -8,8 +8,71 @@ const { pathsToWebpackAlias } = require('../../build/tsconfig_util.cjs')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const rollupTypesPlugin = require('../../build/rollupTypesPlugin.cjs')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const http = require('http')
+const fs = require('fs-extra')
+const mime = require('mime-types')
+const sanitizeFilename = require('sanitize-filename')
+const webpack = require('webpack')
 
-module.exports = function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
+class WebLibraryFrameServePlugin {
+  constructor (outPath, port, watch) {
+    this.name = 'WebLibraryFrameServePlugin'
+    this.server = null
+    this.outPath = outPath
+    this.port = port
+    this.watch = watch
+  }
+
+  apply (compiler) {
+    const logger = compiler.getInfrastructureLogger(this.name)
+    compiler.hooks.afterCompile.tapAsync(this.name, (compilation, callback) => {
+      try {
+        if (!this.watch) {
+          logger.warn(
+`The web-library uses an iframe for shared model caching. This frame needs to be served
+from a url in development mode. To do this, either:
+
+1. Quit webpack and instead use: npm run watch
+2. Run your own http server with something like: http-server -c-1 ${this.outPath} -p ${this.port}`)
+          return
+        }
+        if (this.server) {
+          return
+        }
+
+        logger.info(`Shared frame served from: http://localhost:${this.port}`)
+        this.server = http.createServer(async (req, res) => {
+          // We only support 1-deep paths, so this is fine to strip any slashes
+          const urlPath = sanitizeFilename(new URL(req.url, `http://localhost:${this.port}`).pathname)
+          let filePath = path.join(this.outPath, urlPath)
+
+          try {
+            if ((await fs.stat(filePath)).isDirectory()) {
+              filePath = path.join(filePath, 'index.html')
+            }
+            const fileData = await fs.readFile(filePath)
+            const ext = path.parse(filePath).ext
+            res.setHeader('Content-type', mime.lookup(ext) || 'text/plain')
+            res.end(fileData)
+          } catch (ex) {
+            if (ex.message.startsWith('ENOENT')) {
+              res.writeHead(404)
+              res.end('Not found')
+            } else {
+              res.writeHead(500)
+              res.end('Internal server error')
+            }
+          }
+        }).listen(this.port)
+      } finally {
+        callback()
+      }
+    })
+  }
+}
+
+module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
+  const framePort = await (await import('get-port')).default({ port: 63779 })
   return ['library', 'frame'].map((component) => {
     const srcDir = __dirname
 
@@ -48,6 +111,12 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config, env }, { mode 
               },
               { from: path.join(srcDir, 'template-README.md'), to: 'README.md', force: true }
             ]
+          }),
+          new webpack.DefinePlugin({
+            'process.env.AZ_WEB_FRAME_URL': JSON.stringify(mode === 'development'
+              ? `http://localhost:${framePort}`
+              : config.webLibrary.sharedFrame.production.url //todo: add production url
+            )
           })
         ]
         break
@@ -61,11 +130,10 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config, env }, { mode 
             title: 'AiBrow',
             scriptLoading: 'blocking'
           }),
-          ...(env.WEBPACK_WATCH === true
-            ? [
-              //todo run a watch server?
-            ]
-            : [])
+          ...(mode === 'development'
+            ? [new WebLibraryFrameServePlugin(path.join(outDir, 'web-library-frame'), framePort, env.WEBPACK_WATCH === true)]
+            : []
+          )
         ]
         alias = {
           '@huggingface/transformers': path.resolve(path.join(nodeModulesDir, '@huggingface/transformers'))

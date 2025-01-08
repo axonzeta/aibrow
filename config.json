@@ -22,7 +22,12 @@
     "name": "@aibrow/extension"
   },
   "webLibrary": {
-    "name": "@aibrow/web"
+    "name": "@aibrow/web",
+    "sharedFrame": {
+      "production": {
+        "url": "https://models.aibrow.ai/test"
+      }
+    }
   },
   "domTypesLibrary": {
     "name": "@aibrow/dom-types"

@@ -12,7 +12,7 @@ const registry = {
   'web-library': require('./src/web-library/webpack.config.cjs')
 }
 
-module.exports = function (env, args) {
+module.exports = async function (env, args) {
   const taskInput = env.task ? env.task.split(',') : ['all']
   const taskIds = taskInput.includes('all') ? Object.keys(registry) : taskInput
   const taskConfig = {
@@ -26,10 +26,16 @@ module.exports = function (env, args) {
   const taskArgs = {
     mode: ['production', 'development'].includes(args.mode) ? args.mode : 'development'
   }
-  return taskIds
-    .flatMap((taskId) => registry[taskId](taskConfig, taskArgs))
-    .map((task) => {
-      return {
+
+  const allTasks = []
+  for (const taskId of taskIds) {
+    if (!registry[taskId]) {
+      throw new Error(`Unknown task: ${taskId}`)
+    }
+    const taskOutput = await registry[taskId](taskConfig, taskArgs)
+    const subtasks = Array.isArray(taskOutput) ? taskOutput : [taskOutput]
+    for (const task of subtasks) {
+      allTasks.push({
         ...task,
         plugins: [
           ...(task.plugins ?? []),
@@ -41,6 +47,9 @@ module.exports = function (env, args) {
               : undefined
           })
         ]
-      }
-    })
+      })
+    }
+  }
+
+  return allTasks
 }

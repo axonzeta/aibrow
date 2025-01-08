@@ -25,7 +25,7 @@ export default class FramePort {
     (async () => {
       // Initialize the frame
       const frameId = nanoid()
-      const url = new URL("http://localhost:8080/out/web-library-frame/")
+      const url = new URL((process.env as any).AZ_WEB_FRAME_URL)
       url.searchParams.set('frameId', frameId)
       url.searchParams.set('version', config.version)
       const frame = document.createElement('iframe')
