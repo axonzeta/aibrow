@@ -1,6 +1,6 @@
 import System from './System'
 import config from '#Shared/Config'
-import { AIHelperInstalledState } from '#Shared/API/AI'
+import { AIExtensionHelperInstalledState } from '#Shared/API/AI'
 
 export enum NativeInstallHelperShowReason {
   Install = 'install',
@@ -27,7 +27,7 @@ class NativeInstallHelperImpl {
   start () {
     chrome.runtime.onInstalled.addListener(async (details) => {
       if (details.reason === 'install') {
-        if (await System.isNativeInstalled() !== AIHelperInstalledState.Responded) {
+        if (await System.isNativeInstalled() !== AIExtensionHelperInstalledState.Responded) {
           this.show(NativeInstallHelperShowReason.Install)
         }
       }

@@ -39,17 +39,8 @@ export enum AIModelType {
 // MARK: Core capabilities
 /* **************************************************************************/
 
-export enum AIHelperInstalledState {
-  Responded = 'responded',
-  RespondedOutdated = 'responded-outdated',
-  Errored = 'errored',
-  NotInstalled = 'not-installed'
-}
-
 export type AICapabilities = {
-  extension: boolean
-  helper: boolean
-  helperState: AIHelperInstalledState
+  ready: boolean
 }
 
 export type AIRootCapabilitiesOptions = {
@@ -68,6 +59,32 @@ export type AIRootModelCapabilitiesData = {
   flashAttention?: boolean
   contextSize?: AIModelManifestConfigRange
 }
+
+/* **************************************************************************/
+// MARK: Core capabilities: Extension
+/* **************************************************************************/
+
+export enum AIExtensionHelperInstalledState {
+  Responded = 'responded',
+  RespondedOutdated = 'responded-outdated',
+  Errored = 'errored',
+  NotInstalled = 'not-installed'
+}
+
+export type AIExtensionCapabilities = {
+  extension: boolean
+  helper: boolean
+  helperState: AIExtensionHelperInstalledState
+} & AICapabilities
+
+/* **************************************************************************/
+// MARK: Core capabilities: Web
+/* **************************************************************************/
+
+export type AIWebCapabilities = {
+  gpu: boolean
+  cpu: boolean
+} & AICapabilities
 
 /* **************************************************************************/
 // MARK: Clone

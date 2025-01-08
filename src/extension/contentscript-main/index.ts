@@ -1,10 +1,10 @@
 import AI from './AI'
 import Translation from './Translation'
 import {
-  AICapabilities,
+  AIExtensionCapabilities,
   AICapabilityAvailability,
   AICapabilityGpuEngine,
-  AIHelperInstalledState
+  AIExtensionHelperInstalledState
 } from '#Shared/API/AI'
 import {
   AILanguageModelInitialPromptRole,
@@ -41,10 +41,10 @@ genericWindow.aibrowTranslation = translation
 
 export default ai
 export {
-  AICapabilities,
+  AIExtensionCapabilities,
   AICapabilityAvailability,
   AICapabilityGpuEngine,
-  AIHelperInstalledState,
+  AIExtensionHelperInstalledState,
 
   AILanguageModelInitialPromptRole,
   AILanguageModelPromptRole,

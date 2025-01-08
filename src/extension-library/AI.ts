@@ -11,7 +11,7 @@ import {
   kAIGetCapabilities,
   kAIGetNativeHelperDownloadUrl
 } from '#Shared/API/AIIPCTypes'
-import { AICapabilities } from '#Shared/API/AI'
+import { AIExtensionCapabilities } from '#Shared/API/AI'
 import { kExtensionNotFound } from '#Shared/BrowserErrors'
 
 class AI extends EventTarget {
@@ -80,10 +80,10 @@ class AI extends EventTarget {
   capabilities = async () => {
     try {
       const capabilities = await IPC.request(kAIGetCapabilities, {})
-      return capabilities as AICapabilities
+      return capabilities as AIExtensionCapabilities
     } catch (ex) {
       if (ex.message === kExtensionNotFound) {
-        return { extension: false, helper: false } as AICapabilities
+        return { ready: false, extension: false, helper: false } as AIExtensionCapabilities
       } else {
         throw ex
       }

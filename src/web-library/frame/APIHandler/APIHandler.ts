@@ -6,6 +6,7 @@ import AILanguageModelHandler from './AILanguageModelHandler'
 import AICoreModelHandler from './AICoreModelHandler'
 import AIEmbeddingHandler from './AIEmbeddingHandler'
 import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
+import { AIWebCapabilities } from '#Shared/API/AI'
 
 class APIHandler {
   /* **************************************************************************/
@@ -44,12 +45,11 @@ class APIHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async () => {
-    /*const nativeInstalledState = await System.isNativeInstalled()
     return {
-      extension: true,
-      helper: nativeInstalledState === AIHelperInstalledState.Responded,
-      helperState: nativeInstalledState
-    } as AICapabilities*/
+      ready: true,
+      gpu: Boolean((window.navigator as any).gpu),
+      cpu: typeof WebAssembly === 'object'
+    } as AIWebCapabilities
   }
 }
 

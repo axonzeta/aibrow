@@ -12,7 +12,7 @@ import {
   kAIGetNativeHelperDownloadUrl
 } from '#Shared/API/AIIPCTypes'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
-import { AICapabilities } from '#Shared/API/AI'
+import { AIExtensionCapabilities } from '#Shared/API/AI'
 
 class AI extends EventTarget {
   /* **************************************************************************/
@@ -80,7 +80,7 @@ class AI extends EventTarget {
   capabilities = async () => {
     const capabilities = throwIPCErrorResponse(
       await IPC.request(kAIGetCapabilities, {})
-    ) as AICapabilities
+    ) as AIExtensionCapabilities
     return capabilities
   }
 

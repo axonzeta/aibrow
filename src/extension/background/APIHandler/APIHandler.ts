@@ -9,7 +9,7 @@ import AILanguageDetectorHandler from './AILanguageDetectorHandler'
 import AITranslatorHandler from './AITranslatorHandler'
 import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
 import System from '../System'
-import { AICapabilities, AIHelperInstalledState } from '#Shared/API/AI'
+import { AIExtensionCapabilities, AIExtensionHelperInstalledState } from '#Shared/API/AI'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
 
@@ -57,10 +57,11 @@ class APIHandler {
   #handleGetCapabilities = async () => {
     const nativeInstalledState = await System.isNativeInstalled()
     return {
+      ready: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
       extension: true,
-      helper: nativeInstalledState === AIHelperInstalledState.Responded,
+      helper: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
       helperState: nativeInstalledState
-    } as AICapabilities
+    } as AIExtensionCapabilities
   }
 
   #handleGetNativeHelperDownloadUrl = async () => {
