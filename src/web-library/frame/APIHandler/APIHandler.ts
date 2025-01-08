@@ -45,10 +45,12 @@ class APIHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async () => {
+    const gpu = Boolean((window.navigator as any).gpu)
+    const cpu = typeof WebAssembly === 'object'
     return {
-      ready: true,
-      gpu: Boolean((window.navigator as any).gpu),
-      cpu: typeof WebAssembly === 'object'
+      ready: gpu || cpu,
+      gpu,
+      cpu
     } as AIWebCapabilities
   }
 }

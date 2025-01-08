@@ -12,8 +12,6 @@ class AI {
   get browser () { return BrowserAI }
 
   get aibrow () { return AibrowAI }
-
-  //todo current platform support
 }
 
 export default new AI()
