@@ -73,7 +73,7 @@ from a url in development mode. To do this, either:
 
 module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
   const framePort = await (await import('get-port')).default({ port: 63779 })
-  const urlJoin = await import('url-join')
+  const urlJoin = (await import('url-join')).default
   return ['library', 'frame'].map((component) => {
     const srcDir = __dirname
 
