@@ -116,7 +116,7 @@ module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, {
           new webpack.DefinePlugin({
             'process.env.AZ_WEB_FRAME_URL': JSON.stringify(mode === 'development'
               ? `http://localhost:${framePort}`
-              : urlJoin(config.webLibrary.modelHelper.production.baseUrl, pkg.version)
+              : urlJoin(config.webLibrary.modelHelper.production.baseUrl, pkg.version, 'index.html')
             )
           })
         ]
