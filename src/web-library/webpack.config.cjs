@@ -73,6 +73,7 @@ from a url in development mode. To do this, either:
 
 module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
   const framePort = await (await import('get-port')).default({ port: 63779 })
+  const urlJoin = await import('url-join')
   return ['library', 'frame'].map((component) => {
     const srcDir = __dirname
 
@@ -115,7 +116,7 @@ module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, {
           new webpack.DefinePlugin({
             'process.env.AZ_WEB_FRAME_URL': JSON.stringify(mode === 'development'
               ? `http://localhost:${framePort}`
-              : config.webLibrary.sharedFrame.production.url //todo: add production url
+              : urlJoin(config.webLibrary.modelHelper.production.baseUrl, pkg.version)
             )
           })
         ]

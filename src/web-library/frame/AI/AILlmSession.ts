@@ -1,4 +1,8 @@
-import { AICapabilityGpuEngine, AIRootModelProps } from '#Shared/API/AI'
+import {
+  AIModelGpuEngine,
+  AIModelDType,
+  AIRootModelProps
+} from '#Shared/API/AI'
 import {
   AIEmbeddingVector
 } from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
@@ -36,7 +40,8 @@ type ModelDownloadProgressFn = (loaded: number, total: number) => void
 
 type AISessionOptions = {
   model: string
-  gpuEngine: AICapabilityGpuEngine
+  gpuEngine: AIModelGpuEngine
+  dtype: AIModelDType
 }
 
 type AISession = {
@@ -75,7 +80,7 @@ class AILlmSession {
    * Throws an error if the gpu engine isn't supported
    * @param gpuEngine: the gpu engine the user is trying to use
    */
-  #ensureGpuEngineSupported = (gpuEngine: AICapabilityGpuEngine | undefined) => {
+  #ensureGpuEngineSupported = (gpuEngine: AIModelGpuEngine | undefined) => {
     if (gpuEngine && !(this.getSupportedGpuEngines()).includes(gpuEngine)) {
       throw new Error(kGpuEngineNotSupported)
     }
@@ -88,10 +93,10 @@ class AILlmSession {
   /**
    * @returns an array of supported engines
    */
-  getSupportedGpuEngines (): AICapabilityGpuEngine[] {
+  getSupportedGpuEngines (): AIModelGpuEngine[] {
     return [
-      AICapabilityGpuEngine.Wasm,
-      ...(window.navigator as any).gpu ? [AICapabilityGpuEngine.WebGpu] : []
+      AIModelGpuEngine.Wasm,
+      ...(window.navigator as any).gpu ? [AIModelGpuEngine.WebGpu] : []
     ]
   }
 
@@ -119,7 +124,8 @@ class AILlmSession {
     if (this.#session && this.#session.id === sessionId) { return }
     const options: AISessionOptions = {
       model: props.model,
-      gpuEngine: props.gpuEngine
+      gpuEngine: props.gpuEngine,
+      dtype: props.dtype
     }
     if (this.#session) {
       if (deepEqual(options, this.#session.options)) { return }
@@ -136,7 +142,8 @@ class AILlmSession {
     let modelPath: string
     switch (modelId.provider) {
       case AIModelIdProvider.AiBrow:
-        throw new Error("TODO: impl")
+        modelPath = manifest.formats[AIModelFormat.ONNX].hfId
+        break
       case AIModelIdProvider.HuggingFace:
         modelPath = `${modelId.owner}/${modelId.repo}`
         break
@@ -169,8 +176,8 @@ class AILlmSession {
       progress_callback: progressCallback
     })
     const model = await AutoModelForCausalLM.from_pretrained(modelPath, {
-      dtype: manifest.formats[AIModelFormat.ONNX].dtype,
-      device: props.gpuEngine === AICapabilityGpuEngine.WebGpu ? 'webgpu' : 'wasm',
+      dtype: props.dtype ?? AIModelDType.Auto,
+      device: props.gpuEngine === AIModelGpuEngine.WebGpu ? 'webgpu' : 'wasm',
       progress_callback: progressCallback
     })
 

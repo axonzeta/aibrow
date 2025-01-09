@@ -3,7 +3,8 @@ import Translation from './Translation'
 import {
   AIExtensionCapabilities,
   AICapabilityAvailability,
-  AICapabilityGpuEngine,
+  AIModelGpuEngine,
+  AIModelDType,
   AIExtensionHelperInstalledState
 } from '#Shared/API/AI'
 import {
@@ -43,7 +44,8 @@ export default ai
 export {
   AIExtensionCapabilities,
   AICapabilityAvailability,
-  AICapabilityGpuEngine,
+  AIModelGpuEngine,
+  AIModelDType,
   AIExtensionHelperInstalledState,
 
   AILanguageModelInitialPromptRole,

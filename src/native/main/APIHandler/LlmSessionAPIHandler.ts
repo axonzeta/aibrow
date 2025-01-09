@@ -7,7 +7,7 @@ import {
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposeSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
-import { AICapabilityGpuEngine, AIRootModelProps, AIModelType } from '#Shared/API/AI'
+import { AIModelGpuEngine, AIRootModelProps, AIModelType } from '#Shared/API/AI'
 import { importLlama } from '#R/Llama'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import deepEqual from 'fast-deep-equal'
@@ -24,7 +24,7 @@ import AsyncQueue from '#Shared/AsyncQueue'
 import AIModelId from '#Shared/AIModelId'
 
 type LlmModelOptions = {
-  gpuEngine: AICapabilityGpuEngine | undefined
+  gpuEngine: AIModelGpuEngine | undefined
   manifestVersion: string
   modelId: string
   contextSize: number
@@ -85,18 +85,18 @@ class LlmSessionAPIHandler {
   /* **************************************************************************/
 
   #handleGetSupportedGpuEngines = async () => {
-    const supportedEngines: AICapabilityGpuEngine[] = []
-    const possibleEngines: Exclude<AICapabilityGpuEngine, AICapabilityGpuEngine.Wasm | AICapabilityGpuEngine.WebGpu>[] = process.platform === 'darwin'
+    const supportedEngines: AIModelGpuEngine[] = []
+    const possibleEngines: Exclude<AIModelGpuEngine, AIModelGpuEngine.Wasm | AIModelGpuEngine.WebGpu>[] = process.platform === 'darwin'
       ? [
-          AICapabilityGpuEngine.Cuda,
-          AICapabilityGpuEngine.Vulkan,
-          AICapabilityGpuEngine.Cpu,
-          AICapabilityGpuEngine.Metal
+          AIModelGpuEngine.Cuda,
+          AIModelGpuEngine.Vulkan,
+          AIModelGpuEngine.Cpu,
+          AIModelGpuEngine.Metal
         ]
       : [
-          AICapabilityGpuEngine.Cuda,
-          AICapabilityGpuEngine.Vulkan,
-          AICapabilityGpuEngine.Cpu
+          AIModelGpuEngine.Cuda,
+          AIModelGpuEngine.Vulkan,
+          AIModelGpuEngine.Cpu
         ]
 
     const { getLlamaForOptions } = await importLlama()
@@ -104,7 +104,7 @@ class LlmSessionAPIHandler {
       try {
         await getLlamaForOptions(
           {
-            gpu: engine === AICapabilityGpuEngine.Cpu ? false : engine,
+            gpu: engine === AIModelGpuEngine.Cpu ? false : engine,
             build: 'never',
             vramPadding: 0
           },
@@ -119,7 +119,7 @@ class LlmSessionAPIHandler {
 
   #handleGetModelScore = async (channel: IPCInflightChannel) => {
     const props = new TypoParser(channel.payload)
-    const gpuEngine = props.getEnum('gpuEngine', AICapabilityGpuEngine, undefined)
+    const gpuEngine = props.getEnum('gpuEngine', AIModelGpuEngine, undefined)
     const flashAttention = props.getBool('flashAttention', false)
     const contextSize = props.getNumber('contextSize', 2048)
     const modelId = props.getNonEmptyString('modelId')
@@ -161,17 +161,17 @@ class LlmSessionAPIHandler {
    * @param gpuEngine: the gpu engine to use
    * @returns a new llama instance
    */
-  #getLlama = async (gpuEngine: AICapabilityGpuEngine | undefined) => {
+  #getLlama = async (gpuEngine: AIModelGpuEngine | undefined) => {
     const { getLlama } = await importLlama()
 
     let gpu
     switch (gpuEngine) {
-      case AICapabilityGpuEngine.Cuda:
-      case AICapabilityGpuEngine.Vulkan:
-      case AICapabilityGpuEngine.Metal:
+      case AIModelGpuEngine.Cuda:
+      case AIModelGpuEngine.Vulkan:
+      case AIModelGpuEngine.Metal:
         gpu = gpuEngine
         break
-      case AICapabilityGpuEngine.Cpu:
+      case AIModelGpuEngine.Cpu:
         gpu = false
         break
       case undefined:
@@ -398,7 +398,7 @@ class LlmSessionAPIHandler {
     const props = new TypoParser(modelProps)
     return {
       model: manifest.id,
-      gpuEngine: props.getEnum('gpuEngine', AICapabilityGpuEngine, undefined),
+      gpuEngine: props.getEnum('gpuEngine', AIModelGpuEngine, undefined),
       topK: props.getRange('topK', manifest.config.topK),
       topP: props.getRange('topP', manifest.config.topP),
       temperature: props.getRange('temperature', manifest.config.temperature),

@@ -22,7 +22,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIRootModelProps, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIRootModelProps, AIModelType } from '#Shared/API/AI'
 
 class AILanguageModelHandler {
   /* **************************************************************************/
@@ -66,10 +66,10 @@ class AILanguageModelHandler {
     initialPrompts: AILanguageModelInitialPrompt[],
     messages: AILanguageModelPrompt[]
   ) {
-    if (!manifest.prompts[AICapabilityPromptType.LanguageModel]) {
+    if (!manifest.prompts[AIModelPromptType.LanguageModel]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
-    const promptConfig = manifest.prompts[AICapabilityPromptType.LanguageModel]
+    const promptConfig = manifest.prompts[AIModelPromptType.LanguageModel]
 
     let droppedMessages = 0
     while (true) {
@@ -105,7 +105,7 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.LanguageModel)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.LanguageModel)
   }
 
   /* **************************************************************************/
@@ -113,7 +113,7 @@ class AILanguageModelHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.LanguageModel, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.LanguageModel, async (
       manifest,
       payload,
       props

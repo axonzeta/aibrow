@@ -27,9 +27,9 @@ import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
 import {
   AICapabilityAvailability,
-  AICapabilityGpuEngine,
+  AIModelGpuEngine,
   AIRootModelCapabilitiesData,
-  AICapabilityPromptType,
+  AIModelPromptType,
   AIRootModelProps,
   AIModelType
 } from '#Shared/API/AI'
@@ -63,8 +63,8 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  async getGpuEngine (gpuEngine: any): Promise<AICapabilityGpuEngine> {
-    return Object.values(AICapabilityGpuEngine).includes(gpuEngine)
+  async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine> {
+    return Object.values(AIModelGpuEngine).includes(gpuEngine)
       ? gpuEngine
       : await getDefaultModelEngine()
   }
@@ -75,9 +75,9 @@ class APIHelper {
    * @param promptType: the prompt type to check
    * @returns true if supported, false otherwise
    */
-  modelSupportsPromptType (manifest: AIModelManifest, promptType: AICapabilityPromptType) {
+  modelSupportsPromptType (manifest: AIModelManifest, promptType: AIModelPromptType) {
     switch (promptType) {
-      case AICapabilityPromptType.CoreModel: return true
+      case AIModelPromptType.CoreModel: return true
       default: return Boolean(manifest?.prompts?.[promptType])
     }
   }
@@ -88,7 +88,7 @@ class APIHelper {
    * @param promptType: the type of prompt to check is available
    * @returns the model availablility and manifest in the format { availability, manifest }
    */
-  async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AICapabilityPromptType) {
+  async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AIModelPromptType) {
     let manifest: AIModelManifest
     let availability: AICapabilityAvailability
     let score: number
@@ -167,7 +167,7 @@ class APIHelper {
   async handleGetStandardCapabilitiesData (
     channel: IPCInflightChannel,
     modelType: AIModelType,
-    promptType: AICapabilityPromptType,
+    promptType: AIModelPromptType,
     configFn?: (manifest: AIModelManifest) => object
   ): Promise<AIRootModelCapabilitiesData> {
     return await this.captureCommonErrorsForResponse(async () => {
@@ -212,7 +212,7 @@ class APIHelper {
    * @param modelProps: the model props
    * @returns the core llm prompt options
    */
-  async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AICapabilityGpuEngine, manifest: AIModelManifest, modelProps: any) {
+  async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AIModelGpuEngine, manifest: AIModelManifest, modelProps: any) {
     const props = new TypoParser(modelProps)
     return {
       model: modelId.toString(),
@@ -239,7 +239,7 @@ class APIHelper {
   async handleStandardCreatePreflight (
     channel: IPCInflightChannel,
     modelType: AIModelType,
-    promptType: AICapabilityPromptType,
+    promptType: AIModelPromptType,
     postflightFn: (
       manifest: AIModelManifest,
       payload: TypoParser,

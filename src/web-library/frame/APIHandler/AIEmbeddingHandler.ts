@@ -14,7 +14,7 @@ import {
 } from '#Shared/IPC/IPCServer'
 import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 
 class AIEmbeddingHandler {
   /* **************************************************************************/
@@ -42,7 +42,7 @@ class AIEmbeddingHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Embedding, AICapabilityPromptType.Embedding)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Embedding, AIModelPromptType.Embedding)
   }
 
   /* **************************************************************************/
@@ -50,7 +50,7 @@ class AIEmbeddingHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Embedding, AICapabilityPromptType.Embedding, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Embedding, AIModelPromptType.Embedding, async (
       manifest,
       sessionId,
       payload,

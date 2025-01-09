@@ -19,7 +19,7 @@ import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 
 class AIRewriterHandler {
@@ -48,7 +48,7 @@ class AIRewriterHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.Rewriter)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.Rewriter)
   }
 
   /* **************************************************************************/
@@ -56,7 +56,7 @@ class AIRewriterHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.Rewriter, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.Rewriter, async (
       manifest,
       sessionId,
       payload,
@@ -121,11 +121,11 @@ class AIRewriterHandler {
     context: string,
     input: string
   ) {
-    if (!manifest.prompts[AICapabilityPromptType.Rewriter]) {
+    if (!manifest.prompts[AIModelPromptType.Rewriter]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
 
-    const config = manifest.prompts[AICapabilityPromptType.Rewriter]
+    const config = manifest.prompts[AIModelPromptType.Rewriter]
     const template = new Template(config.template)
     return template.render({
       tone,

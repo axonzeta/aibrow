@@ -19,7 +19,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 
 const noop = () => {}
@@ -50,7 +50,7 @@ class AILanguageDetectorHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.LanguageDetector)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.LanguageDetector)
   }
 
   /* **************************************************************************/
@@ -58,7 +58,7 @@ class AILanguageDetectorHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.LanguageDetector, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.LanguageDetector, async (
       manifest,
       payload,
       props
@@ -135,10 +135,10 @@ class AILanguageDetectorHandler {
     manifest: AIModelManifest,
     input: string
   ) {
-    if (!manifest.prompts[AICapabilityPromptType.LanguageDetector]) {
+    if (!manifest.prompts[AIModelPromptType.LanguageDetector]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
-    const config = manifest.prompts[AICapabilityPromptType.LanguageDetector]
+    const config = manifest.prompts[AIModelPromptType.LanguageDetector]
     const template = new Template(config.template)
     return template.render({
       input,

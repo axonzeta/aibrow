@@ -34,7 +34,7 @@ import {
   setOverrideBrowserAI
 } from '#Shared/Prefs'
 import config from '#Shared/Config'
-import { AICapabilityGpuEngine, AIModelType } from '#Shared/API/AI'
+import { AIModelGpuEngine, AIModelType } from '#Shared/API/AI'
 import { UpdateResult } from '#Shared/Updater'
 
 /* **************************************************************************/
@@ -61,8 +61,8 @@ function renderDefaultModelOptions (
 
 async function renderDefaultEngineOptions (
   $el: HTMLSelectElement,
-  selectedModelEngine: AICapabilityGpuEngine | undefined,
-  supportedEngines: Array<AICapabilityGpuEngine>
+  selectedModelEngine: AIModelGpuEngine | undefined,
+  supportedEngines: Array<AIModelGpuEngine>
 ) {
   UI.empty($el)
 
@@ -132,8 +132,8 @@ async function renderSettings () {
   const $defaultEngineOpt = document.getElementById('opt-engine-default') as HTMLSelectElement
   $defaultEngineOpt.addEventListener('change', async () => {
     const id = ($defaultEngineOpt as HTMLSelectElement).value
-    const supportedEngines = await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as Array<AICapabilityGpuEngine>
-    if (supportedEngines.includes(id as AICapabilityGpuEngine)) {
+    const supportedEngines = await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as Array<AIModelGpuEngine>
+    if (supportedEngines.includes(id as AIModelGpuEngine)) {
       await setDefaultModelEngine(id)
     } else {
       await setDefaultModelEngine(undefined)
@@ -143,7 +143,7 @@ async function renderSettings () {
     renderDefaultEngineOptions(
       $defaultEngineOpt,
       await getDefaultModelEngine(),
-      await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as Array<AICapabilityGpuEngine>
+      await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as Array<AIModelGpuEngine>
     )
   })()
 

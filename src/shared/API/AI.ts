@@ -10,7 +10,7 @@ export enum AICapabilityAvailability {
   No = 'no'
 }
 
-export enum AICapabilityGpuEngine {
+export enum AIModelGpuEngine {
   Metal = 'metal',
   Cuda = 'cuda',
   Vulkan = 'vulkan',
@@ -19,7 +19,7 @@ export enum AICapabilityGpuEngine {
   Wasm = 'wasm'
 }
 
-export enum AICapabilityPromptType {
+export enum AIModelPromptType {
   CoreModel = null,
   Embedding = null,
   LanguageModel = 'languageModel',
@@ -33,6 +33,18 @@ export enum AICapabilityPromptType {
 export enum AIModelType {
   Text = 'text',
   Embedding = 'embedding'
+}
+
+export enum AIModelDType {
+  Auto = 'auto',
+  Fp32 = 'fp32',
+  Fp16 = 'fp16',
+  Q8 = 'q8',
+  Int8 = 'int8',
+  Uint8 = 'uint8',
+  Q4 = 'q4',
+  Bnb4 = 'bnb4',
+  Q4f16 = 'q4f16'
 }
 
 /* **************************************************************************/
@@ -49,7 +61,7 @@ export type AIRootCapabilitiesOptions = {
 
 export type AIRootModelCapabilitiesData = {
   available: AICapabilityAvailability
-  gpuEngines: AICapabilityGpuEngine[]
+  gpuEngines: AIModelGpuEngine[]
   score: number
   supportedLanguages?: string[]
   topK?: AIModelManifestConfigRange
@@ -100,7 +112,8 @@ export type AIRootCloneOptions = {
 
 export type AIRootCreateOptions = {
   model?: string
-  gpuEngine?: AICapabilityGpuEngine
+  gpuEngine?: AIModelGpuEngine
+  dtype?: AIModelDType
   topK?: number
   topP?: number
   temperature?: number
@@ -113,7 +126,8 @@ export type AIRootCreateOptions = {
 
 export type AIRootModelProps = {
   model: string
-  gpuEngine: AICapabilityGpuEngine
+  gpuEngine: AIModelGpuEngine
+  dtype: AIModelDType
   topK: number
   topP: number
   temperature: number

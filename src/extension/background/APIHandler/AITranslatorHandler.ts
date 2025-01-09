@@ -15,7 +15,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 import capitalize from 'capitalize'
 import { parse as partialJsonParse } from 'best-effort-json-parser'
@@ -46,7 +46,7 @@ class AITranslatorHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.Translator)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.Translator)
   }
 
   /* **************************************************************************/
@@ -54,7 +54,7 @@ class AITranslatorHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.Translator, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.Translator, async (
       manifest,
       payload,
       props
@@ -150,10 +150,10 @@ await translator.translate('The Translator and the Language Detector APIs will f
     targetLanguage: string,
     input: string
   ) {
-    if (!manifest.prompts[AICapabilityPromptType.Translator]) {
+    if (!manifest.prompts[AIModelPromptType.Translator]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
-    const config = manifest.prompts[AICapabilityPromptType.Translator]
+    const config = manifest.prompts[AIModelPromptType.Translator]
     const template = new Template(config.template)
     const sourceLanguageName = (new Intl.DisplayNames(['en'], { type: 'language' })).of(sourceLanguage)
     const sourceLanguageNameNative = (new Intl.DisplayNames([sourceLanguage], { type: 'language' })).of(sourceLanguage)

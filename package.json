@@ -72,7 +72,7 @@
   },
   "dependencies": {
     "@huggingface/jinja": "^0.3.2",
-    "@huggingface/transformers": "^3.1.2",
+    "@huggingface/transformers": "^3.2.4",
     "best-effort-json-parser": "^1.1.2",
     "bootstrap": "^5.3.3",
     "capitalize": "^2.0.4",

@@ -20,7 +20,7 @@ import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 
 class AISummarizerHandler {
@@ -49,7 +49,7 @@ class AISummarizerHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.Summarizer)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.Summarizer)
   }
 
   /* **************************************************************************/
@@ -57,7 +57,7 @@ class AISummarizerHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.Summarizer, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.Summarizer, async (
       manifest,
       payload,
       props
@@ -121,10 +121,10 @@ class AISummarizerHandler {
     context: string,
     input: string
   ) {
-    if (!manifest.prompts[AICapabilityPromptType.Summarizer]) {
+    if (!manifest.prompts[AIModelPromptType.Summarizer]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
-    const config = manifest.prompts[AICapabilityPromptType.Summarizer]
+    const config = manifest.prompts[AIModelPromptType.Summarizer]
     const template = new Template(config.template)
     return template.render({
       type,

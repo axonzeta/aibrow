@@ -16,7 +16,7 @@ import {
 import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
 import { nanoid } from 'nanoid'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptAborted } from '#Shared/Errors'
 
 class AICoreModelHandler {
@@ -46,7 +46,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.CoreModel)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.CoreModel)
   }
 
   /* **************************************************************************/
@@ -54,7 +54,7 @@ class AICoreModelHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.CoreModel, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.CoreModel, async (
       manifest,
       payload,
       props

@@ -15,11 +15,12 @@ import {
 } from '#Shared/Errors'
 import {
   AICapabilityAvailability,
-  AICapabilityGpuEngine,
+  AIModelGpuEngine,
   AIRootModelCapabilitiesData,
-  AICapabilityPromptType,
+  AIModelPromptType,
   AIRootModelProps,
-  AIModelType
+  AIModelType,
+  AIModelDType
 } from '#Shared/API/AI'
 import AIModelId from '#Shared/AIModelId'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
@@ -51,14 +52,14 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  getGpuEngine (gpuEngine: any): AICapabilityGpuEngine {
+  getGpuEngine (gpuEngine: any): AIModelGpuEngine {
     const supportedEngines = AILlmSession.getSupportedGpuEngines()
     if (supportedEngines.includes(gpuEngine)) {
       return gpuEngine
-    } else if (supportedEngines.includes(AICapabilityGpuEngine.WebGpu)) {
-      return AICapabilityGpuEngine.WebGpu
+    } else if (supportedEngines.includes(AIModelGpuEngine.WebGpu)) {
+      return AIModelGpuEngine.WebGpu
     } else {
-      return AICapabilityGpuEngine.Wasm
+      return AIModelGpuEngine.Wasm
     }
   }
 
@@ -68,9 +69,9 @@ class APIHelper {
    * @param promptType: the prompt type to check
    * @returns true if supported, false otherwise
    */
-  modelSupportsPromptType (manifest: AIModelManifest, promptType: AICapabilityPromptType) {
+  modelSupportsPromptType (manifest: AIModelManifest, promptType: AIModelPromptType) {
     switch (promptType) {
-      case AICapabilityPromptType.CoreModel: return true
+      case AIModelPromptType.CoreModel: return true
       default: return Boolean(manifest?.prompts?.[promptType])
     }
   }
@@ -81,7 +82,7 @@ class APIHelper {
    * @param promptType: the type of prompt to check is available
    * @returns the model availablility and manifest in the format { availability, manifest }
    */
-  async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AICapabilityPromptType) {
+  async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AIModelPromptType) {
     let manifest: AIModelManifest
     let availability: AICapabilityAvailability
     try {
@@ -149,7 +150,7 @@ class APIHelper {
   async handleGetStandardCapabilitiesData (
     channel: IPCInflightChannel,
     modelType: AIModelType,
-    promptType: AICapabilityPromptType,
+    promptType: AIModelPromptType,
     configFn?: (manifest: AIModelManifest) => object
   ): Promise<AIRootModelCapabilitiesData> {
     return await this.captureCommonErrorsForResponse(async () => {
@@ -188,11 +189,20 @@ class APIHelper {
    * @param modelProps: the model props
    * @returns the core llm prompt options
    */
-  async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AICapabilityGpuEngine, manifest: AIModelManifest, modelProps: any) {
+  async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AIModelGpuEngine, manifest: AIModelManifest, modelProps: any) {
     const props = new TypoParser(modelProps)
+
+    const dtypeMapping = manifest.formats[AIModelFormat.ONNX].dtype
+    let defaultDtype: AIModelDType
+    switch (typeof (dtypeMapping)) {
+      case 'string': defaultDtype = dtypeMapping as AIModelDType; break
+      case 'object': defaultDtype = dtypeMapping[gpuEngine]; break
+    }
+
     return {
       model: modelId.toString(),
       gpuEngine,
+      dtype: props.getEnum('dtype', AIModelDType, defaultDtype),
       topK: props.getRange('topK', manifest.config.topK),
       topP: props.getRange('topP', manifest.config.topP),
       temperature: props.getRange('temperature', manifest.config.temperature),
@@ -215,7 +225,7 @@ class APIHelper {
   async handleStandardCreatePreflight (
     channel: IPCInflightChannel,
     modelType: AIModelType,
-    promptType: AICapabilityPromptType,
+    promptType: AIModelPromptType,
     postflightFn: (
       manifest: AIModelManifest,
       sessionId: string,

@@ -1,4 +1,4 @@
-import { AICapabilityGpuEngine, AIRootModelProps } from '#Shared/API/AI'
+import { AIModelGpuEngine, AIRootModelProps } from '#Shared/API/AI'
 import NativeIPC from '../NativeIPC'
 import {
   kLlmSessionGetSupportedGpuEngines,
@@ -15,9 +15,9 @@ import { kGpuEngineNotSupported } from '#Shared/Errors'
 import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 
 type SupportedEngines = {
-  engines: AICapabilityGpuEngine[] | undefined
+  engines: AIModelGpuEngine[] | undefined
   resolving: boolean
-  callbacks: Array<(engines: AICapabilityGpuEngine[]) => void>
+  callbacks: Array<(engines: AIModelGpuEngine[]) => void>
 }
 
 type GetEmbeddingRequestOptions = {
@@ -56,7 +56,7 @@ class AILlmSession {
    * Throws an error if the gpu engine isn't supported
    * @param gpuEngine: the gpu engine the user is trying to use
    */
-  #ensureGpuEngineSupported = async (gpuEngine: AICapabilityGpuEngine | undefined) => {
+  #ensureGpuEngineSupported = async (gpuEngine: AIModelGpuEngine | undefined) => {
     if (gpuEngine && !(await this.getSupportedGpuEngines()).includes(gpuEngine)) {
       throw new Error(kGpuEngineNotSupported)
     }
@@ -69,13 +69,13 @@ class AILlmSession {
   /**
    * @returns an array of supported engines
    */
-  async getSupportedGpuEngines (): Promise<AICapabilityGpuEngine[]> {
+  async getSupportedGpuEngines (): Promise<AIModelGpuEngine[]> {
     if (this.#supportedEngines.engines) { return this.#supportedEngines.engines }
 
     if (!this.#supportedEngines.resolving) {
       this.#supportedEngines.resolving = true
       ;(async () => {
-        const supportedEngines = (await NativeIPC.request(kLlmSessionGetSupportedGpuEngines, {})) as AICapabilityGpuEngine[]
+        const supportedEngines = (await NativeIPC.request(kLlmSessionGetSupportedGpuEngines, {})) as AIModelGpuEngine[]
         const callbacks = this.#supportedEngines.callbacks
         this.#supportedEngines.engines = supportedEngines
         this.#supportedEngines.resolving = false
@@ -87,7 +87,7 @@ class AILlmSession {
       })()
     }
 
-    return new Promise<AICapabilityGpuEngine[]>((resolve) => {
+    return new Promise<AIModelGpuEngine[]>((resolve) => {
       this.#supportedEngines.callbacks.push(resolve)
     })
   }

@@ -1,3 +1,8 @@
+import {
+  AIModelGpuEngine,
+  AIModelDType
+} from './API/AI'
+
 /* **************************************************************************/
 // MARK: Assets
 /* **************************************************************************/
@@ -49,9 +54,8 @@ export type AIModelFormatGGUF = {
 } & AIModelFormatBase
 
 export type AIModelFormatONNX = {
-  tokenizer: AIModelAssetId
-  tokenizerConfig: AIModelAssetId
-  dtype: 'auto' | 'fp32' | 'fp16' | 'q8' | 'int8' | 'uint8' | 'q4' | 'bnb4' | 'q4f16'
+  hfId: string
+  dtype: AIModelDType | { [AIModelGpuEngine.WebGpu]?: AIModelDType, [AIModelGpuEngine.Wasm]?: AIModelDType }
 } & AIModelFormatBase
 
 /* **************************************************************************/
@@ -110,7 +114,6 @@ export type AIModelStats = {
  * @return the updated manifest
  */
 export function updateManifestToV2 (manifest: any) {
-  //TODO: remove once the models on the server update this
   if (manifest.manifestVersion === 2) {
     return manifest
   }

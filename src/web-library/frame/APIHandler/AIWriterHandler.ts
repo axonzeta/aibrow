@@ -19,7 +19,7 @@ import APIHelper from './APIHelper'
 import AILlmSession from '../AI/AILlmSession'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { Template } from '@huggingface/jinja'
-import { AICapabilityPromptType, AIModelType } from '#Shared/API/AI'
+import { AIModelPromptType, AIModelType } from '#Shared/API/AI'
 import { kModelPromptTypeNotSupported } from '#Shared/Errors'
 
 class AIWriterHandler {
@@ -48,7 +48,7 @@ class AIWriterHandler {
   /* **************************************************************************/
 
   #handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AICapabilityPromptType.Writer)
+    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.Writer)
   }
 
   /* **************************************************************************/
@@ -56,7 +56,7 @@ class AIWriterHandler {
   /* **************************************************************************/
 
   #handleCreate = async (channel: IPCInflightChannel) => {
-    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AICapabilityPromptType.Writer, async (
+    return await APIHelper.handleStandardCreatePreflight(channel, AIModelType.Text, AIModelPromptType.Writer, async (
       manifest,
       sessionId,
       payload,
@@ -120,10 +120,10 @@ class AIWriterHandler {
     context: string,
     input: string
   ) {
-    if (!manifest.prompts[AICapabilityPromptType.Writer]) {
+    if (!manifest.prompts[AIModelPromptType.Writer]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
-    const config = manifest.prompts[AICapabilityPromptType.Writer]
+    const config = manifest.prompts[AIModelPromptType.Writer]
     const template = new Template(config.template)
     return template.render({
       tone,
