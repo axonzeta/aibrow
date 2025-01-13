@@ -96,7 +96,7 @@ export default class FramePort {
 
   #flushMessages () {
     if (!this.#outbox.length) { return }
-    if (!this.#frame.contentWindow) { return }
+    if (!this.#frame?.contentWindow) { return }
 
     const messages = this.#outbox
     this.#outbox = []
