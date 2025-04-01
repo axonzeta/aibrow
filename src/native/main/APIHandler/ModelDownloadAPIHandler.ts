@@ -90,7 +90,7 @@ class ModelDownloadAPIHandler {
         if (!res.ok || !res.body) { throw new Error(`Failed to download ${asset.url}`) }
 
         const writer = fs.createWriteStream(file.path)
-        const reader = Readable.fromWeb(res.body)
+        const reader = Readable.fromWeb(res.body as any)
         reader.on('data', (chunk) => {
           loadedSize += chunk.length
           reportProgress()

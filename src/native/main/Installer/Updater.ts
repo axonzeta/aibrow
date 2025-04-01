@@ -102,7 +102,7 @@ export async function update (apiVersion = config.native.apiVersion, dry = false
       }
 
       const writer = fs.createWriteStream(downloadPath)
-      const reader = Readable.fromWeb(res.body)
+      const reader = Readable.fromWeb(res.body as any)
       await finished(reader.pipe(writer))
 
       // Verify the update
