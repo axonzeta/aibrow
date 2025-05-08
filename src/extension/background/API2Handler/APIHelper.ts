@@ -1,3 +1,46 @@
+import {
+  IPCInflightChannel
+} from '#Shared/IPC/IPCServer'
+import {
+  AIModelAvailability,
+  AICoreModel,
+  AIModelCoreCompatibility,
+  AIModelType,
+  AIModelPromptType,
+  AIModelGpuEngine
+} from '#Shared/API2/AICoreTypes'
+import { createIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
+import {
+  kHelperNotInstalled,
+  kPermissionDenied,
+  kModelCreationAborted,
+  kGpuEngineNotSupported,
+  kModelPromptAborted,
+  kModelPromptTypeNotSupported,
+  kModelFormatNotSupported,
+  kModelIdProviderUnsupported,
+  kUrlModelIdInvalid,
+  kUrlModelIdUnsupportedDomain,
+  kUrlModelIdUnsupportedHuggingFacePath,
+  kModelIdInvalid
+} from '#Shared/Errors'
+import { NativeInstallHelper, NativeInstallHelperShowReason } from '../NativeInstallHelper'
+import { kNativeMessagingHostNotFound } from '#Shared/BrowserErrors'
+import PermissionProvider from '../PermissionProvider'
+import AIModelId from '#Shared/AIModelId'
+import {
+  getDefaultModel,
+  getDefaultModelEngine,
+  getModelUpdatePeriod,
+  getUseMmap,
+  ModelUpdatePeriod
+} from '#Shared/Prefs'
+import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
+import AIModelFileSystem from '../AI/AIModelFileSystem'
+import AIModelDownload from '../AI/AIModelDownload'
+import AILlmSession from '../AI/AILlmSession'
+import config from '#Shared/Config'
+
 class APIHelper {
   /* **************************************************************************/
   // MARK: Prefs
@@ -8,22 +51,22 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  /*async getModelId (modelId: any, modelType: AIModelType): Promise<AIModelId> {
+  async getModelId (modelId: any, modelType: AIModelType): Promise<AIModelId> {
     return typeof (modelId) === 'string' && modelId.length
       ? new AIModelId(modelId)
       : new AIModelId(await getDefaultModel(modelType))
-  }*/
+  }
 
   /**
    * Gets the gpu engine to use or the default
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  /*async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine> {
+  async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine> {
     return Object.values(AIModelGpuEngine).includes(gpuEngine)
       ? gpuEngine
       : await getDefaultModelEngine()
-  }*/
+  }
 
   /**
    * Looks to see if a model supports a given prompt type
@@ -31,12 +74,12 @@ class APIHelper {
    * @param promptType: the prompt type to check
    * @returns true if supported, false otherwise
    */
-  /*modelSupportsPromptType (manifest: AIModelManifest, promptType: AIModelPromptType) {
+  modelSupportsPromptType (manifest: AIModelManifest, promptType: AIModelPromptType) {
     switch (promptType) {
       case AIModelPromptType.CoreModel: return true
       default: return Boolean(manifest?.prompts?.[promptType])
     }
-  }*/
+  }
 
   /**
    * @param channel: the channel making the request
@@ -44,21 +87,21 @@ class APIHelper {
    * @param promptType: the type of prompt to check is available
    * @returns the model availablility and manifest in the format { availability, manifest }
    */
-  /*async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AIModelPromptType) {
+  async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AIModelPromptType) {
     let manifest: AIModelManifest
-    let availability: AICapabilityAvailability
+    let availability: AIModelAvailability
     let score: number
     try {
       manifest = await AIModelFileSystem.readModelManifest(modelId)
       score = (await AIModelFileSystem.readModelStats(modelId))?.machineScore ?? 1
-      availability = AICapabilityAvailability.Readily
+      availability = AIModelAvailability.Available
     } catch (ex) {
       try {
         manifest = await AIModelDownload.fetchModelManifest(modelId)
-        availability = AICapabilityAvailability.AfterDownload
+        availability = AIModelAvailability.Downloadable //TODO: support downloading state
         score = await AILlmSession.getModelScore(manifest)
       } catch (ex) {
-        availability = AICapabilityAvailability.No
+        availability = AIModelAvailability.Unavailable
         score = 0
       }
     }
@@ -70,11 +113,11 @@ class APIHelper {
       !manifest.formats[AIModelFormat.GGUF] ||
       score <= config.modelMinMachineScore
     ) {
-      availability = AICapabilityAvailability.No
+      availability = AIModelAvailability.Unavailable
     }
 
     return { availability, manifest, score }
-  }*/
+  }
 
   /* **************************************************************************/
   // MARK: Errors
@@ -86,7 +129,7 @@ class APIHelper {
    * @param fn: the function execute
    * @returns the result from the function or the wrapped error
    */
-  /*async captureCommonErrorsForResponse (fn: () => Promise<any>) {
+  async captureCommonErrorsForResponse (fn: () => Promise<any>) {
     try {
       return await fn()
     } catch (ex) {
@@ -107,25 +150,24 @@ class APIHelper {
 
       throw ex
     }
-  }*/
+  }
 
   /* **************************************************************************/
   // MARK: Handlers
   /* **************************************************************************/
 
   /**
-   * Gets the standard capabilities data
+   * Gets the model availability
    * @param channel: the incoming channel
    * @param modelType: the type of model we're targeting
-   * @param promptType: the type of prompt to check is available
+   * * @param promptType: the type of prompt to check is available
    * @returns the response for the channel
    */
-  /*async handleGetStandardCapabilitiesData (
+  async handleGetStandardAvailability (
     channel: IPCInflightChannel,
     modelType: AIModelType,
-    promptType: AIModelPromptType,
-    configFn?: (manifest: AIModelManifest) => object
-  ): Promise<AIRootModelCapabilitiesData> {
+    promptType: AIModelPromptType
+  ): Promise<AIModelAvailability> {
     return await this.captureCommonErrorsForResponse(async () => {
       const modelId = await this.getModelId(channel.payload?.model, modelType)
 
@@ -133,32 +175,47 @@ class APIHelper {
       await PermissionProvider.requestModelPermission(channel, modelId)
       await PermissionProvider.ensureModelPermission(channel, modelId)
 
-      const components = await Promise.all([
-        (async () => {
-          const { availability, score } = await this.getAIModelAvailability(channel, modelId, promptType)
-          if (availability === AICapabilityAvailability.Readily) {
-            const manifest = await AIModelFileSystem.readModelManifest(modelId)
-            return {
-              score,
-              ...configFn ? configFn(manifest) : undefined,
-              available: AICapabilityAvailability.Readily,
-              topK: manifest.config.topK,
-              topP: manifest.config.topP,
-              temperature: manifest.config.temperature,
-              repeatPenalty: manifest.config.repeatPenalty,
-              flashAttention: manifest.config.flashAttention,
-              contextSize: [1, manifest.tokens.default, manifest.tokens.max]
-            }
-          } else {
-            return { available: availability, score }
-          }
-        })(),
-        AILlmSession.getSupportedGpuEngines().then((gpuEngines) => ({ gpuEngines }))
-      ])
-
-      return Object.assign({}, ...components)
+      // Get the availability
+      const { availability } = await this.getAIModelAvailability(channel, modelId, promptType)
+      return availability
     })
-  }*/
+  }
+
+  /**
+   * Gets the model compatibility
+   * @param channel: the incoming channel
+   * @param modelType: the type of model we're targeting
+   * @returns the response for the channel
+   */
+  async handleGetStandardCompatibility (
+    channel: IPCInflightChannel,
+    modelType: AIModelType,
+    promptType: AIModelPromptType
+  ): Promise<AIModelCoreCompatibility | null> {
+    return await this.captureCommonErrorsForResponse(async () => {
+      const modelId = await this.getModelId(channel.payload?.model, modelType)
+
+      // Permission checks & requests
+      await PermissionProvider.requestModelPermission(channel, modelId)
+      await PermissionProvider.ensureModelPermission(channel, modelId)
+
+      const {
+        availability,
+        score,
+        manifest
+      } = await this.getAIModelAvailability(channel, modelId, promptType)
+
+      switch (availability) {
+        case AIModelAvailability.Unavailable: return null
+        default: return {
+          score,
+          gpuEngines: await AILlmSession.getSupportedGpuEngines(),
+          flashAttention: manifest.config.flashAttention,
+          contextSize: [1, manifest.tokens.default, manifest.tokens.max]
+        }
+      }
+    })
+  }
 
   /**
    * Takes a AiModelProps from the API and converts it to the core llm prompt options

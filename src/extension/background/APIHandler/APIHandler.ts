@@ -12,7 +12,6 @@ import System from '../System'
 import { AIExtensionCapabilities, AIExtensionHelperInstalledState } from '#Shared/API/AI'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
-import AI2LanguageModelHandler from './AI2LanguageModelHandler'
 
 class APIHandler {
   /* **************************************************************************/

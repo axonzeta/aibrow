@@ -24,7 +24,8 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   /* **************************************************************************/
 
   static async create (options: LanguageModelCreateOptions = {}): Promise<LanguageModel> {
-    const monitorTarget = new EventTarget()
+    throw new Error("Not implemented")
+    /*const monitorTarget = new EventTarget()
     const {
       monitor,
       signal,
@@ -43,7 +44,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AILanguageModel(this.#ipc, data, options.signal)
+    return new AILanguageModel(this.#ipc, data, options.signal)*/
   }
 
   static async availability (options: LanguageModelCreateOptions = {}): Promise<AIModelAvailability> {
@@ -86,7 +87,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   }
 
   clone = async (options: LanguageModelCloneOptions = {}): Promise<LanguageModel> => {
-
+    throw new Error("Not implemented")
   }
 
   destroy = () => {
@@ -97,48 +98,48 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   // MARK: Properties: Config
   /* **************************************************************************/
 
-  get topK () { }
+  get topK () { throw new Error("Not implemented") }
 
-  get temperature () { }
+  get temperature () { throw new Error("Not implemented") }
 
-  get gpuEngine () { }
+  get gpuEngine () { throw new Error("Not implemented") }
 
-  get dtype () { }
+  get dtype () { throw new Error("Not implemented") }
 
-  get flashAttention () { }
+  get flashAttention () { throw new Error("Not implemented") }
 
-  get contextSize () { }
+  get contextSize () { throw new Error("Not implemented") }
 
   /* **************************************************************************/
   // MARK: Properties: Usage
   /* **************************************************************************/
 
-  get inputUsage () { }
+  get inputUsage () { throw new Error("Not implemented") }
 
-  get inputQuota () { }
+  get inputQuota () { throw new Error("Not implemented") }
 
-  set onquotaoverflow (value) { }
+  set onquotaoverflow (value) { throw new Error("Not implemented") }
 
-  get onquotaoverflow () { }
+  get onquotaoverflow () { throw new Error("Not implemented") }
 
   /* **************************************************************************/
   // MARK: Prompting/chat
   /* **************************************************************************/
 
   prompt = async (input: string, options: LanguageModelPromptOptions = {}): Promise<string> => {
-
+    throw new Error("Not implemented")
   }
 
   promptStreaming = async (input: string, options: LanguageModelPromptOptions = {}): Promise<ReadableStream> => {
-
+    throw new Error("Not implemented")
   }
 
   append = async (input: string, options: LanguageModelAppendOptions = {}): Promise<void> => {
-
+    throw new Error("Not implemented")
   }
 
   measureInputUsage = async (input: string, options: LanguageModelPromptOptions = {}): Promise<number> => {
-
+    throw new Error("Not implemented")
   }
 }
 

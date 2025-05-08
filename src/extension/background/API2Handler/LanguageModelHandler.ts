@@ -1,6 +1,17 @@
 import {
-  IPCServer
+  IPCServer,
+  IPCInflightChannel
 } from '#Shared/IPC/IPCServer'
+import {
+  kLanguageModelCompatibility,
+  kLanguageModelAvailability,
+  kLanguageModelParams
+} from '#Shared/API2/LanguageModel/LanguageModelIPCTypes'
+import APIHelper from './APIHelper'
+import {
+  AIModelType,
+  AIModelPromptType
+} from '#Shared/API2/AICoreTypes'
 
 class LanguageModelHandler {
   /* **************************************************************************/
@@ -17,6 +28,8 @@ class LanguageModelHandler {
     this.#server = server
 
     this.#server
+      .addRequestHandler(kLanguageModelAvailability, this.#handleGetAvailability)
+      .addRequestHandler(kLanguageModelCompatibility, this.#handleGetCompatibility)
       /*.addRequestHandler(kLanguageModelGetCapabilities, this.#handleGetCapabilities)
       .addRequestHandler(kLanguageModelCreate, this.#handleCreate)
       .addRequestHandler(kLanguageModelDestroy, this.#handleDestroy)
@@ -79,8 +92,16 @@ class LanguageModelHandler {
   }*/
 
   /* **************************************************************************/
-  // MARK: Handlers: Capabilities
+  // MARK: Handlers: Availability & compatibility
   /* **************************************************************************/
+
+  #handleGetAvailability = async (channel: IPCInflightChannel) => {
+    return APIHelper.handleGetStandardAvailability(channel, AIModelType.Text, AIModelPromptType.LanguageModel)
+  }
+
+  #handleGetCompatibility = async (channel: IPCInflightChannel) => {
+    return APIHelper.handleGetStandardCompatibility(channel, AIModelType.Text, AIModelPromptType.LanguageModel)
+  }
 
   /*#handleGetCapabilities = async (channel: IPCInflightChannel) => {
     return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.LanguageModel)

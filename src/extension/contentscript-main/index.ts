@@ -6,6 +6,13 @@ IPCRegistrar.ipc = IPC
 
 const genericWindow = window as any
 
+// Expose aibrow
+const aibrow = {
+  LanguageModel
+}
+genericWindow.aibrow = aibrow
+
+// Polyfill for the main window
 if (!genericWindow.LanguageModel) {
   genericWindow.LanguageModel = LanguageModel
 }
@@ -13,7 +20,9 @@ if (!genericWindow.LanguageModel) {
 export {
   LanguageModel
 }
+export default aibrow
 
+//todo
 /*import AI from './AI'
 import Translation from './Translation'
 import {

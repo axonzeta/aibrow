@@ -26,10 +26,26 @@ export enum AIModelDType {
 }
 
 export enum AIModelAvailability {
-  Unavailable = "unavailable",
-  Downloadable = "downloadable",
-  Downloading = "downloading",
-  Available = "available"
+  Unavailable = 'unavailable',
+  Downloadable = 'downloadable',
+  Downloading = 'downloading',
+  Available = 'available'
+}
+
+export enum AIModelType {
+  Text = 'text',
+  Embedding = 'embedding'
+}
+
+export enum AIModelPromptType {
+  CoreModel = null,
+  Embedding = null,
+  LanguageModel = 'languageModel',
+  Summarizer = 'summarizer',
+  Writer = 'writer',
+  Rewriter = 'rewriter',
+  Translator = 'translator',
+  LanguageDetector = 'languageDetector'
 }
 
 /* **************************************************************************/
