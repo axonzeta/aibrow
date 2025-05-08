@@ -1,5 +1,7 @@
 import { AIModelManifestConfigRange } from '../AIModelManifest'
 
+//TODO: remove API import
+
 /* **************************************************************************/
 // MARK: Enums
 /* **************************************************************************/

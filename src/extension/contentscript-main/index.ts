@@ -1,4 +1,20 @@
-import AI from './AI'
+import IPCRegistrar from '#Shared/API2/IPCRegistrar'
+import IPC from './IPC'
+import LanguageModel from '#Shared/API2/LanguageModel/LanguageModel'
+
+IPCRegistrar.ipc = IPC
+
+const genericWindow = window as any
+
+if (!genericWindow.LanguageModel) {
+  genericWindow.LanguageModel = LanguageModel
+}
+
+export {
+  LanguageModel
+}
+
+/*import AI from './AI'
 import Translation from './Translation'
 import {
   AIExtensionCapabilities,
@@ -67,3 +83,4 @@ export {
   AIWriterLength,
   AIWriterTone
 }
+*/

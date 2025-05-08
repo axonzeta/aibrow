@@ -1,18 +1,9 @@
 import IPCServer from '#Shared/IPC/IPCServer'
-import AIRewriterHandler from './AIRewriterHandler'
-import AISummarizerHandler from './AISummarizerHandler'
-import AIWriterHandler from './AIWriterHandler'
-import AILanguageModelHandler from './AILanguageModelHandler'
-import AICoreModelHandler from './AICoreModelHandler'
-import AIEmbeddingHandler from './AIEmbeddingHandler'
-import AILanguageDetectorHandler from './AILanguageDetectorHandler'
-import AITranslatorHandler from './AITranslatorHandler'
-import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
 import System from '../System'
 import { AIExtensionCapabilities, AIExtensionHelperInstalledState } from '#Shared/API/AI'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
-import AI2LanguageModelHandler from './AI2LanguageModelHandler'
+import LanguageModelHandler from './LanguageModelHandler'
 
 class APIHandler {
   /* **************************************************************************/
@@ -21,14 +12,7 @@ class APIHandler {
 
   #port: chrome.runtime.Port
   #server: IPCServer
-  #rewriterHandler: AIRewriterHandler
-  #summarizerHandler: AISummarizerHandler
-  #writerHandler: AIWriterHandler
-  #languageModelHandler: AILanguageModelHandler
-  #coreModelHandler: AICoreModelHandler
-  #embeddingHandler: AIEmbeddingHandler
-  #languageDetectorHandler: AILanguageDetectorHandler
-  #translatorHandler: AITranslatorHandler
+  #languageModelHandler: LanguageModelHandler
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -37,25 +21,18 @@ class APIHandler {
   constructor (port: chrome.runtime.Port) {
     this.#port = port
     this.#server = new IPCServer(port)
-    this.#rewriterHandler = new AIRewriterHandler(this.#server)
-    this.#summarizerHandler = new AISummarizerHandler(this.#server)
-    this.#writerHandler = new AIWriterHandler(this.#server)
-    this.#languageModelHandler = new AILanguageModelHandler(this.#server)
-    this.#coreModelHandler = new AICoreModelHandler(this.#server)
-    this.#embeddingHandler = new AIEmbeddingHandler(this.#server)
-    this.#languageDetectorHandler = new AILanguageDetectorHandler(this.#server)
-    this.#translatorHandler = new AITranslatorHandler(this.#server)
+    this.#languageModelHandler = new LanguageModelHandler(this.#server)
 
-    this.#server
+    /*this.#server
       .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
-      .addRequestHandler(kAIGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)
+      .addRequestHandler(kAIGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)*/
   }
 
   /* **************************************************************************/
   // MARK: Handlers: Capabilities
   /* **************************************************************************/
 
-  #handleGetCapabilities = async () => {
+  #handleGetCapabilities = async () => {//todo
     const nativeInstalledState = await System.isNativeInstalled()
     return {
       ready: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
@@ -65,7 +42,7 @@ class APIHandler {
     } as AIExtensionCapabilities
   }
 
-  #handleGetNativeHelperDownloadUrl = async () => {
+  #handleGetNativeHelperDownloadUrl = async () => {//todo
     const platformInfo = await chrome.runtime.getPlatformInfo()
 
     let platform: string
