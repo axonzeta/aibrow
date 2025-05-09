@@ -60,21 +60,11 @@ export type AIModelCoreCompatibility = {
 }
 
 /* **************************************************************************/
-// MARK: Class
-/* **************************************************************************/
-
-export abstract class AICoreModel {
-  static compatibility: (options: AIModelCoreCreateOptions) => Promise<AIModelCoreCompatibility | null>
-
-  destroy: () => void
-}
-
-/* **************************************************************************/
-// MARK: Creation
+// MARK: State
 /* **************************************************************************/
 
 export type AICreateMonitor = EventTarget & {
-  ondownloadprogress: () => void
+  ondownloadprogress?: (evt: Event) => void
 }
 
 export type AICreateMonitorCallback = (monitor: AICreateMonitor) => void
@@ -88,4 +78,23 @@ export type AIModelCoreCreateOptions = {
   dtype?: AIModelDType
   flashAttention?: boolean
   contextSize?: number
+}
+
+export type AIModelCoreState = {
+  model: string
+  gpuEngine: AIModelGpuEngine
+  dtype: AIModelDType
+  flashAttention: boolean
+  contextSize: number
+  useMmap: boolean
+}
+
+/* **************************************************************************/
+// MARK: Class
+/* **************************************************************************/
+
+export abstract class AICoreModel {
+  static compatibility: (options: AIModelCoreCreateOptions) => Promise<AIModelCoreCompatibility | null>
+
+  destroy: () => void
 }

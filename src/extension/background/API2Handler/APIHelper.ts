@@ -3,11 +3,12 @@ import {
 } from '#Shared/IPC/IPCServer'
 import {
   AIModelAvailability,
-  AICoreModel,
+  AIModelCoreState,
   AIModelCoreCompatibility,
   AIModelType,
   AIModelPromptType,
-  AIModelGpuEngine
+  AIModelGpuEngine,
+  AIModelDType
 } from '#Shared/API2/AICoreTypes'
 import { createIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
@@ -40,6 +41,9 @@ import AIModelFileSystem from '../AI/AIModelFileSystem'
 import AIModelDownload from '../AI/AIModelDownload'
 import AILlmSession from '../AI/AILlmSession'
 import config from '#Shared/Config'
+import AIModelManager from '../AI/AIModelManager'
+import TypoObject from '#Shared/Typo/TypoObject'
+import { clamp } from '#Shared/Typo/TypoParser'
 
 class APIHelper {
   /* **************************************************************************/
@@ -62,7 +66,7 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine> {
+  async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine | undefined> {
     return Object.values(AIModelGpuEngine).includes(gpuEngine)
       ? gpuEngine
       : await getDefaultModelEngine()
@@ -242,6 +246,31 @@ class APIHelper {
   }*/
 
   /**
+   * Gets the core model state from the provided user options
+   * @param manifest: the manifest of the model
+   * @param modelType: the type of model we're targeting
+   * @param options: the user options
+   * @returns the core llm prompt state
+   */
+  async getCoreModelState (
+    manifest: AIModelManifest,
+    modelType: AIModelType,
+    options: TypoObject
+  ): Promise<AIModelCoreState> {
+    const modelId = await this.getModelId(options.getString('model'), modelType)
+    const gpuEngine = await this.getGpuEngine(options.getString('gpuEngine'))
+
+    return <AIModelCoreState> {
+      model: modelId.toString(),
+      gpuEngine,
+      dtype: options.getEnum('dtype', AIModelDType, AIModelDType.Auto),
+      flashAttention: options.getBool('flashAttention', manifest.config.flashAttention),
+      contextSize: clamp(options.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
+      useMmap: await getUseMmap()
+    }
+  }
+
+  /**
    * Handles a bunch of preflight tasks before a create call
    * @param channel: the incoming IPC channel
    * @param modelType: the type of model we're targeting
@@ -249,14 +278,15 @@ class APIHelper {
    * @param postflightFn: a function that can execute a after the preflight calls have been executed
    * @returns the reply from the postflight
    */
-  /*async handleStandardCreatePreflight (
+  async handleStandardCreatePreflight (
     channel: IPCInflightChannel,
     modelType: AIModelType,
     promptType: AIModelPromptType,
     postflightFn: (
       manifest: AIModelManifest,
-      payload: TypoParser,
-      props: AIRootModelProps
+      payload: TypoObject,
+      modelId: AIModelId,
+      gpuEngine: AIModelGpuEngine
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
@@ -267,7 +297,7 @@ class APIHelper {
       throw new Error(kGpuEngineNotSupported)
     }
 
-    const payload = new TypoParser(rawPayload)
+    const payload = new TypoObject(rawPayload)
     return await this.captureCommonErrorsForResponse(async () => {
       // Values with user-defined defaults
       const modelId = await this.getModelId(rawPayload?.model, modelType)
@@ -316,10 +346,11 @@ class APIHelper {
       return await postflightFn(
         manifest,
         payload,
-        await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload)
+        modelId,
+        gpuEngine
       )
     })
-  }*/
+  }
 
   /**
    * Handles a bunch of preflight tasks before a prompt call

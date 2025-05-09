@@ -52,7 +52,7 @@ export function getRange (val: any, range: [number, number, number]) {
 // MARK: AI Language model
 /* **************************************************************************/
 
-export function getAILanguageModelInitialPrompts (prompts: any): AILanguageModelInitialPrompt[] {
+export function getAILanguageModelInitialPrompts (prompts: any): AILanguageModelInitialPrompt[] {//todo dep
   if (Array.isArray(prompts)) {
     return prompts.reduce((acc, prompt) => {
       const content = getNonEmptyString(prompt?.content)
@@ -67,7 +67,7 @@ export function getAILanguageModelInitialPrompts (prompts: any): AILanguageModel
   return []
 }
 
-export function getAILanguageModelPrompts (prompts: any): AILanguageModelPrompt[] {
+export function getAILanguageModelPrompts (prompts: any): AILanguageModelPrompt[] {//todo dep
   if (Array.isArray(prompts)) {
     return prompts.reduce((acc, prompt) => {
       const content = getNonEmptyString(prompt?.content)

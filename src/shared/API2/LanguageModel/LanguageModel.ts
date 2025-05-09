@@ -8,15 +8,20 @@ import {
   LanguageModelParams,
   LanguageModelCloneOptions,
   LanguageModelPromptOptions,
-  LanguageModelAppendOptions
+  LanguageModelAppendOptions,
+  LanguageModelState
 } from './LanguageModelTypes'
 import IPCRegistrar from '../IPCRegistrar'
 import {
   kLanguageModelCompatibility,
   kLanguageModelAvailability,
-  kLanguageModelParams
+  kLanguageModelParams,
+  kLanguageModelCreate,
+  kLanguageModelDestroy
 } from './LanguageModelIPCTypes'
 import { throwIPCErrorResponse } from '../../IPC/IPCErrorHelper'
+import { kModelCreationAborted } from '../../Errors'
+import { createDownloadProgressFn } from '../Helpers'
 
 export class LanguageModel extends EventTarget implements AICoreModel {
   /* **************************************************************************/
@@ -24,8 +29,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   /* **************************************************************************/
 
   static async create (options: LanguageModelCreateOptions = {}): Promise<LanguageModel> {
-    throw new Error("Not implemented")
-    /*const monitorTarget = new EventTarget()
+    const monitorTarget = new EventTarget()
     const {
       monitor,
       signal,
@@ -33,18 +37,18 @@ export class LanguageModel extends EventTarget implements AICoreModel {
     } = options
 
     monitor?.(monitorTarget)
-    const data = throwIPCErrorResponse(
-      await this.#ipc.stream(
+    const { sessionId, state } = throwIPCErrorResponse(
+      await IPCRegistrar.ipc.stream(
         kLanguageModelCreate,
         passOptions,
         createDownloadProgressFn(monitorTarget, signal)
       )
-    ) as AILanguageModelData
+    ) as { sessionId: string, state: LanguageModelState }
     if (signal?.aborted) {
       throw new Error(kModelCreationAborted)
     }
 
-    return new AILanguageModel(this.#ipc, data, options.signal)*/
+    return new LanguageModel(sessionId, options, state)
   }
 
   static async availability (options: LanguageModelCreateOptions = {}): Promise<AIModelAvailability> {
@@ -72,18 +76,24 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   // MARK: Private
   /* **************************************************************************/
 
+  #sessionId: string
   #options: LanguageModelCreateOptions
-  //#state: AILanguageModelState
-  #signal: AbortSignal
+  #state: LanguageModelState
   #destroyed = false
 
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/
 
-  constructor (options: LanguageModelCreateOptions) {
+  constructor (sessionId: string, options: LanguageModelCreateOptions, state: LanguageModelState) {
     super()
-    this.#options = options
+    this.#sessionId = sessionId
+    this.#options = { ...options }
+    this.#state = state
+
+    if (this.#options.signal) {
+      this.#options.signal.addEventListener('abort', () => this.destroy())
+    }
   }
 
   clone = async (options: LanguageModelCloneOptions = {}): Promise<LanguageModel> => {
@@ -91,32 +101,33 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   }
 
   destroy = () => {
-
+    this.#destroyed = true
+    IPCRegistrar.ipc.request(kLanguageModelDestroy, { sessionId: this.#sessionId })
   }
 
   /* **************************************************************************/
   // MARK: Properties: Config
   /* **************************************************************************/
 
-  get topK () { throw new Error("Not implemented") }
+  get topK () { return this.#state.topK }
 
-  get temperature () { throw new Error("Not implemented") }
+  get temperature () { return this.#state.temperature }
 
-  get gpuEngine () { throw new Error("Not implemented") }
+  get gpuEngine () { return this.#state.gpuEngine }
 
-  get dtype () { throw new Error("Not implemented") }
+  get dtype () { return this.#state.dtype }
 
-  get flashAttention () { throw new Error("Not implemented") }
+  get flashAttention () { return this.#state.flashAttention }
 
-  get contextSize () { throw new Error("Not implemented") }
+  get contextSize () { return this.#state.contextSize }
 
   /* **************************************************************************/
   // MARK: Properties: Usage
   /* **************************************************************************/
 
-  get inputUsage () { throw new Error("Not implemented") }
+  get inputUsage () { return this.#state.inputUsage }
 
-  get inputQuota () { throw new Error("Not implemented") }
+  get inputQuota () { return this.#state.inputQuota }
 
   set onquotaoverflow (value) { throw new Error("Not implemented") }
 

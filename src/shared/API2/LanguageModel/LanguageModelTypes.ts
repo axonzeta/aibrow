@@ -1,5 +1,6 @@
 import {
-  AIModelCoreCreateOptions
+  AIModelCoreCreateOptions,
+  AIModelCoreState
 } from '../AICoreTypes'
 
 /* **************************************************************************/
@@ -9,15 +10,15 @@ import {
 export type LanguageModelMessageContentValue = ImageBitmapSource | AudioBuffer | BufferSource | string
 
 export enum LanguageModelMessageType {
-  Text = "text",
-  Image = "image",
-  Audio = "audio"
+  Text = 'text',
+  Image = 'image',
+  Audio = 'audio'
 }
 
 export enum LanguageModelMessageRole {
-  System = "system",
-  User = "user",
-  Assistant = "assistant"
+  System = 'system',
+  User = 'user',
+  Assistant = 'assistant'
 }
 
 export type LanguageModelMessageContent = {
@@ -87,4 +88,16 @@ export type LanguageModelPromptOptions = {
 
 export type LanguageModelAppendOptions = {
   signal?: AbortSignal
+}
+
+/* **************************************************************************/
+// MARK: State
+/* **************************************************************************/
+
+export type LanguageModelState = AIModelCoreState & {
+  topK: number
+  temperature: number
+  inputUsage: number
+  inputQuota: number
+  messages: LanguageModelMessage[]
 }
