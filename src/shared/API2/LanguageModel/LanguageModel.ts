@@ -9,7 +9,9 @@ import {
   LanguageModelCloneOptions,
   LanguageModelPromptOptions,
   LanguageModelAppendOptions,
-  LanguageModelState
+  LanguageModelState,
+  LanguageModelPrompt,
+  languageModelPromptToMessages
 } from './LanguageModelTypes'
 import IPCRegistrar from '../IPCRegistrar'
 import {
@@ -17,11 +19,16 @@ import {
   kLanguageModelAvailability,
   kLanguageModelParams,
   kLanguageModelCreate,
-  kLanguageModelDestroy
+  kLanguageModelDestroy,
+  kLanguageModelPrompt,
+  kLanguageModelMeasureInput
 } from './LanguageModelIPCTypes'
 import { throwIPCErrorResponse } from '../../IPC/IPCErrorHelper'
-import { kModelCreationAborted } from '../../Errors'
-import { createDownloadProgressFn } from '../Helpers'
+import {
+  kModelCreationAborted,
+  kSessionDestroyed
+} from '../../Errors'
+import { createDownloadProgressFn, readablePromptStreamToString } from '../Helpers'
 
 export class LanguageModel extends EventTarget implements AICoreModel {
   /* **************************************************************************/
@@ -97,12 +104,37 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   }
 
   clone = async (options: LanguageModelCloneOptions = {}): Promise<LanguageModel> => {
-    throw new Error("Not implemented")
+    this.#guardDestroyed()
+
+    const {
+      signal: parentSignal,
+      ...passOptions
+    } = this.#options
+    const signal = AbortSignal.any([options.signal, parentSignal].filter(Boolean))
+
+    const { sessionId, state } = throwIPCErrorResponse(
+      await IPCRegistrar.ipc.request(
+        kLanguageModelCreate,
+        passOptions,
+        { signal })
+    ) as { sessionId: string, state: LanguageModelState }
+
+    if (signal?.aborted) {
+      throw new Error(kModelCreationAborted)
+    }
+
+    return new LanguageModel(sessionId, options, state)
   }
 
   destroy = () => {
     this.#destroyed = true
     IPCRegistrar.ipc.request(kLanguageModelDestroy, { sessionId: this.#sessionId })
+  }
+
+  #guardDestroyed () {
+    if (this.#destroyed) {
+      throw new Error(kSessionDestroyed)
+    }
   }
 
   /* **************************************************************************/
@@ -129,28 +161,59 @@ export class LanguageModel extends EventTarget implements AICoreModel {
 
   get inputQuota () { return this.#state.inputQuota }
 
-  set onquotaoverflow (value) { throw new Error("Not implemented") }
-
-  get onquotaoverflow () { throw new Error("Not implemented") }
-
   /* **************************************************************************/
   // MARK: Prompting/chat
   /* **************************************************************************/
 
-  prompt = async (input: string, options: LanguageModelPromptOptions = {}): Promise<string> => {
-    throw new Error("Not implemented")
+  prompt = async (input: LanguageModelPrompt, options: LanguageModelPromptOptions = {}): Promise<string> => {
+    return await readablePromptStreamToString(this.promptStreaming(input, options))
   }
 
-  promptStreaming = async (input: string, options: LanguageModelPromptOptions = {}): Promise<ReadableStream> => {
-    throw new Error("Not implemented")
+  promptStreaming = (input: LanguageModelPrompt, options: LanguageModelPromptOptions = {}): ReadableStream => {
+    this.#guardDestroyed()
+    const signal = AbortSignal.any([options.signal, this.#options.signal].filter(Boolean))
+
+    this.#state.messages.push(...languageModelPromptToMessages(input))
+
+    return new ReadableStream({
+      start: (controller) => {
+        let buffer = ''
+        IPCRegistrar.ipc.stream(
+          kLanguageModelPrompt,
+          {
+            sessionId: this.#sessionId,
+            state: this.#state,
+            options
+          },
+          (chunk: string) => {
+            buffer += chunk
+            controller.enqueue(buffer)
+          },
+          { signal }
+        ).then(
+          (stateDelta: Partial<LanguageModelState>) => {
+            this.#state = { ...this.#state, ...stateDelta }
+            controller.close()
+          },
+          (ex: Error) => {
+            controller.error(ex)
+          }
+        )
+      }
+    })
   }
 
-  append = async (input: string, options: LanguageModelAppendOptions = {}): Promise<void> => {
-    throw new Error("Not implemented")
+  append = async (input: string, _options: LanguageModelAppendOptions = {}): Promise<void> => {
+    this.#guardDestroyed()
+    this.#state.messages.push(...languageModelPromptToMessages(input))
   }
 
   measureInputUsage = async (input: string, options: LanguageModelPromptOptions = {}): Promise<number> => {
-    throw new Error("Not implemented")
+    this.#guardDestroyed()
+
+    const signal = AbortSignal.any([options.signal, this.#options.signal].filter(Boolean))
+    const count = (await IPCRegistrar.ipc.request(kLanguageModelMeasureInput, { state: this.#state }, { signal })) as number
+    return count
   }
 }
 

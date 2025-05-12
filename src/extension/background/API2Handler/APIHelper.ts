@@ -359,35 +359,34 @@ class APIHelper {
    * @param postflightFn: a function that can execute a after the preflight calls have been executed
    * @returns the reply from the postflight
    */
-  /*async handleStandardPromptPreflight (
+  async handleStandardPromptPreflight (
     channel: IPCInflightChannel,
     modelType: AIModelType,
     postflightFn: (
       manifest: AIModelManifest,
-      payload: TypoParser,
-      props: AIRootModelProps
+      payload: TypoObject
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
-    const payload = new TypoParser(rawPayload)
+    const payload = new TypoObject(rawPayload)
+    return await this.captureCommonErrorsForResponse(async () => {
+      // Values with user-defined defaults
+      const modelId = await this.getModelId(rawPayload?.model, modelType)
 
-    // Values with user-defined defaults
-    const modelId = await this.getModelId(rawPayload?.props?.model, modelType)
-    const gpuEngine = await this.getGpuEngine(rawPayload?.props?.gpuEngine)
+      // Permission checks & requests
+      await PermissionProvider.requestModelPermission(channel, modelId)
+      await PermissionProvider.ensureModelPermission(channel, modelId)
+      if (channel.abortSignal?.aborted) { throw new Error(kModelCreationAborted) }
 
-    // Permission checks & requests
-    await PermissionProvider.requestModelPermission(channel, modelId)
-    await PermissionProvider.ensureModelPermission(channel, modelId)
-    if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
+      // Get the values
+      const manifest = await AIModelFileSystem.readModelManifest(modelId)
 
-    // Get the values
-    const manifest = await AIModelFileSystem.readModelManifest(modelId)
-
-    return await postflightFn(
-      manifest,
-      payload,
-      await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload?.props ?? {}))
-  }*/
+      return await postflightFn(
+        manifest,
+        payload
+      )
+    })
+  }
 }
 
 export default new APIHelper()

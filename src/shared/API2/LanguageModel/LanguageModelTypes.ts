@@ -40,6 +40,44 @@ export type LanguageModelPrompt = LanguageModelMessage[] | LanguageModelMessageS
 
 export type LanguageModelInitialPrompts = LanguageModelMessage[] | LanguageModelMessageShorthand[]
 
+/**
+ * Converts a LanguageModelPrompt to an array of LanguageModelMessage
+ * @param input: the input to convert
+ * @returns: the full languageModel message
+ */
+export function languageModelPromptToMessages (input: LanguageModelPrompt): LanguageModelMessage[] {
+  if (typeof input === 'string') {
+    return [{
+      content: [{ type: LanguageModelMessageType.Text, content: input }],
+      role: LanguageModelMessageRole.User
+    }]
+  } else if (Array.isArray(input)) {
+    return input.map((item: LanguageModelMessage | LanguageModelMessageShorthand) => {
+      if (typeof (item.content) === 'string') {
+        return {
+          content: [{ type: LanguageModelMessageType.Text, content: item.content }],
+          role: item.role
+        }
+      } else if (Array.isArray(item.content)) {
+        return {
+          content: item.content.map((contentItem) => {
+            if (typeof contentItem === 'string') {
+              return { type: LanguageModelMessageType.Text, content: contentItem }
+            } else {
+              return contentItem
+            }
+          }),
+          role: item.role
+        }
+      }
+
+      throw new Error('Malformed input')
+    })
+  }
+
+  throw new Error('Malformed input')
+}
+
 /* **************************************************************************/
 // MARK: Creation
 /* **************************************************************************/

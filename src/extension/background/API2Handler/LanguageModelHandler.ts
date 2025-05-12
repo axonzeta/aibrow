@@ -7,7 +7,9 @@ import {
   kLanguageModelAvailability,
   kLanguageModelParams,
   kLanguageModelCreate,
-  kLanguageModelDestroy
+  kLanguageModelDestroy,
+  kLanguageModelPrompt,
+  kLanguageModelMeasureInput
 } from '#Shared/API2/LanguageModel/LanguageModelIPCTypes'
 import {
   LanguageModelParams,
@@ -61,11 +63,8 @@ class LanguageModelHandler {
       .addRequestHandler(kLanguageModelParams, this.#handleGetParams)
       .addRequestHandler(kLanguageModelCreate, this.#handleCreate)
       .addRequestHandler(kLanguageModelDestroy, this.#handleDestroy)
-      /*.addRequestHandler(kLanguageModelGetCapabilities, this.#handleGetCapabilities)
-      .addRequestHandler(kLanguageModelCreate, this.#handleCreate)
-      .addRequestHandler(kLanguageModelDestroy, this.#handleDestroy)
       .addRequestHandler(kLanguageModelPrompt, this.#handlePrompt)
-      .addRequestHandler(kLanguageModelCountTokens, this.#handleCountTokens)*/
+      .addRequestHandler(kLanguageModelMeasureInput, this.#handleMeasureInput)
   }
 
   /* **************************************************************************/
@@ -109,7 +108,7 @@ class LanguageModelHandler {
    * @param manifest: the manifest object
    * @param messages: the array of messages
    * @param contextSize: the context size
-   * @returns the prompt to pass to the LLM
+   * @returns the prompt and the token usage
    */
   async #buildPrompt (
     manifest: AIModelManifest,
@@ -121,20 +120,34 @@ class LanguageModelHandler {
     }
     const promptConfig = manifest.prompts[AIModelPromptType.LanguageModel]
 
+    // Split the messages into system and non system
+    const { systemMessages, chatMessages } = messages.reduce((acc, msg) => {
+      if (msg.role === LanguageModelMessageRole.System) {
+        acc.systemMessages.push(msg)
+      } else {
+        acc.chatMessages.push(msg)
+      }
+      return acc
+    }, { systemMessages: [], chatMessages: [] } as { systemMessages: LanguageModelMessage[], chatMessages: LanguageModelMessage[] })
+
+    // Work out the maximum number of messages we can fit in the context window
     let droppedMessages = 0
     while (true) {
-      if (droppedMessages >= messages.length && droppedMessages > 0) {
+      if (droppedMessages >= chatMessages.length && droppedMessages > 0) {
         throw new Error('Failed to build prompt. Context window overflow.')
-      }
-
-      if (droppedMessages) {
-        //TODO: this should always keep the system prompts
-        messages.slice(droppedMessages)
       }
 
       const template = new Template(promptConfig.template)
       const prompt = template.render({
-        messages,
+        messages: [
+          ...systemMessages,
+          ...chatMessages.slice(droppedMessages).flatMap((item) => {
+            return item.content.map((contentItem) => {
+              //TODO support non-string content types
+              return { role: item.role, content: contentItem.content }
+            })
+          })
+        ],
         bos_token: manifest.tokens.bosToken,
         eos_token: manifest.tokens.eosToken,
         add_generation_prompt: true
@@ -142,7 +155,7 @@ class LanguageModelHandler {
 
       const tokenCount = await AILlmSession.countTokens(prompt, TRANS_AIModelCoreState_To_AIRootModelProps(state), {})
       if (tokenCount <= state.contextSize) {
-        return prompt
+        return { prompt, usage: tokenCount }
       }
 
       droppedMessages++
@@ -189,10 +202,6 @@ class LanguageModelHandler {
     })
   }
 
-  /*#handleGetCapabilities = async (channel: IPCInflightChannel) => {
-    return APIHelper.handleGetStandardCapabilitiesData(channel, AIModelType.Text, AIModelPromptType.LanguageModel)
-  }*/
-
   /* **************************************************************************/
   // MARK: Handlers: Lifecycle
   /* **************************************************************************/
@@ -208,15 +217,10 @@ class LanguageModelHandler {
         topK: payload.getNumber('topK', manifest.config.topK?.[1] ?? 0),
         temperature: payload.getNumber('temperature', manifest.config.temperature?.[1] ?? 0),
         messages,
-        inputUsage: 0, // Filled later
+        inputUsage: -1, // Filled later
         inputQuota: manifest.tokens.max
       }
-
-      state.inputUsage = await AILlmSession.countTokens(
-        await this.#buildPrompt(manifest, state, messages),
-        TRANS_AIModelCoreState_To_AIRootModelProps(state),
-        {}
-      )
+      state.inputUsage = (await this.#buildPrompt(manifest, state, messages)).usage
 
       return { sessionId: nanoid(), state }
     })
@@ -230,31 +234,17 @@ class LanguageModelHandler {
   // MARK: Handlers: Token counting
   /* **************************************************************************/
 
-  /*#handleCountTokens = async (channel: IPCInflightChannel) => {
+  #handleMeasureInput = async (channel: IPCInflightChannel) => {
     return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
-      payload,
-      props
+      payload
     ) => {
-      const input = payload.getString('input')
-      const prompt = await this.#buildPrompt(
-        manifest,
-        props,
-        undefined,
-        [],
-        [{ role: AILanguageModelPromptRole.User, content: input }]
-      )
-      if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
-
-      const count = (await AILlmSession.countTokens(
-        prompt,
-        props,
-        { signal: channel.abortSignal }
-      )) as number
-
-      return count
+      const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
+      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
+      const { usage } = await this.#buildPrompt(manifest, coreState, messages)
+      return usage
     })
-  }*/
+  }
 
   /* **************************************************************************/
   // MARK: Handlers: Prompts
@@ -265,23 +255,22 @@ class LanguageModelHandler {
    * @param channel: the IPC channel that is being processed
    * @returns the stream response
    */
-  /*#handlePrompt = async (channel: IPCInflightChannel) => {
+  #handlePrompt = async (channel: IPCInflightChannel) => {
     return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
       manifest,
-      payload,
-      props
+      payload
     ) => {
-      const systemPrompt = payload.getString('props.systemPrompt')
-      const initialPrompts = payload.getAILanguageModelInitialPrompts('props.initialPrompts')
-      const messages = payload.getAILanguageModelPrompts('messages')
-      const prompt = await this.#buildPrompt(manifest, props, systemPrompt, initialPrompts, messages)
       const sessionId = payload.getNonEmptyString('sessionId')
-      if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
+      const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
+      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
+      const { prompt } = await this.#buildPrompt(manifest, coreState, messages)
 
+      //todo implement grammar parsing from payload.options.responseConstraint
+      //todo guard against unexpected message types
       const reply = (await AILlmSession.prompt(
         sessionId,
         prompt,
-        props,
+        TRANS_AIModelCoreState_To_AIRootModelProps(coreState),
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)
@@ -289,20 +278,14 @@ class LanguageModelHandler {
       )) as string
 
       return {
-        tokensSoFar: await AILlmSession.countTokens(
-          await this.#buildPrompt(
-            manifest,
-            props,
-            systemPrompt,
-            initialPrompts,
-            [...messages, { role: AILanguageModelPromptRole.Assistant, content: reply }]
-          ),
-          props,
-          {}
-        )
+        messages: [
+          ...messages,
+          { role: LanguageModelMessageRole.Assistant, content: reply }
+        ],
+        usage: (await this.#buildPrompt(manifest, coreState, messages)).usage
       }
     })
-  }*/
+  }
 }
 
 export default LanguageModelHandler
