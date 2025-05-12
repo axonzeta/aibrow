@@ -1,4 +1,8 @@
 import {
+  EmbeddingVector
+} from '#Shared/API2/Embedding/EmbeddingTypes'
+import Embedding from '#Shared/API2/Embedding/Embedding'
+import {
   LanguageModelMessageType,
   LanguageModelMessageRole
 } from '#Shared/API2/LanguageModel/LanguageModelTypes'
@@ -43,6 +47,9 @@ if (!genericWindow.Writer) {
 }
 
 export {
+  EmbeddingVector,
+  Embedding,
+
   LanguageModelMessageType,
   LanguageModelMessageRole,
   LanguageModel,
@@ -66,4 +73,3 @@ export default AIBrow
 
 //todo add genericWindow.ai?.__aibrowOverride === true support
 //todo window.translation
-//todo embedding

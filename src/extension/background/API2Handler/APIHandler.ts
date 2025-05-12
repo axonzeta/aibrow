@@ -6,6 +6,7 @@ import {
 } from '#Shared/API2/AIBrowTypes'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
+import EmbeddingHandler from './EmbeddingHandler'
 import LanguageModelHandler from './LanguageModelHandler'
 import RewriterHandler from './RewriterHandler'
 import SummarizerHandler from './SummarizerHandler'
@@ -25,6 +26,7 @@ class APIHandler {
 
   #port: chrome.runtime.Port
   #server: IPCServer
+  #embeddingHandler: EmbeddingHandler
   #languageModelHandler: LanguageModelHandler
   #rewriterHandler: RewriterHandler
   #summarizerHandler: SummarizerHandler
@@ -37,6 +39,7 @@ class APIHandler {
   constructor (port: chrome.runtime.Port) {
     this.#port = port
     this.#server = new IPCServer(port)
+    this.#embeddingHandler = new EmbeddingHandler(this.#server)
     this.#languageModelHandler = new LanguageModelHandler(this.#server)
     this.#rewriterHandler = new RewriterHandler(this.#server)
     this.#summarizerHandler = new SummarizerHandler(this.#server)

@@ -1,0 +1,5 @@
+export const kEmbeddingCompatibility = '2:AI:Embedding:Compatibility'
+export const kEmbeddingAvailability = '2:AI:Embedding:Availability'
+export const kEmbeddingCreate = '2:AI:Embedding:Create'
+export const kEmbeddingDestroy = '2:AI:Embedding:Destroy'
+export const kEmbeddingGet = '2:AI:Embedding:Get'

@@ -6,6 +6,7 @@ import {
 } from '#Shared/API2/AIBrowIPCTypes'
 import { throwIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import { AIBrowExtensionCapabilities } from '#Shared/API2/AIBrowTypes'
+import Embedding from '#Shared/API2/Embedding/Embedding'
 import LanguageModel from '#Shared/API2/LanguageModel/LanguageModel'
 import Rewriter from '#Shared/API2/Rewriter/Rewriter'
 import Summarizer from '#Shared/API2/Summarizer/Summarizer'
@@ -24,6 +25,8 @@ class AIBrow {
   // MARK: Properties
   /* **************************************************************************/
 
+  Embedding = Embedding
+
   LanguageModel = LanguageModel
 
   Rewriter = Rewriter
@@ -32,7 +35,7 @@ class AIBrow {
 
   Writer = Writer
 
-  //TODO: translation, embedding
+  //TODO: translation
 
   /* **************************************************************************/
   // MARK: Capabilities
