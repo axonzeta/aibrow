@@ -4,6 +4,9 @@ import { AIExtensionCapabilities, AIExtensionHelperInstalledState } from '#Share
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
 import LanguageModelHandler from './LanguageModelHandler'
+import RewriterHandler from './RewriterHandler'
+import SummarizerHandler from './SummarizerHandler'
+import WriterHandler from './WriterHandler'
 
 class APIHandler {
   /* **************************************************************************/
@@ -13,6 +16,9 @@ class APIHandler {
   #port: chrome.runtime.Port
   #server: IPCServer
   #languageModelHandler: LanguageModelHandler
+  #rewriterHandler: RewriterHandler
+  #summarizerHandler: SummarizerHandler
+  #writerHandler: WriterHandler
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -22,6 +28,9 @@ class APIHandler {
     this.#port = port
     this.#server = new IPCServer(port)
     this.#languageModelHandler = new LanguageModelHandler(this.#server)
+    this.#rewriterHandler = new RewriterHandler(this.#server)
+    this.#summarizerHandler = new SummarizerHandler(this.#server)
+    this.#writerHandler = new WriterHandler(this.#server)
 
     /*this.#server
       .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)

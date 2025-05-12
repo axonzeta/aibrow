@@ -1,5 +1,6 @@
 import {
-  AIModelCoreCreateOptions
+  AIModelCoreCreateOptions,
+  AIModelCoreState
 } from '../AICoreTypes'
 
 /* **************************************************************************/
@@ -7,20 +8,20 @@ import {
 /* **************************************************************************/
 
 export enum WriterTone {
-  Formal = "formal",
-  Neutral = "neutral",
-  Casual = "casual"
+  Formal = 'formal',
+  Neutral = 'neutral',
+  Casual = 'casual'
 }
 
 export enum WriterFormat {
-  PlainText = "plain-text",
-  Markdown = "markdown"
+  PlainText = 'plain-text',
+  Markdown = 'markdown'
 }
 
 export enum WriterLength {
-  Short = "short",
-  Medium = "medium",
-  Long = "long"
+  Short = 'short',
+  Medium = 'medium',
+  Long = 'long'
 }
 
 /* **************************************************************************/
@@ -45,4 +46,19 @@ export type WriterCreateOptions = AIModelCoreCreateOptions & {
 export type WriterWriteOptions = {
   signal?: AbortSignal
   context?: string
+}
+
+/* **************************************************************************/
+// MARK: State
+/* **************************************************************************/
+
+export type WriterState = AIModelCoreState & {
+  tone: WriterTone
+  format: WriterFormat
+  length: WriterLength
+  sharedContext: string
+  expectedInputLanguages: string[]
+  expectedContextLanguages: string[]
+  outputLanguage: string
+  inputQuota: number
 }

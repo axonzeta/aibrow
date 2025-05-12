@@ -240,8 +240,12 @@ class LanguageModelHandler {
       payload
     ) => {
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
+      const input = payload.getNonEmptyString('input')
       const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const { usage } = await this.#buildPrompt(manifest, coreState, messages)
+      const { usage } = await this.#buildPrompt(manifest, coreState, [
+        ...messages,
+        { role: LanguageModelMessageRole.User, content: [{ type: LanguageModelMessageType.Text, content: input }] }
+      ])
       return usage
     })
   }

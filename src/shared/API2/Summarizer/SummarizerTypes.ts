@@ -1,5 +1,6 @@
 import {
-  AIModelCoreCreateOptions
+  AIModelCoreCreateOptions,
+  AIModelCoreState
 } from '../AICoreTypes'
 
 /* **************************************************************************/
@@ -7,21 +8,21 @@ import {
 /* **************************************************************************/
 
 export enum SummarizerType {
-  Tldr = "tl;dr",
-  Teaser = "teaser",
-  KeyPoints = "key-points",
-  Headline = "headline"
+  Tldr = 'tl;dr',
+  Teaser = 'teaser',
+  KeyPoints = 'key-points',
+  Headline = 'headline'
 }
 
 export enum SummarizerFormat {
-  PlainText = "plain-text",
-  Markdown = "markdown"
+  PlainText = 'plain-text',
+  Markdown = 'markdown'
 }
 
 export enum SummarizerLength {
-  Short = "short",
-  Medium = "medium",
-  Long = "long"
+  Short = 'short',
+  Medium = 'medium',
+  Long = 'long'
 }
 
 /* **************************************************************************/
@@ -46,4 +47,19 @@ export type SummarizerCreateOptions = AIModelCoreCreateOptions & {
 export type SummarizerSummarizeOptions = {
   signal?: AbortSignal
   context?: string
+}
+
+/* **************************************************************************/
+// MARK: State
+/* **************************************************************************/
+
+export type SummarizerState = AIModelCoreState & {
+  type: SummarizerType
+  format: SummarizerFormat
+  length: SummarizerLength
+  sharedContext: string
+  expectedInputLanguages: string[]
+  expectedContextLanguages: string[]
+  outputLanguage: string
+  inputQuota: number
 }

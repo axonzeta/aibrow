@@ -1,5 +1,6 @@
 import {
-  AIModelCoreCreateOptions
+  AIModelCoreCreateOptions,
+  AIModelCoreState
 } from '../AICoreTypes'
 
 /* **************************************************************************/
@@ -7,21 +8,21 @@ import {
 /* **************************************************************************/
 
 export enum RewriterTone {
-  AsIs = "as-is",
-  MoreFormal = "more-formal",
-  MoreCasual = "more-casual"
+  AsIs = 'as-is',
+  MoreFormal = 'more-formal',
+  MoreCasual = 'more-casual'
 }
 
 export enum RewriterFormat {
-  AsIs = "as-is",
-  PlainText = "plain-text",
-  Markdown = "markdown"
+  AsIs = 'as-is',
+  PlainText = 'plain-text',
+  Markdown = 'markdown'
 }
 
 export enum RewriterLength {
-  AsIs = "as-is",
-  Shorter = "shorter",
-  Longer = "longer"
+  AsIs = 'as-is',
+  Shorter = 'shorter',
+  Longer = 'longer'
 }
 
 /* **************************************************************************/
@@ -40,10 +41,25 @@ export type RewriterCreateOptions = AIModelCoreCreateOptions & {
 }
 
 /* **************************************************************************/
-// MARK: Rew
+// MARK: Options
 /* **************************************************************************/
 
 export type RewriterWriteOptions = {
   signal?: AbortSignal
   context?: string
+}
+
+/* **************************************************************************/
+// MARK: State
+/* **************************************************************************/
+
+export type RewriterState = AIModelCoreState & {
+  tone: RewriterTone
+  format: RewriterFormat
+  length: RewriterLength
+  sharedContext: string
+  expectedInputLanguages: string[]
+  expectedContextLanguages: string[]
+  outputLanguage: string
+  inputQuota: number
 }

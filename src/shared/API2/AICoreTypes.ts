@@ -94,7 +94,27 @@ export type AIModelCoreState = {
 /* **************************************************************************/
 
 export abstract class AICoreModel {
+  /* **************************************************************************/
+  // MARK: Compatibility
+  /* **************************************************************************/
+
   static compatibility: (options: AIModelCoreCreateOptions) => Promise<AIModelCoreCompatibility | null>
 
+  /* **************************************************************************/
+  // MARK: Lifecycle
+  /* **************************************************************************/
+
   destroy: () => void
+
+  /* **************************************************************************/
+  // MARK: Properties
+  /* **************************************************************************/
+
+  abstract get gpuEngine (): AIModelGpuEngine
+
+  abstract get dtype (): AIModelDType
+
+  abstract get flashAttention (): boolean
+
+  abstract get contextSize (): number
 }

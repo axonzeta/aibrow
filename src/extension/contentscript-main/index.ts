@@ -1,6 +1,9 @@
 import IPCRegistrar from '#Shared/API2/IPCRegistrar'
 import IPC from './IPC'
 import LanguageModel from '#Shared/API2/LanguageModel/LanguageModel'
+import Rewriter from '#Shared/API2/Rewriter/Rewriter'
+import Summarizer from '#Shared/API2/Summarizer/Summarizer'
+import Writer from '#Shared/API2/Writer/Writer'
 
 IPCRegistrar.ipc = IPC
 
@@ -8,7 +11,8 @@ const genericWindow = window as any
 
 // Expose aibrow
 const aibrow = {
-  LanguageModel
+  LanguageModel,
+  Rewriter
 }
 genericWindow.aibrow = aibrow
 
@@ -16,9 +20,21 @@ genericWindow.aibrow = aibrow
 if (!genericWindow.LanguageModel) {
   genericWindow.LanguageModel = LanguageModel
 }
+if (!genericWindow.Rewriter) {
+  genericWindow.Rewriter = Rewriter
+}
+if (!genericWindow.Summarizer) {
+  genericWindow.Summarizer = Summarizer
+}
+if (!genericWindow.Writer) {
+  genericWindow.Writer = Writer
+}
 
 export {
-  LanguageModel
+  LanguageModel,
+  Rewriter,
+  Summarizer,
+  Writer
 }
 export default aibrow
 

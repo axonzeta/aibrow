@@ -110,7 +110,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
       signal: parentSignal,
       ...passOptions
     } = this.#options
-    const signal = AbortSignal.any([options.signal, parentSignal].filter(Boolean))
+    const signal = AbortSignal.any([options.signal, parentSignal].filter((s): s is AbortSignal => s !== undefined))
 
     const { sessionId, state } = throwIPCErrorResponse(
       await IPCRegistrar.ipc.request(
@@ -171,7 +171,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
 
   promptStreaming = (input: LanguageModelPrompt, options: LanguageModelPromptOptions = {}): ReadableStream => {
     this.#guardDestroyed()
-    const signal = AbortSignal.any([options.signal, this.#options.signal].filter(Boolean))
+    const signal = AbortSignal.any([options.signal, this.#options.signal].filter((s) => s !== undefined))
 
     this.#state.messages.push(...languageModelPromptToMessages(input))
 
@@ -191,8 +191,8 @@ export class LanguageModel extends EventTarget implements AICoreModel {
           },
           { signal }
         ).then(
-          (stateDelta: Partial<LanguageModelState>) => {
-            this.#state = { ...this.#state, ...stateDelta }
+          (stateDelta: unknown) => {
+            this.#state = { ...this.#state, ...(stateDelta as Partial<LanguageModelState>) }
             controller.close()
           },
           (ex: Error) => {
@@ -211,8 +211,8 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   measureInputUsage = async (input: string, options: LanguageModelPromptOptions = {}): Promise<number> => {
     this.#guardDestroyed()
 
-    const signal = AbortSignal.any([options.signal, this.#options.signal].filter(Boolean))
-    const count = (await IPCRegistrar.ipc.request(kLanguageModelMeasureInput, { state: this.#state }, { signal })) as number
+    const signal = AbortSignal.any([options.signal, this.#options.signal].filter((s) => s !== undefined))
+    const count = (await IPCRegistrar.ipc.request(kLanguageModelMeasureInput, { input, state: this.#state }, { signal })) as number
     return count
   }
 }

@@ -16,7 +16,6 @@ import {
   kPermissionDenied,
   kModelCreationAborted,
   kGpuEngineNotSupported,
-  kModelPromptAborted,
   kModelPromptTypeNotSupported,
   kModelFormatNotSupported,
   kModelIdProviderUnsupported,
@@ -220,30 +219,6 @@ class APIHelper {
       }
     })
   }
-
-  /**
-   * Takes a AiModelProps from the API and converts it to the core llm prompt options
-   * @param modelId: the id of the model
-   * @param gpuEngine: the gpu engine to use
-   * @param manifest: the manifest of the model
-   * @param modelProps: the model props
-   * @returns the core llm prompt options
-   */
-  /*async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AIModelGpuEngine, manifest: AIModelManifest, modelProps: any) {
-    const props = new TypoParser(modelProps)
-    return {
-      model: modelId.toString(),
-      gpuEngine,
-      topK: props.getRange('topK', manifest.config.topK),
-      topP: props.getRange('topP', manifest.config.topP),
-      temperature: props.getRange('temperature', manifest.config.temperature),
-      repeatPenalty: props.getRange('repeatPenalty', manifest.config.repeatPenalty),
-      flashAttention: props.getBool('flashAttention', manifest.config.flashAttention),
-      contextSize: clamp(props.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
-      useMmap: await getUseMmap(),
-      grammar: props.getAny('grammar')
-    } as AIRootModelProps
-  }*/
 
   /**
    * Gets the core model state from the provided user options
