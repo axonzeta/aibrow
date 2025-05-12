@@ -1,12 +1,22 @@
 import IPCServer from '#Shared/IPC/IPCServer'
 import System from '../System'
-import { AIExtensionCapabilities, AIExtensionHelperInstalledState } from '#Shared/API/AI'
+import {
+  AIBrowExtensionCapabilities,
+  AIBrowExtensionHelperInstalledState
+} from '#Shared/API2/AIBrowTypes'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
 import LanguageModelHandler from './LanguageModelHandler'
 import RewriterHandler from './RewriterHandler'
 import SummarizerHandler from './SummarizerHandler'
 import WriterHandler from './WriterHandler'
+import {
+  kAIBrowGetCapabilities,
+  kAIBrowGetNativeHelperDownloadUrl
+} from '#Shared/API2/AIBrowIPCTypes'
+import {
+  TRANS_AIExtensionHelperInstalledState_To_AIBrow
+} from '#Shared/API2/Transition'
 
 class APIHandler {
   /* **************************************************************************/
@@ -32,26 +42,26 @@ class APIHandler {
     this.#summarizerHandler = new SummarizerHandler(this.#server)
     this.#writerHandler = new WriterHandler(this.#server)
 
-    /*this.#server
-      .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
-      .addRequestHandler(kAIGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)*/
+    this.#server
+      .addRequestHandler(kAIBrowGetCapabilities, this.#handleGetCapabilities)
+      .addRequestHandler(kAIBrowGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)
   }
 
   /* **************************************************************************/
   // MARK: Handlers: Capabilities
   /* **************************************************************************/
 
-  #handleGetCapabilities = async () => {//todo
-    const nativeInstalledState = await System.isNativeInstalled()
+  #handleGetCapabilities = async () => {
+    const nativeInstalledState = TRANS_AIExtensionHelperInstalledState_To_AIBrow(await System.isNativeInstalled())
     return {
-      ready: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
+      ready: nativeInstalledState === AIBrowExtensionHelperInstalledState.Responded,
       extension: true,
-      helper: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
+      helper: nativeInstalledState === AIBrowExtensionHelperInstalledState.Responded,
       helperState: nativeInstalledState
-    } as AIExtensionCapabilities
+    } as AIBrowExtensionCapabilities
   }
 
-  #handleGetNativeHelperDownloadUrl = async () => {//todo
+  #handleGetNativeHelperDownloadUrl = async () => {
     const platformInfo = await chrome.runtime.getPlatformInfo()
 
     let platform: string
