@@ -3,6 +3,10 @@ import {
 } from '#Shared/API2/Embedding/EmbeddingTypes'
 import Embedding from '#Shared/API2/Embedding/Embedding'
 import {
+  LanguageDetectorDetectionResult
+} from '#Shared/API2/LanguageDetector/LanguageDetectorTypes'
+import LanguageDetector from '#Shared/API2/LanguageDetector/LanguageDetector'
+import {
   LanguageModelMessageType,
   LanguageModelMessageRole
 } from '#Shared/API2/LanguageModel/LanguageModelTypes'
@@ -19,6 +23,7 @@ import {
   SummarizerType
 } from '#Shared/API2/Summarizer/SummarizerTypes'
 import Summarizer from '#Shared/API2/Summarizer/Summarizer'
+import Translator from '#Shared/API2/Translator/Translator'
 import {
   WriterTone,
   WriterLength,
@@ -33,6 +38,9 @@ const genericWindow = window as any
 genericWindow.aibrow = AIBrow
 
 // Polyfill for the main window
+if (!genericWindow.LanguageDetector) {
+  genericWindow.LanguageDetector = AIBrow.LanguageDetector
+}
 if (!genericWindow.LanguageModel) {
   genericWindow.LanguageModel = AIBrow.LanguageModel
 }
@@ -42,6 +50,9 @@ if (!genericWindow.Rewriter) {
 if (!genericWindow.Summarizer) {
   genericWindow.Summarizer = AIBrow.Summarizer
 }
+if (!genericWindow.Translator) {
+  genericWindow.Translator = AIBrow.Translator
+}
 if (!genericWindow.Writer) {
   genericWindow.Writer = AIBrow.Writer
 }
@@ -49,6 +60,9 @@ if (!genericWindow.Writer) {
 export {
   EmbeddingVector,
   Embedding,
+
+  LanguageDetectorDetectionResult,
+  LanguageDetector,
 
   LanguageModelMessageType,
   LanguageModelMessageRole,
@@ -64,6 +78,8 @@ export {
   SummarizerType,
   Summarizer,
 
+  Translator,
+
   WriterTone,
   WriterLength,
   WriterFormat,
@@ -72,4 +88,3 @@ export {
 export default AIBrow
 
 //todo add genericWindow.ai?.__aibrowOverride === true support
-//todo window.translation

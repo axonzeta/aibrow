@@ -7,9 +7,11 @@ import {
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
 import EmbeddingHandler from './EmbeddingHandler'
+import LanguageDetectorHandler from './LanguageDetectorHandler'
 import LanguageModelHandler from './LanguageModelHandler'
 import RewriterHandler from './RewriterHandler'
 import SummarizerHandler from './SummarizerHandler'
+import TranslatorHandler from './TranslatorHandler'
 import WriterHandler from './WriterHandler'
 import {
   kAIBrowGetCapabilities,
@@ -27,9 +29,11 @@ class APIHandler {
   #port: chrome.runtime.Port
   #server: IPCServer
   #embeddingHandler: EmbeddingHandler
+  #languageDetectorHandler: LanguageDetectorHandler
   #languageModelHandler: LanguageModelHandler
   #rewriterHandler: RewriterHandler
   #summarizerHandler: SummarizerHandler
+  #translatorHandler: TranslatorHandler
   #writerHandler: WriterHandler
 
   /* **************************************************************************/
@@ -40,9 +44,11 @@ class APIHandler {
     this.#port = port
     this.#server = new IPCServer(port)
     this.#embeddingHandler = new EmbeddingHandler(this.#server)
+    this.#languageDetectorHandler = new LanguageDetectorHandler(this.#server)
     this.#languageModelHandler = new LanguageModelHandler(this.#server)
     this.#rewriterHandler = new RewriterHandler(this.#server)
     this.#summarizerHandler = new SummarizerHandler(this.#server)
+    this.#translatorHandler = new TranslatorHandler(this.#server)
     this.#writerHandler = new WriterHandler(this.#server)
 
     this.#server
