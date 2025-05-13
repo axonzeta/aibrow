@@ -1,17 +1,22 @@
 import IPCServer from '#Shared/IPC/IPCServer'
-import AIRewriterHandler from './AIRewriterHandler'
-import AISummarizerHandler from './AISummarizerHandler'
-import AIWriterHandler from './AIWriterHandler'
-import AILanguageModelHandler from './AILanguageModelHandler'
-import AICoreModelHandler from './AICoreModelHandler'
-import AIEmbeddingHandler from './AIEmbeddingHandler'
-import AILanguageDetectorHandler from './AILanguageDetectorHandler'
-import AITranslatorHandler from './AITranslatorHandler'
-import { kAIGetCapabilities, kAIGetNativeHelperDownloadUrl } from '#Shared/API/AIIPCTypes'
 import System from '../System'
-import { AIExtensionCapabilities, AIExtensionHelperInstalledState } from '#Shared/API/AI'
+import {
+  AIBrowExtensionCapabilities,
+  AIBrowExtensionHelperInstalledState
+} from '#Shared/API/AIBrowTypes'
 import urlJoin from 'url-join'
 import config from '#Shared/Config'
+import EmbeddingHandler from './EmbeddingHandler'
+import LanguageDetectorHandler from './LanguageDetectorHandler'
+import LanguageModelHandler from './LanguageModelHandler'
+import RewriterHandler from './RewriterHandler'
+import SummarizerHandler from './SummarizerHandler'
+import TranslatorHandler from './TranslatorHandler'
+import WriterHandler from './WriterHandler'
+import {
+  kAIBrowGetCapabilities,
+  kAIBrowGetNativeHelperDownloadUrl
+} from '#Shared/API/AIBrowIPCTypes'
 
 class APIHandler {
   /* **************************************************************************/
@@ -20,14 +25,13 @@ class APIHandler {
 
   #port: chrome.runtime.Port
   #server: IPCServer
-  #rewriterHandler: AIRewriterHandler
-  #summarizerHandler: AISummarizerHandler
-  #writerHandler: AIWriterHandler
-  #languageModelHandler: AILanguageModelHandler
-  #coreModelHandler: AICoreModelHandler
-  #embeddingHandler: AIEmbeddingHandler
-  #languageDetectorHandler: AILanguageDetectorHandler
-  #translatorHandler: AITranslatorHandler
+  #embeddingHandler: EmbeddingHandler
+  #languageDetectorHandler: LanguageDetectorHandler
+  #languageModelHandler: LanguageModelHandler
+  #rewriterHandler: RewriterHandler
+  #summarizerHandler: SummarizerHandler
+  #translatorHandler: TranslatorHandler
+  #writerHandler: WriterHandler
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -36,18 +40,17 @@ class APIHandler {
   constructor (port: chrome.runtime.Port) {
     this.#port = port
     this.#server = new IPCServer(port)
-    this.#rewriterHandler = new AIRewriterHandler(this.#server)
-    this.#summarizerHandler = new AISummarizerHandler(this.#server)
-    this.#writerHandler = new AIWriterHandler(this.#server)
-    this.#languageModelHandler = new AILanguageModelHandler(this.#server)
-    this.#coreModelHandler = new AICoreModelHandler(this.#server)
-    this.#embeddingHandler = new AIEmbeddingHandler(this.#server)
-    this.#languageDetectorHandler = new AILanguageDetectorHandler(this.#server)
-    this.#translatorHandler = new AITranslatorHandler(this.#server)
+    this.#embeddingHandler = new EmbeddingHandler(this.#server)
+    this.#languageDetectorHandler = new LanguageDetectorHandler(this.#server)
+    this.#languageModelHandler = new LanguageModelHandler(this.#server)
+    this.#rewriterHandler = new RewriterHandler(this.#server)
+    this.#summarizerHandler = new SummarizerHandler(this.#server)
+    this.#translatorHandler = new TranslatorHandler(this.#server)
+    this.#writerHandler = new WriterHandler(this.#server)
 
     this.#server
-      .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
-      .addRequestHandler(kAIGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)
+      .addRequestHandler(kAIBrowGetCapabilities, this.#handleGetCapabilities)
+      .addRequestHandler(kAIBrowGetNativeHelperDownloadUrl, this.#handleGetNativeHelperDownloadUrl)
   }
 
   /* **************************************************************************/
@@ -57,11 +60,11 @@ class APIHandler {
   #handleGetCapabilities = async () => {
     const nativeInstalledState = await System.isNativeInstalled()
     return {
-      ready: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
+      ready: nativeInstalledState === AIBrowExtensionHelperInstalledState.Responded,
       extension: true,
-      helper: nativeInstalledState === AIExtensionHelperInstalledState.Responded,
+      helper: nativeInstalledState === AIBrowExtensionHelperInstalledState.Responded,
       helperState: nativeInstalledState
-    } as AIExtensionCapabilities
+    } as AIBrowExtensionCapabilities
   }
 
   #handleGetNativeHelperDownloadUrl = async () => {

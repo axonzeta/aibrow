@@ -1,5 +1,2 @@
-import AI from './AI'
-
-export const ai = new AI(window.ai)
-
-export default ai
+import AIBrow from './AIBrow'
+export default AIBrow

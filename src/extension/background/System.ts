@@ -10,7 +10,9 @@ import {
 } from '#Shared/Prefs'
 import config from '#Shared/Config'
 import { kNativeMessagingHostNotFound } from '#Shared/BrowserErrors'
-import { AIExtensionHelperInstalledState } from '#Shared/API/AI'
+import {
+  AIBrowExtensionHelperInstalledState
+} from '#Shared/API/AIBrowTypes'
 
 class System {
   /* **************************************************************************/
@@ -57,20 +59,20 @@ class System {
   /**
    * @return the current installed state
    */
-  async isNativeInstalled (): Promise<AIExtensionHelperInstalledState> {
+  async isNativeInstalled (): Promise<AIBrowExtensionHelperInstalledState> {
     try {
       // We re-use the management getInfo call for this
       const info = await this.getNativeInfo()
       if (info?.apiVersion === config.native.apiVersion) {
-        return AIExtensionHelperInstalledState.Responded
+        return AIBrowExtensionHelperInstalledState.Responded
       } else {
-        return AIExtensionHelperInstalledState.RespondedOutdated
+        return AIBrowExtensionHelperInstalledState.RespondedOutdated
       }
     } catch (ex) {
       if (ex.message === kNativeMessagingHostNotFound) {
-        return AIExtensionHelperInstalledState.NotInstalled
+        return AIBrowExtensionHelperInstalledState.NotInstalled
       } else {
-        return AIExtensionHelperInstalledState.Errored
+        return AIBrowExtensionHelperInstalledState.Errored
       }
     }
   }

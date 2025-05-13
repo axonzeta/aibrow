@@ -1,4 +1,4 @@
-import { AIModelType } from './API/AI'
+import { AIModelType } from './API/AICoreTypes'
 
 export type Config = {
   version: string,

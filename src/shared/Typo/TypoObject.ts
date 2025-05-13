@@ -7,9 +7,7 @@ import {
   getEnum,
   getBool,
   getAny,
-  getRange,
-  getAILanguageModelInitialPrompts,
-  getAILanguageModelPrompts
+  getRange
 } from './TypoParser'
 
 class TypoObject {
@@ -69,18 +67,6 @@ class TypoObject {
 
   getRange (path: string, range: [number, number, number]) {
     return getRange(this.#get(path), range)
-  }
-
-  /* **************************************************************************/
-  // MARK: AI Language model
-  /* **************************************************************************/
-
-  getAILanguageModelInitialPrompts (path: string) {
-    return getAILanguageModelInitialPrompts(this.#get(path))
-  }
-
-  getAILanguageModelPrompts (path: string) {
-    return getAILanguageModelPrompts(this.#get(path))
   }
 }
 

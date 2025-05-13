@@ -1,63 +1,49 @@
 import {
   EmbeddingVector
-} from '#Shared/API2/Embedding/EmbeddingTypes'
-import Embedding from '#Shared/API2/Embedding/Embedding'
+} from '#Shared/API/Embedding/EmbeddingTypes'
+import Embedding from '#Shared/API/Embedding/Embedding'
 import {
   LanguageDetectorDetectionResult
-} from '#Shared/API2/LanguageDetector/LanguageDetectorTypes'
-import LanguageDetector from '#Shared/API2/LanguageDetector/LanguageDetector'
+} from '#Shared/API/LanguageDetector/LanguageDetectorTypes'
+import LanguageDetector from '#Shared/API/LanguageDetector/LanguageDetector'
 import {
   LanguageModelMessageType,
   LanguageModelMessageRole
-} from '#Shared/API2/LanguageModel/LanguageModelTypes'
-import LanguageModel from '#Shared/API2/LanguageModel/LanguageModel'
+} from '#Shared/API/LanguageModel/LanguageModelTypes'
+import LanguageModel from '#Shared/API/LanguageModel/LanguageModel'
 import {
   RewriterTone,
   RewriterLength,
   RewriterFormat
-} from '#Shared/API2/Rewriter/RewriterTypes'
-import Rewriter from '#Shared/API2/Rewriter/Rewriter'
+} from '#Shared/API/Rewriter/RewriterTypes'
+import Rewriter from '#Shared/API/Rewriter/Rewriter'
 import {
   SummarizerLength,
   SummarizerFormat,
   SummarizerType
-} from '#Shared/API2/Summarizer/SummarizerTypes'
-import Summarizer from '#Shared/API2/Summarizer/Summarizer'
-import Translator from '#Shared/API2/Translator/Translator'
+} from '#Shared/API/Summarizer/SummarizerTypes'
+import Summarizer from '#Shared/API/Summarizer/Summarizer'
+import Translator from '#Shared/API/Translator/Translator'
 import {
   WriterTone,
   WriterLength,
   WriterFormat
-} from '#Shared/API2/Writer/WriterTypes'
-import Writer from '#Shared/API2/Writer/Writer'
+} from '#Shared/API/Writer/WriterTypes'
+import Writer from '#Shared/API/Writer/Writer'
 import AIBrow from './AIBrow'
+import {
+  AIBrowExtensionHelperInstalledState
+} from '#Shared/API/AIBrowTypes'
 
 const genericWindow = window as any
 
 // Expose aibrow
 genericWindow.aibrow = AIBrow
-
-// Polyfill for the main window
-if (!genericWindow.LanguageDetector) {
-  genericWindow.LanguageDetector = AIBrow.LanguageDetector
-}
-if (!genericWindow.LanguageModel) {
-  genericWindow.LanguageModel = AIBrow.LanguageModel
-}
-if (!genericWindow.Rewriter) {
-  genericWindow.Rewriter = AIBrow.Rewriter
-}
-if (!genericWindow.Summarizer) {
-  genericWindow.Summarizer = AIBrow.Summarizer
-}
-if (!genericWindow.Translator) {
-  genericWindow.Translator = AIBrow.Translator
-}
-if (!genericWindow.Writer) {
-  genericWindow.Writer = AIBrow.Writer
-}
+AIBrow.overrideBrowserAPI(genericWindow.__aibrowOverride === true)
 
 export {
+  AIBrowExtensionHelperInstalledState,
+
   EmbeddingVector,
   Embedding,
 
@@ -86,5 +72,3 @@ export {
   Writer
 }
 export default AIBrow
-
-//todo add genericWindow.ai?.__aibrowOverride === true support

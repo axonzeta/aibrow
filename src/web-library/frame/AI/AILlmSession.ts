@@ -1,11 +1,11 @@
 import {
   AIModelGpuEngine,
   AIModelDType,
-  AIRootModelProps
-} from '#Shared/API/AI'
+  AIModelPromptProps
+} from '#Shared/API/AICoreTypes'
 import {
-  AIEmbeddingVector
-} from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
+  EmbeddingVector
+} from '#Shared/API/Embedding/EmbeddingTypes'
 import {
   kGpuEngineNotSupported,
   kModelFormatNotSupported,
@@ -119,7 +119,7 @@ class AILlmSession {
   /**
    * Creates a new session
    */
-  #createSession = async (sessionId: string, props: AIRootModelProps, progressFn?: ModelDownloadProgressFn) => {
+  #createSession = async (sessionId: string, props: Partial<AIModelPromptProps>, progressFn?: ModelDownloadProgressFn) => {
     // See if we can reuse the current session
     if (this.#session && this.#session.id === sessionId) { return }
     const options: AISessionOptions = {
@@ -198,7 +198,7 @@ class AILlmSession {
    * @param progressFn: the progress function
    * @returns
    */
-  async createPromptSession (sessionId: string, props: AIRootModelProps, progressFn?: ModelDownloadProgressFn) {
+  async createPromptSession (sessionId: string, props: Partial<AIModelPromptProps>, progressFn?: ModelDownloadProgressFn) {
     this.#ensureGpuEngineSupported(props.gpuEngine)
     return this.#requestQueue.push(async () => {
       await this.#createSession(sessionId, props, progressFn)
@@ -223,7 +223,7 @@ class AILlmSession {
    * @param props: the prompt model props
    * @param streamOptions: the options for the return stream
    */
-  async prompt (sessionId: string, prompt: string, props: AIRootModelProps, streamOptions: PromptStreamOptions) {
+  async prompt (sessionId: string, prompt: string, props: Partial<AIModelPromptProps>, streamOptions: PromptStreamOptions) {
     this.#ensureGpuEngineSupported(props.gpuEngine)
     return this.#requestQueue.push(async () => {
       if (streamOptions.signal?.aborted) { throw new Error(kModelPromptAborted) }
@@ -267,7 +267,7 @@ class AILlmSession {
    * @param requestOptions: the requestOptions
    * @return the embedding vector
    */
-  async getEmbeddingVectors (sessionId: string, inputs: string[], props: AIRootModelProps, requestOptions: GetEmbeddingRequestOptions) {
+  async getEmbeddingVectors (sessionId: string, inputs: string[], props: Partial<AIModelPromptProps>, requestOptions: GetEmbeddingRequestOptions) {
     this.#ensureGpuEngineSupported(props.gpuEngine)
 
     return this.#requestQueue.push(async () => {
@@ -277,14 +277,14 @@ class AILlmSession {
 
       const pipe = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2')
 
-      const result: AIEmbeddingVector[] = []
+      const result: EmbeddingVector[] = []
       for (const input of inputs) {
         const res = await pipe(input, { pooling: 'mean', normalize: true })
         result.push(Array.from(res.data))
       }
 
       return result
-    }) as Promise<AIEmbeddingVector[]>
+    }) as Promise<EmbeddingVector[]>
   }
 
   /* **************************************************************************/
@@ -299,7 +299,7 @@ class AILlmSession {
    * @param requestOptions: the request options
    * @return the token count
    */
-  async countTokens (sessionId: string, input: string, props: AIRootModelProps, requestOptions: CountTokensRequestOptions) {
+  async countTokens (sessionId: string, input: string, props: Partial<AIModelPromptProps>, requestOptions: CountTokensRequestOptions) {
     this.#ensureGpuEngineSupported(props.gpuEngine)
     this.#ensureGpuEngineSupported(props.gpuEngine)
     return this.#requestQueue.push(async () => {

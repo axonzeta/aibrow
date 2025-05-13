@@ -34,7 +34,7 @@ import {
   setOverrideBrowserAI
 } from '#Shared/Prefs'
 import config from '#Shared/Config'
-import { AIModelGpuEngine, AIModelType } from '#Shared/API/AI'
+import { AIModelGpuEngine, AIModelType } from '#Shared/API/AICoreTypes'
 import { UpdateResult } from '#Shared/Updater'
 
 /* **************************************************************************/

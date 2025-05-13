@@ -1,11 +1,15 @@
-import AIImpl from './AI'
-import AibrowAIImpl from './AibrowAI'
-import BrowserAIImpl from './BrowserAI'
-import WebAIImpl from './WebAI'
+import AIBrowImpl from './AIBrow'
+import BrowserImpl from './Browser'
+import AIBrowWebImpl from './AIBrowWeb'
 
-export const AI = AIImpl
-export const AibrowAI = AibrowAIImpl
-export const BrowserAI = BrowserAIImpl
-export const WebAI = WebAIImpl
+export const AI = {
+  AIBrow: AIBrowImpl,
+  AIBrowWeb: AIBrowWebImpl,
+  Browser: BrowserImpl
+}
+
+export const AIBrow = AIBrowImpl
+export const AIBrowWeb = AIBrowWebImpl
+export const Browser = BrowserImpl
 
 export default AI

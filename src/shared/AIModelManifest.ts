@@ -1,7 +1,7 @@
 import {
   AIModelGpuEngine,
   AIModelDType
-} from './API/AI'
+} from './API/AICoreTypes'
 
 /* **************************************************************************/
 // MARK: Assets

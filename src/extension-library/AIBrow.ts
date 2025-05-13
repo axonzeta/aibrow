@@ -56,34 +56,6 @@ class AIBrow {
     const url = await IPC.request(kAIBrowGetNativeHelperDownloadUrl, {})
     return url as string
   }
-
-  /* **************************************************************************/
-  // MARK: Overriding
-  /* **************************************************************************/
-
-  overrideBrowserAPI (force = false) {
-    const genericWindow = window as any
-
-    // Polyfill for the main window
-    if (force || !genericWindow.LanguageDetector) {
-      genericWindow.LanguageDetector = this.LanguageDetector
-    }
-    if (force || !genericWindow.LanguageModel) {
-      genericWindow.LanguageModel = this.LanguageModel
-    }
-    if (force || !genericWindow.Rewriter) {
-      genericWindow.Rewriter = this.Rewriter
-    }
-    if (force || !genericWindow.Summarizer) {
-      genericWindow.Summarizer = this.Summarizer
-    }
-    if (force || !genericWindow.Translator) {
-      genericWindow.Translator = this.Translator
-    }
-    if (force || !genericWindow.Writer) {
-      genericWindow.Writer = this.Writer
-    }
-  }
 }
 
 export default new AIBrow()

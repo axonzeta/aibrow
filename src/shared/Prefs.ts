@@ -1,5 +1,5 @@
 import config from './Config'
-import { AIModelType } from './API/AI'
+import { AIModelType } from './API/AICoreTypes'
 
 /* **************************************************************************/
 // MARK: Base

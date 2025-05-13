@@ -1,4 +1,4 @@
-import { AIModelGpuEngine, AIRootModelProps } from '#Shared/API/AI'
+import { AIModelGpuEngine, AIModelPromptProps } from '#Shared/API/AICoreTypes'
 import NativeIPC from '../NativeIPC'
 import {
   kLlmSessionGetSupportedGpuEngines,
@@ -9,8 +9,8 @@ import {
   kLlmSessionDisposeSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
 import {
-  AIEmbeddingVector
-} from '#Shared/API/AIEmbedding/AIEmbeddingTypes'
+  EmbeddingVector
+} from '#Shared/API/Embedding/EmbeddingTypes'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
 import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 
@@ -121,7 +121,7 @@ class AILlmSession {
    * @param props: the prompt model props
    * @param streamOptions: the options for the return stream
    */
-  async prompt (sessionId: string, prompt: string, props: AIRootModelProps, streamOptions: PromptStreamOptions) {
+  async prompt (sessionId: string, prompt: string, props: Partial<AIModelPromptProps>, streamOptions: PromptStreamOptions) {
     await this.#ensureGpuEngineSupported(props.gpuEngine)
 
     const res = await NativeIPC.stream(
@@ -141,14 +141,14 @@ class AILlmSession {
    * @param requestOptions: the requestOptions
    * @return the embedding vector
    */
-  async getEmbeddingVectors (sessionId: string, inputs: string[], props: AIRootModelProps, requestOptions: GetEmbeddingRequestOptions) {
+  async getEmbeddingVectors (sessionId: string, inputs: string[], props: Partial<AIModelPromptProps>, requestOptions: GetEmbeddingRequestOptions) {
     await this.#ensureGpuEngineSupported(props.gpuEngine)
 
-    const res: AIEmbeddingVector[] = []
+    const res: EmbeddingVector[] = []
     await NativeIPC.stream(
       kLlmSessionGetEmbeddingVectors,
       { inputs, props },
-      (chunk: AIEmbeddingVector) => { res.push(chunk) },
+      (chunk: EmbeddingVector) => { res.push(chunk) },
       { signal: requestOptions.signal }
     )
 
@@ -174,7 +174,7 @@ class AILlmSession {
    * @param requestOptions: the request options
    * @return the token count
    */
-  async countTokens (input: string, props: AIRootModelProps, requestOptions: CountTokensRequestOptions) {
+  async countTokens (input: string, props: Partial<AIModelPromptProps>, requestOptions: CountTokensRequestOptions) {
     await this.#ensureGpuEngineSupported(props.gpuEngine)
 
     const res = await NativeIPC.request(

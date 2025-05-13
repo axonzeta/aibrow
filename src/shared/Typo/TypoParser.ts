@@ -1,10 +1,3 @@
-import {
-  AILanguageModelInitialPrompt,
-  AILanguageModelInitialPromptRole,
-  AILanguageModelPrompt,
-  AILanguageModelPromptRole
-} from '../API/AILanguageModel/AILanguageModelTypes'
-
 /* **************************************************************************/
 // MARK: Base types
 /* **************************************************************************/
@@ -46,38 +39,4 @@ export function clamp (val: number, min: number, max: number) {
 export function getRange (val: any, range: [number, number, number]) {
   const [min, defaultVal, max] = range
   return clamp(getNumber(val, defaultVal), min, max)
-}
-
-/* **************************************************************************/
-// MARK: AI Language model
-/* **************************************************************************/
-
-export function getAILanguageModelInitialPrompts (prompts: any): AILanguageModelInitialPrompt[] {//todo dep
-  if (Array.isArray(prompts)) {
-    return prompts.reduce((acc, prompt) => {
-      const content = getNonEmptyString(prompt?.content)
-      const role = getEnum(prompt?.role, AILanguageModelInitialPromptRole)
-      if (content && role) {
-        acc.push({ content, role })
-      }
-      return acc
-    }, [])
-  }
-
-  return []
-}
-
-export function getAILanguageModelPrompts (prompts: any): AILanguageModelPrompt[] {//todo dep
-  if (Array.isArray(prompts)) {
-    return prompts.reduce((acc, prompt) => {
-      const content = getNonEmptyString(prompt?.content)
-      const role = getEnum(prompt?.role, AILanguageModelPromptRole)
-      if (content && role) {
-        acc.push({ content, role })
-      }
-      return acc
-    }, [])
-  }
-
-  return []
 }

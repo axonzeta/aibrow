@@ -1,6 +1,8 @@
 import System from './System'
 import config from '#Shared/Config'
-import { AIExtensionHelperInstalledState } from '#Shared/API/AI'
+import {
+  AIBrowExtensionHelperInstalledState
+} from '#Shared/API/AIBrowTypes'
 
 export enum NativeInstallHelperShowReason {
   Install = 'install',
@@ -27,7 +29,7 @@ class NativeInstallHelperImpl {
   start () {
     chrome.runtime.onInstalled.addListener(async (details) => {
       if (details.reason === 'install') {
-        if (await System.isNativeInstalled() !== AIExtensionHelperInstalledState.Responded) {
+        if (await System.isNativeInstalled() !== AIBrowExtensionHelperInstalledState.Responded) {
           this.show(NativeInstallHelperShowReason.Install)
         }
       }

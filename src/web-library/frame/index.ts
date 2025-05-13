@@ -1,4 +1,4 @@
-import APIHandler from './APIHandler'
+import APIHandler from './APIHandler/APIHandler'
 import FramePort from './FramePort'
 
 // API Handlers

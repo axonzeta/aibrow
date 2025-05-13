@@ -1,12 +1,15 @@
 import IPCServer from '#Shared/IPC/IPCServer'
-import AIRewriterHandler from './AIRewriterHandler'
-import AISummarizerHandler from './AISummarizerHandler'
-import AIWriterHandler from './AIWriterHandler'
-import AILanguageModelHandler from './AILanguageModelHandler'
-import AICoreModelHandler from './AICoreModelHandler'
-import AIEmbeddingHandler from './AIEmbeddingHandler'
-import { kAIGetCapabilities } from '#Shared/API/AIIPCTypes'
-import { AIWebCapabilities } from '#Shared/API/AI'
+import EmbeddingHandler from './EmbeddingHandler'
+import LanguageModelHandler from './LanguageModelHandler'
+import RewriterHandler from './RewriterHandler'
+import SummarizerHandler from './SummarizerHandler'
+import WriterHandler from './WriterHandler'
+import {
+  kAIBrowGetCapabilities
+} from '#Shared/API/AIBrowIPCTypes'
+import {
+  AIBrowWebCapabilities
+} from '#Shared/API/AIBrowTypes'
 
 class APIHandler {
   /* **************************************************************************/
@@ -15,12 +18,11 @@ class APIHandler {
 
   #port: chrome.runtime.Port
   #server: IPCServer
-  #rewriterHandler: AIRewriterHandler
-  #summarizerHandler: AISummarizerHandler
-  #writerHandler: AIWriterHandler
-  #languageModelHandler: AILanguageModelHandler
-  #coreModelHandler: AICoreModelHandler
-  #embeddingHandler: AIEmbeddingHandler
+  #embeddingHandler: EmbeddingHandler
+  #languageModelHandler: LanguageModelHandler
+  #rewriterHandler: RewriterHandler
+  #summarizerHandler: SummarizerHandler
+  #writerHandler: WriterHandler
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -29,15 +31,14 @@ class APIHandler {
   constructor (port: chrome.runtime.Port) {
     this.#port = port
     this.#server = new IPCServer(port)
-    this.#rewriterHandler = new AIRewriterHandler(this.#server)
-    this.#summarizerHandler = new AISummarizerHandler(this.#server)
-    this.#writerHandler = new AIWriterHandler(this.#server)
-    this.#languageModelHandler = new AILanguageModelHandler(this.#server)
-    this.#coreModelHandler = new AICoreModelHandler(this.#server)
-    this.#embeddingHandler = new AIEmbeddingHandler(this.#server)
+    this.#embeddingHandler = new EmbeddingHandler(this.#server)
+    this.#languageModelHandler = new LanguageModelHandler(this.#server)
+    this.#rewriterHandler = new RewriterHandler(this.#server)
+    this.#summarizerHandler = new SummarizerHandler(this.#server)
+    this.#writerHandler = new WriterHandler(this.#server)
 
     this.#server
-      .addRequestHandler(kAIGetCapabilities, this.#handleGetCapabilities)
+      .addRequestHandler(kAIBrowGetCapabilities, this.#handleGetCapabilities)
   }
 
   /* **************************************************************************/
@@ -51,7 +52,7 @@ class APIHandler {
       ready: gpu || cpu,
       gpu,
       cpu
-    } as AIWebCapabilities
+    } as AIBrowWebCapabilities
   }
 }
 

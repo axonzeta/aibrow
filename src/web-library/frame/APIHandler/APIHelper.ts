@@ -1,10 +1,20 @@
-import { clamp } from '#Shared/Typo/TypoParser'
+import {
+  IPCInflightChannel
+} from '#Shared/IPC/IPCServer'
+import {
+  AIModelAvailability,
+  AIModelCoreState,
+  AIModelCoreCompatibility,
+  AIModelType,
+  AIModelPromptType,
+  AIModelGpuEngine,
+  AIModelDType
+} from '#Shared/API/AICoreTypes'
 import { createIPCErrorResponse } from '#Shared/IPC/IPCErrorHelper'
 import {
   kPermissionDenied,
   kModelCreationAborted,
   kGpuEngineNotSupported,
-  kModelPromptAborted,
   kModelPromptTypeNotSupported,
   kModelFormatNotSupported,
   kModelIdProviderUnsupported,
@@ -13,22 +23,17 @@ import {
   kUrlModelIdUnsupportedHuggingFacePath,
   kModelIdInvalid
 } from '#Shared/Errors'
-import {
-  AICapabilityAvailability,
-  AIModelGpuEngine,
-  AIRootModelCapabilitiesData,
-  AIModelPromptType,
-  AIRootModelProps,
-  AIModelType,
-  AIModelDType
-} from '#Shared/API/AI'
 import AIModelId from '#Shared/AIModelId'
-import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
-import { AIModelManifest, AIModelFormat } from '#Shared/AIModelManifest'
-import TypoParser from '#Shared/Typo/TypoObject'
-import config from '#Shared/Config'
-import AIModelManager from '../AI/AIModelManager'
+import {
+  getDefaultModel,
+  getDefaultModelEngine,
+  getUseMmap
+} from '#Shared/Prefs'
+import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 import AILlmSession from '../AI/AILlmSession'
+import AIModelManager from '../AI/AIModelManager'
+import TypoObject from '#Shared/Typo/TypoObject'
+import { clamp } from '#Shared/Typo/TypoParser'
 import { nanoid } from 'nanoid'
 
 class APIHelper {
@@ -41,10 +46,10 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  getModelId (modelId: any, modelType: AIModelType): AIModelId {
+  async getModelId (modelId: any, modelType: AIModelType): Promise<AIModelId> {
     return typeof (modelId) === 'string' && modelId.length
       ? new AIModelId(modelId)
-      : new AIModelId(config.defaultModels[modelType])
+      : new AIModelId(await getDefaultModel(modelType))
   }
 
   /**
@@ -52,15 +57,10 @@ class APIHelper {
    * @param modelId: the id of the model
    * @returns the model id or the default
    */
-  getGpuEngine (gpuEngine: any): AIModelGpuEngine {
-    const supportedEngines = AILlmSession.getSupportedGpuEngines()
-    if (supportedEngines.includes(gpuEngine)) {
-      return gpuEngine
-    } else if (supportedEngines.includes(AIModelGpuEngine.WebGpu)) {
-      return AIModelGpuEngine.WebGpu
-    } else {
-      return AIModelGpuEngine.Wasm
-    }
+  async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine | undefined> {
+    return Object.values(AIModelGpuEngine).includes(gpuEngine)
+      ? gpuEngine
+      : await getDefaultModelEngine()
   }
 
   /**
@@ -84,14 +84,14 @@ class APIHelper {
    */
   async getAIModelAvailability (channel: IPCInflightChannel, modelId: AIModelId, promptType: AIModelPromptType) {
     let manifest: AIModelManifest
-    let availability: AICapabilityAvailability
+    let availability: AIModelAvailability
     try {
       manifest = await AIModelManager.fetchModelManifest(modelId)
       availability = await AIModelManager.areManifestAssetsCached(manifest)
-        ? AICapabilityAvailability.Readily
-        : AICapabilityAvailability.AfterDownload
+        ? AIModelAvailability.Available
+        : AIModelAvailability.Downloadable // TODO: support downloading state
     } catch (ex) {
-      availability = AICapabilityAvailability.No
+      availability = AIModelAvailability.Unavailable
     }
 
     // Check the model supports the prompt type we're trying to use
@@ -100,7 +100,7 @@ class APIHelper {
       !manifest.formats[AIModelFormat.ONNX] ||
       !this.modelSupportsPromptType(manifest, promptType)
     ) {
-      availability = AICapabilityAvailability.No
+      availability = AIModelAvailability.Unavailable
     }
 
     return { availability, manifest, score: 1 }
@@ -141,77 +141,81 @@ class APIHelper {
   /* **************************************************************************/
 
   /**
-   * Gets the standard capabilities data
+   * Gets the model availability
    * @param channel: the incoming channel
    * @param modelType: the type of model we're targeting
-   * @param promptType: the type of prompt to check is available
+   * * @param promptType: the type of prompt to check is available
    * @returns the response for the channel
    */
-  async handleGetStandardCapabilitiesData (
+  async handleGetStandardAvailability (
     channel: IPCInflightChannel,
     modelType: AIModelType,
-    promptType: AIModelPromptType,
-    configFn?: (manifest: AIModelManifest) => object
-  ): Promise<AIRootModelCapabilitiesData> {
+    promptType: AIModelPromptType
+  ): Promise<AIModelAvailability> {
     return await this.captureCommonErrorsForResponse(async () => {
-      const modelId = this.getModelId(channel.payload?.model, modelType)
-      const gpuEngines = AILlmSession.getSupportedGpuEngines()
-      const { availability, manifest, score } = await this.getAIModelAvailability(channel, modelId, promptType)
+      const modelId = await this.getModelId(channel.payload?.model, modelType)
 
-      if (availability === AICapabilityAvailability.Readily) {
-        return {
+      // Get the availability
+      const { availability } = await this.getAIModelAvailability(channel, modelId, promptType)
+      return availability
+    })
+  }
+
+  /**
+   * Gets the model compatibility
+   * @param channel: the incoming channel
+   * @param modelType: the type of model we're targeting
+   * @returns the response for the channel
+   */
+  async handleGetStandardCompatibility (
+    channel: IPCInflightChannel,
+    modelType: AIModelType,
+    promptType: AIModelPromptType
+  ): Promise<AIModelCoreCompatibility | null> {
+    return await this.captureCommonErrorsForResponse(async () => {
+      const modelId = await this.getModelId(channel.payload?.model, modelType)
+
+      const {
+        availability,
+        score,
+        manifest
+      } = await this.getAIModelAvailability(channel, modelId, promptType)
+
+      switch (availability) {
+        case AIModelAvailability.Unavailable: return null
+        default: return {
           score,
-          ...configFn ? configFn(manifest) : undefined,
-          available: AICapabilityAvailability.Readily,
-          gpuEngines,
-          topK: manifest.config.topK,
-          topP: manifest.config.topP,
-          temperature: manifest.config.temperature,
-          repeatPenalty: manifest.config.repeatPenalty,
+          gpuEngines: AILlmSession.getSupportedGpuEngines(),
           flashAttention: manifest.config.flashAttention,
           contextSize: [1, manifest.tokens.default, manifest.tokens.max]
-        }
-      } else {
-        return {
-          available: availability,
-          gpuEngines,
-          score
         }
       }
     })
   }
 
   /**
-   * Takes a AiModelProps from the API and converts it to the core llm prompt options
-   * @param modelId: the id of the model
-   * @param gpuEngine: the gpu engine to use
+   * Gets the core model state from the provided user options
    * @param manifest: the manifest of the model
-   * @param modelProps: the model props
-   * @returns the core llm prompt options
+   * @param modelType: the type of model we're targeting
+   * @param options: the user options
+   * @returns the core llm prompt state
    */
-  async #sanitizeModelProps (modelId: AIModelId, gpuEngine: AIModelGpuEngine, manifest: AIModelManifest, modelProps: any) {
-    const props = new TypoParser(modelProps)
+  async getCoreModelState (
+    manifest: AIModelManifest,
+    modelType: AIModelType,
+    options: TypoObject
+  ): Promise<AIModelCoreState> {
+    const modelId = await this.getModelId(options.getString('model'), modelType)
+    const gpuEngine = await this.getGpuEngine(options.getString('gpuEngine'))
 
-    const dtypeMapping = manifest.formats[AIModelFormat.ONNX].dtype
-    let defaultDtype: AIModelDType
-    switch (typeof (dtypeMapping)) {
-      case 'string': defaultDtype = dtypeMapping as AIModelDType; break
-      case 'object': defaultDtype = dtypeMapping[gpuEngine]; break
-    }
-
-    return {
+    return <AIModelCoreState> {
       model: modelId.toString(),
       gpuEngine,
-      dtype: props.getEnum('dtype', AIModelDType, defaultDtype),
-      topK: props.getRange('topK', manifest.config.topK),
-      topP: props.getRange('topP', manifest.config.topP),
-      temperature: props.getRange('temperature', manifest.config.temperature),
-      repeatPenalty: props.getRange('repeatPenalty', manifest.config.repeatPenalty),
-      flashAttention: props.getBool('flashAttention', manifest.config.flashAttention),
-      contextSize: clamp(props.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
-      useMmap: false,
-      grammar: props.getAny('grammar')
-    } as AIRootModelProps
+      dtype: options.getEnum('dtype', AIModelDType, AIModelDType.Auto),
+      flashAttention: options.getBool('flashAttention', manifest.config.flashAttention),
+      contextSize: clamp(options.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
+      useMmap: await getUseMmap()
+    }
   }
 
   /**
@@ -229,8 +233,9 @@ class APIHelper {
     postflightFn: (
       manifest: AIModelManifest,
       sessionId: string,
-      payload: TypoParser,
-      props: AIRootModelProps
+      payload: TypoObject,
+      modelId: AIModelId,
+      gpuEngine: AIModelGpuEngine
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
@@ -241,19 +246,22 @@ class APIHelper {
       throw new Error(kGpuEngineNotSupported)
     }
 
-    const payload = new TypoParser(rawPayload)
+    const payload = new TypoObject(rawPayload)
     return await this.captureCommonErrorsForResponse(async () => {
       // Values with user-defined defaults
       const sessionId = nanoid()
-      const modelId = this.getModelId(rawPayload?.model, modelType)
-      const gpuEngine = this.getGpuEngine(rawPayload?.gpuEngine)
+      const modelId = await this.getModelId(rawPayload?.model, modelType)
+      const gpuEngine = await this.getGpuEngine(rawPayload?.gpuEngine)
 
-      // Check we support this model
+      if (channel.abortSignal?.aborted) { throw new Error(kModelCreationAborted) }
+
+      // Check we support this model type after install - things may have changed
       const manifest = await AIModelManager.fetchModelManifest(modelId)
       if (!this.modelSupportsPromptType(manifest, promptType)) {
         throw new Error(kModelPromptTypeNotSupported)
       }
-      const props = await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload)
+
+      const props = await this.getCoreModelState(manifest, modelType, payload)
 
       // Permission checks & requests
       if (channel.abortSignal?.aborted) { throw new Error(kModelCreationAborted) }
@@ -264,12 +272,17 @@ class APIHelper {
       })
       if (channel.abortSignal?.aborted) { throw new Error(kModelCreationAborted) }
 
+      if (!manifest.formats[AIModelFormat.GGUF]) {
+        throw new Error(kModelFormatNotSupported)
+      }
+
       // Return builder
       return await postflightFn(
         manifest,
         sessionId,
         payload,
-        props
+        modelId,
+        gpuEngine
       )
     })
   }
@@ -286,27 +299,26 @@ class APIHelper {
     modelType: AIModelType,
     postflightFn: (
       manifest: AIModelManifest,
-      payload: TypoParser,
-      props: AIRootModelProps
+      payload: TypoObject
     ) => Promise<any>
   ) {
     const rawPayload = channel.payload
-    const payload = new TypoParser(rawPayload)
+    const payload = new TypoObject(rawPayload)
+    return await this.captureCommonErrorsForResponse(async () => {
+      // Values with user-defined defaults
+      const modelId = await this.getModelId(rawPayload?.model, modelType)
 
-    // Values with user-defined defaults
-    const modelId = this.getModelId(rawPayload?.props?.model, modelType)
-    const gpuEngine = this.getGpuEngine(rawPayload?.props?.gpuEngine)
+      // Permission checks & requests
+      if (channel.abortSignal?.aborted) { throw new Error(kModelCreationAborted) }
 
-    // Permission checks & requests
-    if (channel.abortSignal?.aborted) { throw new Error(kModelPromptAborted) }
+      // Get the values
+      const manifest = await AIModelManager.fetchModelManifest(modelId)
 
-    // Get the values
-    const manifest = await AIModelManager.fetchModelManifest(modelId)
-
-    return await postflightFn(
-      manifest,
-      payload,
-      await this.#sanitizeModelProps(modelId, gpuEngine, manifest, rawPayload?.props ?? {}))
+      return await postflightFn(
+        manifest,
+        payload
+      )
+    })
   }
 }
 

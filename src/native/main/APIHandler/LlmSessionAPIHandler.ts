@@ -7,7 +7,7 @@ import {
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposeSession
 } from '#Shared/NativeAPI/LlmSessionIPC'
-import { AIModelGpuEngine, AIRootModelProps, AIModelType } from '#Shared/API/AI'
+import { AIModelGpuEngine, AIModelPromptProps, AIModelType } from '#Shared/API/AICoreTypes'
 import { importLlama } from '#R/Llama'
 import { IPCInflightChannel } from '#Shared/IPC/IPCServer'
 import deepEqual from 'fast-deep-equal'
@@ -407,7 +407,7 @@ class LlmSessionAPIHandler {
       contextSize: clamp(props.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
       useMmap: props.getBool('useMmap', true),
       grammar: props.getAny('grammar')
-    } as AIRootModelProps
+    } as AIModelPromptProps
   }
 
   #handleExecPromptSession = async (channel: IPCInflightChannel) => {
