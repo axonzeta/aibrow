@@ -19,7 +19,8 @@ import {
 import APIHelper from './APIHelper'
 import {
   AIModelType,
-  AIModelPromptType
+  AIModelPromptType,
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
@@ -31,6 +32,7 @@ import {
 } from '#Shared/Errors'
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
+import TypoObject from '#Shared/Typo/TypoObject'
 
 class SummarizerHandler {
   /* **************************************************************************/
@@ -61,16 +63,18 @@ class SummarizerHandler {
 
   #getPrompt (
     manifest: AIModelManifest,
-    type: SummarizerType,
-    format: SummarizerFormat,
-    length: SummarizerLength,
-    sharedContext: string,
-    context: string,
-    input: string
+    payload: TypoObject
   ) {
     if (!manifest.prompts[AIModelPromptType.Summarizer]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
+
+    const type = payload.getEnum('state.type', SummarizerType, SummarizerType.Tldr)
+    const format = payload.getEnum('state.format', SummarizerFormat, SummarizerFormat.Markdown)
+    const length = payload.getEnum('state.length', SummarizerLength, SummarizerLength.Medium)
+    const sharedContext = payload.getString('state.sharedContext')
+    const context = payload.getString('options.context')
+    const input = payload.getString('input')
 
     const config = manifest.prompts[AIModelPromptType.Summarizer]
     const template = new Template(config.template)
@@ -85,6 +89,26 @@ class SummarizerHandler {
       eos_token: manifest.tokens.eosToken,
       add_generation_prompt: true
     })
+  }
+
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
+      sharedContext: payload.getNonEmptyString('sharedContext'),
+      type: payload.getEnum('type', SummarizerType, SummarizerType.Tldr),
+      format: payload.getEnum('format', SummarizerFormat, SummarizerFormat.Markdown),
+      length: payload.getEnum('length', SummarizerLength, SummarizerLength.Medium),
+      expectedInputLanguages: payload.getStringArray('expectedInputLanguages'),
+      expectedContextLanguages: payload.getStringArray('expectedContextLanguages'),
+      outputLanguage: payload.getNonEmptyString('outputLanguage'),
+      inputQuota: manifest.tokens.max
+    } as SummarizerState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload.getTypo('state'))
+    } as Partial<AIModelPromptProps>
   }
 
   /* **************************************************************************/
@@ -108,18 +132,7 @@ class SummarizerHandler {
       manifest,
       payload
     ): Promise<{ sessionId: string, state: SummarizerState }> => {
-      const state: SummarizerState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
-        sharedContext: payload.getNonEmptyString('sharedContext'),
-        type: payload.getEnum('type', SummarizerType, SummarizerType.Tldr),
-        format: payload.getEnum('format', SummarizerFormat, SummarizerFormat.Markdown),
-        length: payload.getEnum('length', SummarizerLength, SummarizerLength.Medium),
-        expectedInputLanguages: payload.getStringArray('expectedInputLanguages'),
-        expectedContextLanguages: payload.getStringArray('expectedContextLanguages'),
-        outputLanguage: payload.getNonEmptyString('outputLanguage'),
-        inputQuota: manifest.tokens.max
-      }
-
+      const state = await this.#buildStateFromPayload(manifest, payload)
       return { sessionId: nanoid(), state }
     })
   }
@@ -137,18 +150,8 @@ class SummarizerHandler {
       manifest,
       payload
     ) => {
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getEnum('state.type', SummarizerType, SummarizerType.Tldr),
-        payload.getEnum('state.format', SummarizerFormat, SummarizerFormat.Markdown),
-        payload.getEnum('state.length', SummarizerLength, SummarizerLength.Medium),
-        payload.getString('state.sharedContext'),
-        payload.getString('options.context'),
-        payload.getString('input')
-      )
-
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const usage = await AILlmSession.countTokens(prompt, coreState, {})
+      const prompt = this.#getPrompt(manifest, payload)
+      const usage = await AILlmSession.countTokens(prompt, await this.#buildPromptPropsFromPayload(manifest, payload), {})
       return usage
     })
   }
@@ -168,21 +171,12 @@ class SummarizerHandler {
       payload
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getEnum('state.type', SummarizerType, SummarizerType.Tldr),
-        payload.getEnum('state.format', SummarizerFormat, SummarizerFormat.Markdown),
-        payload.getEnum('state.length', SummarizerLength, SummarizerLength.Medium),
-        payload.getString('state.sharedContext'),
-        payload.getString('options.context'),
-        payload.getString('input')
-      )
+      const prompt = this.#getPrompt(manifest, payload)
 
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
       await AILlmSession.prompt(
         sessionId,
         prompt,
-        coreState,
+        await this.#buildPromptPropsFromPayload(manifest, payload),
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

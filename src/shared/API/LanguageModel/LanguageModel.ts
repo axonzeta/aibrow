@@ -35,6 +35,8 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   // MARK: Static
   /* **************************************************************************/
 
+  static aibrow = true
+
   static async create (options: LanguageModelCreateOptions = {}): Promise<LanguageModel> {
     const monitorTarget = new EventTarget()
     const {
@@ -142,6 +144,10 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   /* **************************************************************************/
 
   get topK () { return this.#state.topK }
+
+  get topP () { return this.#state.topP }
+
+  get repeatPenalty () { return this.#state.repeatPenalty }
 
   get temperature () { return this.#state.temperature }
 

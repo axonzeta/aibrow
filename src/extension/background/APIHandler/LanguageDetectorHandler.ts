@@ -18,7 +18,8 @@ import {
 import APIHelper from './APIHelper'
 import {
   AIModelType,
-  AIModelPromptType
+  AIModelPromptType,
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
@@ -30,6 +31,7 @@ import {
 } from '#Shared/Errors'
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
+import TypoObject from '#Shared/Typo/TypoObject'
 
 const noop = () => {}
 
@@ -78,6 +80,19 @@ class LanguageDetectorHandler {
     })
   }
 
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
+      inputQuota: manifest.tokens.max
+    } as LanguageDetectorState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload.getTypo('state'))
+    } as Partial<AIModelPromptProps>
+  }
+
   /* **************************************************************************/
   // MARK: Handlers: Availability & compatibility
   /* **************************************************************************/
@@ -99,11 +114,7 @@ class LanguageDetectorHandler {
       manifest,
       payload
     ): Promise<{ sessionId: string, state: LanguageDetectorState }> => {
-      const state: LanguageDetectorState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
-        inputQuota: manifest.tokens.max
-      }
-
+      const state = await this.#buildStateFromPayload(manifest, payload)
       return { sessionId: nanoid(), state }
     })
   }
@@ -126,8 +137,11 @@ class LanguageDetectorHandler {
         payload.getString('input')
       )
 
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const usage = await AILlmSession.countTokens(prompt, coreState, {})
+      const usage = await AILlmSession.countTokens(
+        prompt,
+        await this.#buildPromptPropsFromPayload(manifest, payload),
+        {}
+      )
       return usage
     })
   }
@@ -151,7 +165,7 @@ class LanguageDetectorHandler {
       const sessionId = payload.getNonEmptyString('sessionId')
       const results: LanguageDetectorDetectionResult[] = []
 
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
+      const corePromptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
       for (let i = 0; i < 1; i++) {
         const detectedLanguage = new Set(results.map(result => result.detectedLanguage))
         const languages = LanguageDetectorDefaultLanguages.filter((language) => !detectedLanguage.has(language))
@@ -160,7 +174,7 @@ class LanguageDetectorHandler {
           sessionId,
           prompt,
           {
-            ...coreState,
+            ...corePromptProps,
             grammar: {
               type: 'object',
               properties: {

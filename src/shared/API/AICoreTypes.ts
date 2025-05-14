@@ -108,6 +108,8 @@ export abstract class AICoreModel {
 
   static compatibility: (options: AIModelCoreCreateOptions) => Promise<AIModelCoreCompatibility | null>
 
+  static aibrow = true
+
   /* **************************************************************************/
   // MARK: Lifecycle
   /* **************************************************************************/

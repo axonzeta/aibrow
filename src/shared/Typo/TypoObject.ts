@@ -68,6 +68,11 @@ class TypoObject {
   getRange (path: string, range: [number, number, number]) {
     return getRange(this.#get(path), range)
   }
+
+  getTypo (path: string) {
+    const data = this.#get(path)
+    return new TypoObject(typeof (data) === 'object' ? data : {})
+  }
 }
 
 export default TypoObject

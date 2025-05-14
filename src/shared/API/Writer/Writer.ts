@@ -29,6 +29,8 @@ export class Writer extends EventTarget implements AICoreModel {
   // MARK: Static
   /* **************************************************************************/
 
+  static aibrow = true
+
   static async create (options: WriterCreateOptions = {}): Promise<Writer> {
     const monitorTarget = new EventTarget()
     const {

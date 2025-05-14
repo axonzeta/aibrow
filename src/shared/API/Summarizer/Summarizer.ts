@@ -29,6 +29,8 @@ export class Summarizer extends EventTarget implements AICoreModel {
   // MARK: Static
   /* **************************************************************************/
 
+  static aibrow = true
+
   static async create (options: SummarizerCreateOptions = {}): Promise<Summarizer> {
     const monitorTarget = new EventTarget()
     const {

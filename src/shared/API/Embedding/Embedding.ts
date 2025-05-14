@@ -34,6 +34,8 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   // MARK: Static
   /* **************************************************************************/
 
+  static aibrow = true
+
   static async create (options: EmbeddingCreateOptions = {}): Promise<LanguageModel> {
     const monitorTarget = new EventTarget()
     const {

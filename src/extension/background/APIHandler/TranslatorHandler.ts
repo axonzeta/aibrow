@@ -16,7 +16,8 @@ import {
 import APIHelper from './APIHelper'
 import {
   AIModelType,
-  AIModelPromptType
+  AIModelPromptType,
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
@@ -30,6 +31,7 @@ import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
 import capitalize from 'capitalize'
 import { parse as partialJsonParse } from 'best-effort-json-parser'
+import TypoObject from '#Shared/Typo/TypoObject'
 
 class TranslatorHandler {
   /* **************************************************************************/
@@ -60,13 +62,15 @@ class TranslatorHandler {
 
   #getPrompt (
     manifest: AIModelManifest,
-    sourceLanguage: string,
-    targetLanguage: string,
+    payload: TypoObject,
     input: string
   ) {
     if (!manifest.prompts[AIModelPromptType.Translator]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
+    const sourceLanguage = payload.getNonEmptyString('state.sourceLanguage')
+    const targetLanguage = payload.getNonEmptyString('state.targetLanguage')
+
     const config = manifest.prompts[AIModelPromptType.Translator]
     const template = new Template(config.template)
     const sourceLanguageName = (new Intl.DisplayNames(['en'], { type: 'language' })).of(sourceLanguage)
@@ -83,6 +87,21 @@ class TranslatorHandler {
       eos_token: manifest.tokens.eosToken,
       add_generation_prompt: true
     })
+  }
+
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
+      sourceLanguage: payload.getNonEmptyString('sourceLanguage'),
+      targetLanguage: payload.getNonEmptyString('targetLanguage'),
+      inputQuota: manifest.tokens.max
+    } as TranslatorState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload.getTypo('state'))
+    } as Partial<AIModelPromptProps>
   }
 
   /* **************************************************************************/
@@ -106,13 +125,7 @@ class TranslatorHandler {
       manifest,
       payload
     ): Promise<{ sessionId: string, state: TranslatorState }> => {
-      const state: TranslatorState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
-        sourceLanguage: payload.getNonEmptyString('state.sourceLanguage'),
-        targetLanguage: payload.getNonEmptyString('state.targetLanguage'),
-        inputQuota: manifest.tokens.max
-      }
-
+      const state = await this.#buildStateFromPayload(manifest, payload)
       return { sessionId: nanoid(), state }
     })
   }
@@ -130,15 +143,8 @@ class TranslatorHandler {
       manifest,
       payload
     ) => {
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getNonEmptyString('state.sourceLanguage'),
-        payload.getNonEmptyString('state.targetLanguage'),
-        payload.getString('input')
-      )
-
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const usage = await AILlmSession.countTokens(prompt, coreState, {})
+      const prompt = this.#getPrompt(manifest, payload, payload.getString('input'))
+      const usage = await AILlmSession.countTokens(prompt, await this.#buildPromptPropsFromPayload(manifest, payload), {})
       return usage
     })
   }
@@ -157,12 +163,11 @@ class TranslatorHandler {
       manifest,
       payload
     ) => {
-      const sourceLanguage = payload.getNonEmptyString('state.sourceLanguage')
       const targetLanguage = payload.getNonEmptyString('state.targetLanguage')
       const input = payload.getString('input')
       const targetSections = []
 
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
+      const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
 
       for (const sourceSection of input.split('\n')) {
         if (sourceSection.length === 0) {
@@ -170,7 +175,7 @@ class TranslatorHandler {
           continue
         }
 
-        const prompt = this.#getPrompt(manifest, sourceLanguage, targetLanguage, sourceSection)
+        const prompt = this.#getPrompt(manifest, payload, sourceSection)
         const sessionId = payload.getNonEmptyString('sessionId')
 
         const translationKey = `translation-${targetLanguage}`
@@ -180,7 +185,7 @@ class TranslatorHandler {
           sessionId,
           prompt,
           {
-            ...coreState,
+            ...promptProps,
             grammar: {
               type: 'object',
               properties: {

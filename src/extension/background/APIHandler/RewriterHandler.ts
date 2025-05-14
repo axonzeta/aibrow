@@ -19,7 +19,8 @@ import {
 import APIHelper from './APIHelper'
 import {
   AIModelType,
-  AIModelPromptType
+  AIModelPromptType,
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
@@ -31,6 +32,7 @@ import {
 } from '#Shared/Errors'
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
+import TypoObject from '#Shared/Typo/TypoObject'
 
 class RewriterHandler {
   /* **************************************************************************/
@@ -61,16 +63,18 @@ class RewriterHandler {
 
   #getPrompt (
     manifest: AIModelManifest,
-    tone: RewriterTone,
-    format: RewriterFormat,
-    length: RewriterLength,
-    sharedContext: string,
-    context: string,
-    input: string
+    payload: TypoObject
   ) {
     if (!manifest.prompts[AIModelPromptType.Rewriter]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
+
+    const tone = payload.getEnum('state.tone', RewriterTone, RewriterTone.AsIs)
+    const format = payload.getEnum('state.format', RewriterFormat, RewriterFormat.AsIs)
+    const length = payload.getEnum('state.length', RewriterLength, RewriterLength.AsIs)
+    const sharedContext = payload.getString('state.sharedContext')
+    const context = payload.getString('options.context')
+    const input = payload.getString('input')
 
     const config = manifest.prompts[AIModelPromptType.Rewriter]
     const template = new Template(config.template)
@@ -85,6 +89,26 @@ class RewriterHandler {
       eos_token: manifest.tokens.eosToken,
       add_generation_prompt: true
     })
+  }
+
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
+      sharedContext: payload.getNonEmptyString('sharedContext'),
+      tone: payload.getEnum('tone', RewriterTone, RewriterTone.AsIs),
+      format: payload.getEnum('format', RewriterFormat, RewriterFormat.AsIs),
+      length: payload.getEnum('length', RewriterLength, RewriterLength.AsIs),
+      expectedInputLanguages: payload.getStringArray('expectedInputLanguages'),
+      expectedContextLanguages: payload.getStringArray('expectedContextLanguages'),
+      outputLanguage: payload.getNonEmptyString('outputLanguage'),
+      inputQuota: manifest.tokens.max
+    } as RewriterState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload.getTypo('state'))
+    } as Partial<AIModelPromptProps>
   }
 
   /* **************************************************************************/
@@ -108,18 +132,7 @@ class RewriterHandler {
       manifest,
       payload
     ): Promise<{ sessionId: string, state: RewriterState }> => {
-      const state: RewriterState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
-        sharedContext: payload.getNonEmptyString('sharedContext'),
-        tone: payload.getEnum('tone', RewriterTone, RewriterTone.AsIs),
-        format: payload.getEnum('format', RewriterFormat, RewriterFormat.AsIs),
-        length: payload.getEnum('length', RewriterLength, RewriterLength.AsIs),
-        expectedInputLanguages: payload.getStringArray('expectedInputLanguages'),
-        expectedContextLanguages: payload.getStringArray('expectedContextLanguages'),
-        outputLanguage: payload.getNonEmptyString('outputLanguage'),
-        inputQuota: manifest.tokens.max
-      }
-
+      const state = await this.#buildStateFromPayload(manifest, payload)
       return { sessionId: nanoid(), state }
     })
   }
@@ -137,18 +150,12 @@ class RewriterHandler {
       manifest,
       payload
     ) => {
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getEnum('state.tone', RewriterTone, RewriterTone.AsIs),
-        payload.getEnum('state.format', RewriterFormat, RewriterFormat.AsIs),
-        payload.getEnum('state.length', RewriterLength, RewriterLength.AsIs),
-        payload.getString('state.sharedContext'),
-        payload.getString('options.context'),
-        payload.getString('input')
+      const prompt = this.#getPrompt(manifest, payload)
+      const usage = await AILlmSession.countTokens(
+        prompt,
+        await this.#buildPromptPropsFromPayload(manifest, payload),
+        {}
       )
-
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const usage = await AILlmSession.countTokens(prompt, coreState, {})
       return usage
     })
   }
@@ -168,21 +175,11 @@ class RewriterHandler {
       payload
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getEnum('state.tone', RewriterTone, RewriterTone.AsIs),
-        payload.getEnum('state.format', RewriterFormat, RewriterFormat.AsIs),
-        payload.getEnum('state.length', RewriterLength, RewriterLength.AsIs),
-        payload.getString('state.sharedContext'),
-        payload.getString('options.context'),
-        payload.getString('input')
-      )
-
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
+      const prompt = this.#getPrompt(manifest, payload)
       await AILlmSession.prompt(
         sessionId,
         prompt,
-        coreState,
+        await this.#buildPromptPropsFromPayload(manifest, payload),
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

@@ -19,7 +19,8 @@ import {
 import APIHelper from './APIHelper'
 import {
   AIModelType,
-  AIModelPromptType
+  AIModelPromptType,
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import { nanoid } from 'nanoid'
@@ -31,6 +32,7 @@ import {
 } from '#Shared/Errors'
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
+import TypoObject from '#Shared/Typo/TypoObject'
 
 class WriterHandler {
   /* **************************************************************************/
@@ -61,16 +63,18 @@ class WriterHandler {
 
   #getPrompt (
     manifest: AIModelManifest,
-    tone: WriterTone,
-    format: WriterFormat,
-    length: WriterLength,
-    sharedContext: string,
-    context: string,
-    input: string
+    payload: TypoObject
   ) {
     if (!manifest.prompts[AIModelPromptType.Writer]) {
       throw new Error(kModelPromptTypeNotSupported)
     }
+
+    const tone = payload.getEnum('state.tone', WriterTone, WriterTone.Neutral)
+    const format = payload.getEnum('state.format', WriterFormat, WriterFormat.Markdown)
+    const length = payload.getEnum('state.length', WriterLength, WriterLength.Short)
+    const sharedContext = payload.getString('state.sharedContext')
+    const context = payload.getString('options.context')
+    const input = payload.getString('input')
 
     const config = manifest.prompts[AIModelPromptType.Writer]
     const template = new Template(config.template)
@@ -85,6 +89,26 @@ class WriterHandler {
       eos_token: manifest.tokens.eosToken,
       add_generation_prompt: true
     })
+  }
+
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
+      sharedContext: payload.getNonEmptyString('sharedContext'),
+      tone: payload.getEnum('tone', WriterTone, WriterTone.Neutral),
+      format: payload.getEnum('format', WriterFormat, WriterFormat.Markdown),
+      length: payload.getEnum('length', WriterLength, WriterLength.Short),
+      expectedInputLanguages: payload.getStringArray('expectedInputLanguages'),
+      expectedContextLanguages: payload.getStringArray('expectedContextLanguages'),
+      outputLanguage: payload.getNonEmptyString('outputLanguage'),
+      inputQuota: manifest.tokens.max
+    } as WriterState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload.getTypo('state'))
+    } as Partial<AIModelPromptProps>
   }
 
   /* **************************************************************************/
@@ -108,17 +132,7 @@ class WriterHandler {
       manifest,
       payload
     ): Promise<{ sessionId: string, state: WriterState }> => {
-      const state: WriterState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
-        sharedContext: payload.getNonEmptyString('sharedContext'),
-        tone: payload.getEnum('tone', WriterTone, WriterTone.Neutral),
-        format: payload.getEnum('format', WriterFormat, WriterFormat.Markdown),
-        length: payload.getEnum('length', WriterLength, WriterLength.Short),
-        expectedInputLanguages: payload.getStringArray('expectedInputLanguages'),
-        expectedContextLanguages: payload.getStringArray('expectedContextLanguages'),
-        outputLanguage: payload.getNonEmptyString('outputLanguage'),
-        inputQuota: manifest.tokens.max
-      }
+      const state = await this.#buildStateFromPayload(manifest, payload)
 
       return { sessionId: nanoid(), state }
     })
@@ -137,18 +151,8 @@ class WriterHandler {
       manifest,
       payload
     ) => {
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getEnum('state.tone', WriterTone, WriterTone.Neutral),
-        payload.getEnum('state.format', WriterFormat, WriterFormat.Markdown),
-        payload.getEnum('state.length', WriterLength, WriterLength.Short),
-        payload.getString('state.sharedContext'),
-        payload.getString('options.context'),
-        payload.getString('input')
-      )
-
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const usage = await AILlmSession.countTokens(prompt, coreState, {})
+      const prompt = this.#getPrompt(manifest, payload)
+      const usage = await AILlmSession.countTokens(prompt, await this.#buildPromptPropsFromPayload(manifest, payload), {})
       return usage
     })
   }
@@ -168,21 +172,12 @@ class WriterHandler {
       payload
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
-      const prompt = this.#getPrompt(
-        manifest,
-        payload.getEnum('state.tone', WriterTone, WriterTone.Neutral),
-        payload.getEnum('state.format', WriterFormat, WriterFormat.Markdown),
-        payload.getEnum('state.length', WriterLength, WriterLength.Short),
-        payload.getString('state.sharedContext'),
-        payload.getString('options.context'),
-        payload.getString('input')
-      )
+      const prompt = this.#getPrompt(manifest, payload)
 
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
       await AILlmSession.prompt(
         sessionId,
         prompt,
-        coreState,
+        await this.#buildPromptPropsFromPayload(manifest, payload),
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

@@ -90,6 +90,8 @@ export type LanguageModelExpectedInput = {
 export type LanguageModelCreateOptions = AIModelCoreCreateOptions & {
   initialPrompts?: LanguageModelInitialPrompts
   topK?: number
+  topP?: number
+  repeatPenalty?: number
   temperature?: number
   expectedInputs?: LanguageModelExpectedInput[]
 }
@@ -105,6 +107,10 @@ export type LanguageModelCloneOptions = {
 export type LanguageModelParams = {
   defaultTopK: number
   maxTopK: number
+  defaultTopP: number
+  maxTopP: number
+  defaultRepeatPenalty: number
+  maxRepeatPenalty: number
   defaultTemperature: number
   maxTemperature: number
 }
@@ -134,6 +140,8 @@ export type LanguageModelAppendOptions = {
 
 export type LanguageModelState = AIModelCoreState & {
   topK: number
+  topP: number
+  repeatPenalty: number
   temperature: number
   inputUsage: number
   inputQuota: number

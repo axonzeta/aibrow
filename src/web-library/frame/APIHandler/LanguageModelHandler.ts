@@ -23,7 +23,7 @@ import APIHelper from './APIHelper'
 import {
   AIModelType,
   AIModelPromptType,
-  AIModelCoreState
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { AIModelManifest } from '#Shared/AIModelManifest'
 import {
@@ -36,6 +36,7 @@ import {
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
 import AIModelManager from '../AI/AIModelManager'
+import TypoObject from '#Shared/Typo/TypoObject'
 
 class LanguageModelHandler {
   /* **************************************************************************/
@@ -108,7 +109,7 @@ class LanguageModelHandler {
   async #buildPrompt (
     manifest: AIModelManifest,
     sessionId: string,
-    state: AIModelCoreState,
+    promptProps: Partial<AIModelPromptProps>,
     messages: LanguageModelMessage[]
   ) {
     if (!manifest.prompts[AIModelPromptType.LanguageModel]) {
@@ -136,7 +137,12 @@ class LanguageModelHandler {
       const template = new Template(promptConfig.template)
       const prompt = template.render({
         messages: [
-          ...systemMessages,
+          ...systemMessages.slice(droppedMessages).flatMap((item) => {
+            return item.content.map((contentItem) => {
+              //TODO support non-string content types
+              return { role: item.role, content: contentItem.content }
+            })
+          }),
           ...chatMessages.slice(droppedMessages).flatMap((item) => {
             return item.content.map((contentItem) => {
               //TODO support non-string content types
@@ -149,13 +155,42 @@ class LanguageModelHandler {
         add_generation_prompt: true
       })
 
-      const tokenCount = await AILlmSession.countTokens(sessionId, prompt, state, {})
-      if (tokenCount <= state.contextSize) {
+      const tokenCount = await AILlmSession.countTokens(sessionId, prompt, promptProps, {})
+      const contextSize = promptProps.contextSize ?? manifest.tokens.max
+      if (tokenCount <= contextSize) {
         return { prompt, usage: tokenCount }
       }
 
       droppedMessages++
     }
+  }
+
+  /* **************************************************************************/
+  // MARK: Utils
+  /* **************************************************************************/
+
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject, messages: LanguageModelMessage[]) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
+      topK: payload.getNumber('topK', manifest.config.topK?.[1] ?? 0),
+      topP: payload.getNumber('topP', manifest.config.topP?.[1] ?? 0),
+      repeatPenalty: payload.getNumber('repeatPenalty', manifest.config.repeatPenalty?.[1] ?? 0),
+      temperature: payload.getNumber('temperature', manifest.config.temperature?.[1] ?? 0),
+      messages,
+      inputUsage: -1, // Optionally filled later
+      inputQuota: manifest.tokens.max
+    } as LanguageModelState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    const state = payload.getTypo('state')
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, state),
+      topK: state.getNumber('topK', manifest.config.topK?.[1] ?? 0),
+      topP: state.getNumber('topP', manifest.config.topP?.[1] ?? 0),
+      repeatPenalty: state.getNumber('repeatPenalty', manifest.config.repeatPenalty?.[1] ?? 0),
+      temperature: state.getNumber('temperature', manifest.config.temperature?.[1] ?? 0)
+    } as Partial<AIModelPromptProps>
   }
 
   /* **************************************************************************/
@@ -178,6 +213,10 @@ class LanguageModelHandler {
       return <LanguageModelParams> {
         defaultTopK: manifest.config.topK?.[1] ?? null,
         maxTopK: manifest.config.topK?.[2] ?? null,
+        defaultTopP: manifest.config.topP?.[1] ?? null,
+        maxTopP: manifest.config.topP?.[2] ?? null,
+        defaultRepeatPenalty: manifest.config.repeatPenalty?.[1] ?? null,
+        maxRepeatPenalty: manifest.config.repeatPenalty?.[2] ?? null,
         defaultTemperature: manifest.config.temperature?.[1] ?? null,
         maxTemperature: manifest.config.temperature?.[2] ?? null
       }
@@ -195,14 +234,7 @@ class LanguageModelHandler {
       payload
     ): Promise<{ sessionId: string, state: LanguageModelState }> => {
       const messages = this.#parseTypoMessages(payload.getAny('initialPrompts', undefined))
-      const state: LanguageModelState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
-        topK: payload.getNumber('topK', manifest.config.topK?.[1] ?? 0),
-        temperature: payload.getNumber('temperature', manifest.config.temperature?.[1] ?? 0),
-        messages,
-        inputUsage: -1, // Filled later
-        inputQuota: manifest.tokens.max
-      }
+      const state = await this.#buildStateFromPayload(manifest, payload, messages)
       state.inputUsage = (await this.#buildPrompt(manifest, sessionId, state, messages)).usage
 
       return { sessionId, state }
@@ -225,8 +257,8 @@ class LanguageModelHandler {
       const sessionId = payload.getNonEmptyString('sessionId')
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
       const input = payload.getNonEmptyString('input')
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const { usage } = await this.#buildPrompt(manifest, sessionId, coreState, [
+      const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
+      const { usage } = await this.#buildPrompt(manifest, sessionId, promptProps, [
         ...messages,
         { role: LanguageModelMessageRole.User, content: [{ type: LanguageModelMessageType.Text, content: input }] }
       ])
@@ -250,27 +282,28 @@ class LanguageModelHandler {
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      const { prompt } = await this.#buildPrompt(manifest, sessionId, coreState, messages)
+      const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
+      const { prompt } = await this.#buildPrompt(manifest, sessionId, promptProps, messages)
 
       //todo implement grammar parsing from payload.options.responseConstraint
       //todo guard against unexpected message types
       const reply = (await AILlmSession.prompt(
         sessionId,
         prompt,
-        coreState,
+        promptProps,
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)
         }
       )) as string
 
+      const nextMessages = [
+        ...messages,
+        { role: LanguageModelMessageRole.Assistant, content: [{ type: LanguageModelMessageType.Text, content: reply }] }
+      ]
       return {
-        messages: [
-          ...messages,
-          { role: LanguageModelMessageRole.Assistant, content: reply }
-        ],
-        usage: (await this.#buildPrompt(manifest, sessionId, coreState, messages)).usage
+        messages: nextMessages,
+        usage: (await this.#buildPrompt(manifest, sessionId, promptProps, nextMessages)).usage
       }
     })
   }

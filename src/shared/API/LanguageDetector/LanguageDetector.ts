@@ -30,6 +30,8 @@ export class LanguageDetector extends EventTarget implements AICoreModel {
   // MARK: Static
   /* **************************************************************************/
 
+  static aibrow = true
+
   static async create (options: LanguageDetectorCreateOptions = {}): Promise<LanguageDetector> {
     const monitorTarget = new EventTarget()
     const {
@@ -105,7 +107,6 @@ export class LanguageDetector extends EventTarget implements AICoreModel {
   /* **************************************************************************/
   // MARK: Properties: Config
   /* **************************************************************************/
-
   get expectedInputLanguages () { return this.#state.expectedInputLanguages }
 
   get gpuEngine () { return this.#state.gpuEngine }

@@ -29,6 +29,8 @@ export class Rewriter extends EventTarget implements AICoreModel {
   // MARK: Static
   /* **************************************************************************/
 
+  static aibrow = true
+
   static async create (options: RewriterCreateOptions = {}): Promise<Rewriter> {
     const monitorTarget = new EventTarget()
     const {

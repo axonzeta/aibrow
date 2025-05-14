@@ -16,13 +16,16 @@ import {
 import APIHelper from './APIHelper'
 import {
   AIModelType,
-  AIModelPromptType
+  AIModelPromptType,
+  AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import { nanoid } from 'nanoid'
 import {
   getNonEmptyString
 } from '#Shared/Typo/TypoParser'
 import AILlmSession from '../AI/AILlmSession'
+import TypoObject from '#Shared/Typo/TypoObject'
+import { AIModelManifest } from '#Shared/AIModelManifest'
 
 class EmbeddingHandler {
   /* **************************************************************************/
@@ -47,6 +50,22 @@ class EmbeddingHandler {
   }
 
   /* **************************************************************************/
+  // MARK: Utils
+  /* **************************************************************************/
+
+  #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
+    } as EmbeddingState
+  }
+
+  #buildPromptPropsFromPayload = async (manifest: AIModelManifest, payload: TypoObject) => {
+    return {
+      ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload.getTypo('state'))
+    } as Partial<AIModelPromptProps>
+  }
+
+  /* **************************************************************************/
   // MARK: Handlers: Availability & compatibility
   /* **************************************************************************/
 
@@ -67,10 +86,7 @@ class EmbeddingHandler {
       manifest,
       payload
     ): Promise<{ sessionId: string, state: EmbeddingState }> => {
-      const state: EmbeddingState = {
-        ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
-      }
-
+      const state = await this.#buildStateFromPayload(manifest, payload)
       return { sessionId: nanoid(), state }
     })
   }
@@ -94,13 +110,12 @@ class EmbeddingHandler {
       payload
     ) => {
       const sessionId = payload.getNonEmptyString('sessionId')
-      const coreState = await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload)
       const inputs = payload.getStringArray('inputs')
 
       const embedding = await AILlmSession.getEmbeddingVectors(
         sessionId,
         inputs,
-        coreState,
+        await this.#buildPromptPropsFromPayload(manifest, payload),
         { signal: channel.abortSignal }
       )
 
