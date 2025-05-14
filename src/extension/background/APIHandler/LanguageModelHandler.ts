@@ -23,7 +23,6 @@ import APIHelper from './APIHelper'
 import {
   AIModelType,
   AIModelPromptType,
-  AIModelCoreState,
   AIModelPromptProps
 } from '#Shared/API/AICoreTypes'
 import PermissionProvider from '../PermissionProvider'
@@ -36,7 +35,9 @@ import {
   getNonEmptyString
 } from '#Shared/Typo/TypoParser'
 import {
-  kModelPromptTypeNotSupported
+  kModelPromptTypeNotSupported,
+  kModelInputTypeNotSupported,
+  kModelInputTooLong
 } from '#Shared/Errors'
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
@@ -133,25 +134,23 @@ class LanguageModelHandler {
     let droppedMessages = 0
     while (true) {
       if (droppedMessages >= chatMessages.length && droppedMessages > 0) {
-        throw new Error('Failed to build prompt. Context window overflow.')
+        throw new Error(kModelInputTooLong)
       }
 
       const template = new Template(promptConfig.template)
       const prompt = template.render({
         messages: [
-          ...systemMessages.flatMap((item) => {
-            return item.content.map((contentItem) => {
-              //TODO support non-string content types
+          ...systemMessages,
+          ...chatMessages.slice(droppedMessages)
+        ].flatMap((item) => {
+          return item.content.map((contentItem) => {
+            if (contentItem.type === LanguageModelMessageType.Text) {
               return { role: item.role, content: contentItem.content }
-            })
-          }),
-          ...chatMessages.slice(droppedMessages).flatMap((item) => {
-            return item.content.map((contentItem) => {
-              //TODO support non-string content types
-              return { role: item.role, content: contentItem.content }
-            })
+            } else {
+              throw new Error(kModelInputTypeNotSupported)
+            }
           })
-        ],
+        }),
         bos_token: manifest.tokens.bosToken,
         eos_token: manifest.tokens.eosToken,
         add_generation_prompt: true
@@ -298,14 +297,17 @@ class LanguageModelHandler {
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
       const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
       const { prompt } = await this.#buildPrompt(manifest, promptProps, messages)
+      const responseConstraint = payload.getAny('options.responseConstraint', undefined)
 
-      //todo implement grammar parsing from payload.options.responseConstraint
-      //todo guard against unexpected message types
-      console.log(">>>", sessionId, prompt, promptProps, payload)
+      let grammar: any
+      if (responseConstraint) {
+        grammar = responseConstraint.grammar
+      }
+
       const reply = (await AILlmSession.prompt(
         sessionId,
         prompt,
-        promptProps,
+        grammar ? { ...promptProps, grammar } : promptProps,
         {
           signal: channel.abortSignal,
           stream: (chunk: string) => channel.emit(chunk)

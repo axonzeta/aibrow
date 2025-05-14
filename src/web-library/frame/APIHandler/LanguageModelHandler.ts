@@ -31,7 +31,9 @@ import {
   getNonEmptyString
 } from '#Shared/Typo/TypoParser'
 import {
-  kModelPromptTypeNotSupported
+  kModelPromptTypeNotSupported,
+  kModelInputTypeNotSupported,
+  kModelInputTooLong
 } from '#Shared/Errors'
 import { Template } from '@huggingface/jinja'
 import AILlmSession from '../AI/AILlmSession'
@@ -131,25 +133,23 @@ class LanguageModelHandler {
     let droppedMessages = 0
     while (true) {
       if (droppedMessages >= chatMessages.length && droppedMessages > 0) {
-        throw new Error('Failed to build prompt. Context window overflow.')
+        throw new Error(kModelInputTooLong)
       }
 
       const template = new Template(promptConfig.template)
       const prompt = template.render({
         messages: [
-          ...systemMessages.slice(droppedMessages).flatMap((item) => {
-            return item.content.map((contentItem) => {
-              //TODO support non-string content types
+          ...systemMessages,
+          ...chatMessages.slice(droppedMessages)
+        ].flatMap((item) => {
+          return item.content.map((contentItem) => {
+            if (contentItem.type === LanguageModelMessageType.Text) {
               return { role: item.role, content: contentItem.content }
-            })
-          }),
-          ...chatMessages.slice(droppedMessages).flatMap((item) => {
-            return item.content.map((contentItem) => {
-              //TODO support non-string content types
-              return { role: item.role, content: contentItem.content }
-            })
+            } else {
+              throw new Error(kModelInputTypeNotSupported)
+            }
           })
-        ],
+        }),
         bos_token: manifest.tokens.bosToken,
         eos_token: manifest.tokens.eosToken,
         add_generation_prompt: true
@@ -284,9 +284,11 @@ class LanguageModelHandler {
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
       const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
       const { prompt } = await this.#buildPrompt(manifest, sessionId, promptProps, messages)
+      const responseConstraint = payload.getAny('options.responseConstraint', undefined)
+      if (responseConstraint) {
+        throw new Error('Response constraint is not supported using WebAI.')
+      }
 
-      //todo implement grammar parsing from payload.options.responseConstraint
-      //todo guard against unexpected message types
       const reply = (await AILlmSession.prompt(
         sessionId,
         prompt,

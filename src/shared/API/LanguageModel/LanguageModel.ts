@@ -189,7 +189,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
           {
             sessionId: this.#sessionId,
             state: this.#state,
-            options
+            options: { responseConstraint: options.responseConstraint }
           },
           (chunk: string) => {
             buffer += chunk

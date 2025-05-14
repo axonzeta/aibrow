@@ -15,6 +15,8 @@ export const kModelPromptAborted = 'Model prompt aborted.'
 export const kGpuEngineNotSupported = 'GpuEngine is not supported on this platform.'
 export const kModelPromptTypeNotSupported = 'API is not supported by this model.'
 export const kModelFormatNotSupported = 'Format is not supported by this model.'
+export const kModelInputTypeNotSupported = 'Input type not supported.'
+export const kModelInputTooLong = 'Input is too long.'
 
 // Session API
 export const kSessionCreationAborted = 'Session creation was aborted.'

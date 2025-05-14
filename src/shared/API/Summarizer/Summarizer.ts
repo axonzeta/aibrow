@@ -115,11 +115,11 @@ export class Summarizer extends EventTarget implements AICoreModel {
 
   get length () { return this.#state.length }
 
-  get expectedInputLanguages () { return this.#state.expectedInputLanguages } //TODO impl
+  get expectedInputLanguages () { return this.#state.expectedInputLanguages }
 
-  get expectedContextLanguages () { return this.#state.expectedContextLanguages } //TODO impl
+  get expectedContextLanguages () { return this.#state.expectedContextLanguages }
 
-  get outputLanguage () { return this.#state.outputLanguage } //TODO impl
+  get outputLanguage () { return this.#state.outputLanguage }
 
   get gpuEngine () { return this.#state.gpuEngine }
 

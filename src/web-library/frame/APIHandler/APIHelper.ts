@@ -21,7 +21,9 @@ import {
   kUrlModelIdInvalid,
   kUrlModelIdUnsupportedDomain,
   kUrlModelIdUnsupportedHuggingFacePath,
-  kModelIdInvalid
+  kModelIdInvalid,
+  kModelInputTypeNotSupported,
+  kModelInputTooLong
 } from '#Shared/Errors'
 import AIModelId from '#Shared/AIModelId'
 import {
@@ -89,7 +91,7 @@ class APIHelper {
       manifest = await AIModelManager.fetchModelManifest(modelId)
       availability = await AIModelManager.areManifestAssetsCached(manifest)
         ? AIModelAvailability.Available
-        : AIModelAvailability.Downloadable // TODO: support downloading state
+        : AIModelAvailability.Downloadable // TODO: Support downloading state in the future
     } catch (ex) {
       availability = AIModelAvailability.Unavailable
     }
@@ -129,6 +131,8 @@ class APIHelper {
         case kUrlModelIdUnsupportedDomain:
         case kUrlModelIdUnsupportedHuggingFacePath:
         case kModelIdInvalid:
+        case kModelInputTypeNotSupported:
+        case kModelInputTooLong:
           return createIPCErrorResponse(ex.message)
       }
 

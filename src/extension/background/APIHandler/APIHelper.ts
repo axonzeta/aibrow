@@ -22,7 +22,9 @@ import {
   kUrlModelIdInvalid,
   kUrlModelIdUnsupportedDomain,
   kUrlModelIdUnsupportedHuggingFacePath,
-  kModelIdInvalid
+  kModelIdInvalid,
+  kModelInputTypeNotSupported,
+  kModelInputTooLong
 } from '#Shared/Errors'
 import { NativeInstallHelper, NativeInstallHelperShowReason } from '../NativeInstallHelper'
 import { kNativeMessagingHostNotFound } from '#Shared/BrowserErrors'
@@ -101,7 +103,7 @@ class APIHelper {
     } catch (ex) {
       try {
         manifest = await AIModelDownload.fetchModelManifest(modelId)
-        availability = AIModelAvailability.Downloadable //TODO: support downloading state
+        availability = AIModelAvailability.Downloadable // TODO: Support downloading state in the future
         score = await AILlmSession.getModelScore(manifest)
       } catch (ex) {
         availability = AIModelAvailability.Unavailable
@@ -148,6 +150,8 @@ class APIHelper {
         case kUrlModelIdUnsupportedDomain:
         case kUrlModelIdUnsupportedHuggingFacePath:
         case kModelIdInvalid:
+        case kModelInputTypeNotSupported:
+        case kModelInputTooLong:
           return createIPCErrorResponse(ex.message)
       }
 

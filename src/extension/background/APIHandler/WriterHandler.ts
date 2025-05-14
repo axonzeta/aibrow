@@ -75,6 +75,9 @@ class WriterHandler {
     const sharedContext = payload.getString('state.sharedContext')
     const context = payload.getString('options.context')
     const input = payload.getString('input')
+    const expectedInputLanguages = payload.getStringArray('state.expectedInputLanguages')
+    const expectedContextLanguages = payload.getStringArray('state.expectedContextLanguages')
+    const outputLanguage = payload.getNonEmptyString('state.outputLanguage')
 
     const config = manifest.prompts[AIModelPromptType.Writer]
     const template = new Template(config.template)
@@ -85,6 +88,9 @@ class WriterHandler {
       shared_context: sharedContext,
       context,
       input,
+      expected_input_language_codes: expectedInputLanguages,
+      expected_context_language_codes: expectedContextLanguages,
+      output_language_code: outputLanguage,
       bos_token: manifest.tokens.bosToken,
       eos_token: manifest.tokens.eosToken,
       add_generation_prompt: true
