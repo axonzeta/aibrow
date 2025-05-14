@@ -37,19 +37,19 @@ You can use the languageModel API to have a conversation with the AI, using whic
 import AI from '@aibrow/web'
 
 // WebGPU
-const webGpu = await AI.web.languageModel.create()
+const webGpu = await AI.AIBrowWeb.LanguageModel.create()
 console.log(await webGpu.prompt('Write a short poem about the weather'))
 
 // Llama.cpp
-const ext = await AI.aibrow.languageModel.create()
+const ext = await AI.AIBrow.LanguageModel.create()
 console.log(await ext.prompt('Write a short poem about the weather'))
 
 // Chrome AI
-const browser = await AI.browser.languageModel.create()
+const browser = await AI.Browser.LanguageModel.create()
 console.log(await browser.prompt('Write a short poem about the weather'))
 
 // Server
-const server = await AI.server.languageModel.create()
+const server = await AI.Server.LanguageModel.create()
 console.log(await server.prompt('Write a short poem about the weather'))
 
 ```
@@ -72,13 +72,18 @@ Using the AiBrow extension gives the best on-device performance with the broades
 ```js
 import AI from '@aibrow/web'
 
-const { ready, extension, helper } = await AI.aibrow.capabilities()
-if (ready) {
-  const session = await AI.aibrow.languageModel.create()
-  console.log(await session.prompt('Write a short poem about the weather'))
+if (AI.AIBrow) {
+  const { ready } = await AI.AIBrow.capabilities()
+  if (ready) {
+    const session = await AI.AIBrow.LanguageModel.create()
+    console.log(await session.prompt('Write a short poem about the weather'))
+  } else {
+    // Here are some tips to help users install the AiBrow extension & helper https://docs.aibrow.ai/guides/helping-users-install-aibrow
+    console.log(`Install the extension from https://aibrow.ai/install?redirect_to=${window.location.href}`)
+  }
 } else {
   // Here are some tips to help users install the AiBrow extension & helper https://docs.aibrow.ai/guides/helping-users-install-aibrow
-  console.log(`Extension is not fully installed. Extension=${extension}. Helper=${helper}`)
+  console.log(`Install the extension from https://aibrow.ai/install?redirect_to=${window.location.href}`)
 }
 ```
 
@@ -111,19 +116,15 @@ Other extensions can make use of the AiBrow extension by using the extension lib
 ```js
 import aibrow from '@aibrow/extension'
 
-const { helper, extension } = await window.aibrow.capabilities()
-if (extension) {
-  if (helper) {
-    const session = await window.aibrow.languageModel.create()
-    const stream = await sess.promptStreaming('Write a poem about AI in the browser')
-    for await (const chunk of stream) {
-      console.log(chunk)
-    }
-  } else {
-    console.log('Aibrow helper not installed')
+const { ready } = await aibrow.capabilities()
+if (ready) {
+  const session = await aibrow.LanguageModel.create()
+  const stream = await sess.promptStreaming('Write a poem about AI in the browser')
+  for await (const chunk of stream) {
+    console.log(chunk)
   }
 } else {
-  console.log('Aibrow not installed')
+  console.log(`Install the extension from https://aibrow.ai/install?redirect_to=${window.location.href}`)
 }
 ```
 </details>
@@ -137,7 +138,7 @@ WebGPU provides a good middle-ground for performance and feature set, but it com
 ```js
 import AI from '@aibrow/web'
 
-const session = await AI.web.languageModel.create()
+const session = await AI.AIBrowWeb.LanguageModel.create()
 console.log(await session.prompt('Write a short poem about the weather'))
 ```
 
@@ -150,8 +151,8 @@ The Chrome built-in AI is a great option for simple tasks such as summarization,
 ```js
 import AI from '@aibrow/web'
 
-if (AI.browser) {
-  const session = await AI.browser.languageModel.create()
+if (AI.AIBrow) {
+  const session = await AI.AIBrow.LanguageModel.create()
   console.log(await session.prompt('Write a short poem about the weather'))
 } else {
   console.log(`Your browser doesn't support browser window.ai`)
