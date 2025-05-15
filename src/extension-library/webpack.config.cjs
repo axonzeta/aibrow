@@ -20,6 +20,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
       path: path.join(outDir, 'extension-library'),
       library: config.extensionLibrary.name,
       libraryTarget: 'umd',
+      libraryExport: 'default',
       umdNamedDefine: true
     },
     devtool: mode === 'development' ? 'inline-cheap-source-map' : undefined,
