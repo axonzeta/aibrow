@@ -301,7 +301,7 @@ class LanguageModelHandler {
 
       let grammar: any
       if (responseConstraint) {
-        grammar = responseConstraint.grammar
+        grammar = responseConstraint
       }
 
       const reply = (await AILlmSession.prompt(
