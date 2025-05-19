@@ -9,7 +9,7 @@ Run local AI in your browser with the unified AiBrow JavaScript API. The API all
 
 | Engine             | Targets                               | Custom models | HuggingFace models | Runs on-device | Grammar output | LoRA Adapters | Embeddings | GPU Required | Performance |
 | ------------------ | ------------------------------------- | ------------- | ------------------ | -------------- | -------------- | ------------- | ---------- | ------------ | ----------- |
-| Chrome AI          | Chrome Desktop                        | ❌            | ❌                 | ✅              | ❌             | ❌            | ❌          | ✅           | ⭐️⭐️         |
+| Chrome AI          | Chrome Desktop                        | ❌            | ❌                 | ✅              | ✅             | ❌            | ❌          | ✅           | ⭐️⭐️         |
 | llama.cpp          | Desktop Browsers                      | ✅            | ✅                 | ✅              | ✅             | ✅            | ✅          | ❌           | ⭐️⭐️⭐️       |
 | WebGPU             | Desktop & Android Browsers            | ✅            | ✅                 | ✅              | ✅             | ❌            | ✅          | ❌           | ⭐️          |
 | Self-hosted Server | Any browser                           | ✅            | ✅                 | ❌              | ✅             | ✅            | ✅          | ❌           | ⭐️⭐️⭐️       |
@@ -17,7 +17,13 @@ Run local AI in your browser with the unified AiBrow JavaScript API. The API all
 
 When using AiBrow through the llama.cpp extension or WebGPU, it runs small language models completely on your machine, making it fast and keeping your data private. You can complete sentences, improve your writing, rephrase text, or sum up complex information using the latest small LLMs such as Llama 3.2, Phi 3.5, Gemma 2 and Qwen 2.5.
 
-The AiBrow API follows the current proposal for the browser [Prompt API](https://github.com/explainers-by-googlers/prompt-api) in development in [Google Chrome](https://developer.chrome.com/docs/ai/built-in).
+The AiBrow API follows the current proposals for the browser machine learning APIs under development in [Google Chrome](https://developer.chrome.com/docs/ai/built-in), namely the
+
+* [Prompt API](https://github.com/explainers-by-googlers/prompt-api)
+* [Writing assistance API](https://github.com/webmachinelearning/writing-assistance-apis)
+* [Translation API](https://github.com/webmachinelearning/translation-api)
+
+You can find more information about the AIBrow implementation along with docs & API reference following the links below...
 
 * [Docs](https://docs.aibrow.ai/)
 * [API Reference](https://docs.aibrow.ai/api-reference/aibrow)
