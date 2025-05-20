@@ -34,12 +34,14 @@ function externalNodeModulesTracker (pkg, nodeModulesDir, $externals) {
 
   // Dependencies that we should set as ESM modules
   const ESM_DEPS = [
-    'node-llama-cpp' // This uses an async import
+    'node-llama-cpp', // This uses an async import
+    '@aibrow/node-llama-cpp' // This uses an async import
   ]
 
   // Predefined dependencies that we should always add
   const PREDEFINED_DEPS = [
-    'node-llama-cpp' // We tell webpack to ignore this because it doesn't like compiling it
+    'node-llama-cpp', // We tell webpack to ignore this because it doesn't like compiling it
+    '@aibrow/node-llama-cpp' // We tell webpack to ignore this because it doesn't like compiling it
   ]
 
   // Seed the externals with the predefined deps
