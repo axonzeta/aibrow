@@ -10,12 +10,12 @@ Run local AI in your browser with the unified AiBrow JavaScript API. The API all
 | Engine             | Targets                               | Custom models | HuggingFace models | Runs on-device | Grammar output | LoRA Adapters | Embeddings | GPU Required | Performance |
 | ------------------ | ------------------------------------- | ------------- | ------------------ | -------------- | -------------- | ------------- | ---------- | ------------ | ----------- |
 | Chrome AI          | Chrome Desktop                        | ❌            | ❌                 | ✅              | ✅             | ❌            | ❌          | ✅           | ⭐️⭐️         |
-| llama.cpp          | Desktop Browsers                      | ✅            | ✅                 | ✅              | ✅             | ✅            | ✅          | ❌           | ⭐️⭐️⭐️       |
+| llama          | Desktop Browsers                      | ✅            | ✅                 | ✅              | ✅             | ✅            | ✅          | ❌           | ⭐️⭐️⭐️       |
 | WebGPU             | Desktop & Android Browsers            | ✅            | ✅                 | ✅              | ✅             | ❌            | ✅          | ❌           | ⭐️          |
 | Self-hosted Server | Any browser                           | ✅            | ✅                 | ❌              | ✅             | ✅            | ✅          | ❌           | ⭐️⭐️⭐️       |
 | Public Server      | Any browser                           | ✅            | ✅                 | ❌              | ✅             | ✅            | ✅          | ❌           | ⭐️⭐️         |
 
-When using AiBrow through the llama.cpp extension or WebGPU, it runs small language models completely on your machine, making it fast and keeping your data private. You can complete sentences, improve your writing, rephrase text, or sum up complex information using the latest small LLMs such as Llama 3.2, Phi 3.5, Gemma 2 and Qwen 2.5.
+When using AiBrow through the llama extension or WebGPU, it runs small language models completely on your machine, making it fast and keeping your data private. You can complete sentences, improve your writing, rephrase text, or sum up complex information using the latest small LLMs such as Llama 3.2, Phi 3.5, Gemma 2 and Qwen 2.5.
 
 The AiBrow API follows the current proposals for the browser machine learning APIs under development in [Google Chrome](https://developer.chrome.com/docs/ai/built-in), namely the
 
@@ -60,7 +60,7 @@ console.log(await server.prompt('Write a short poem about the weather'))
 
 ```
 
-## AiBrow extension using llama.cpp natively
+## AiBrow extension using llama natively
 
 <p>
 <a href="https://chromewebstore.google.com/detail/aibrow/bbkbjiehfkggfkbampigbbakecijicdm"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" width="228" height="64" alt="Get AiBrow for Chrome" /></a>
@@ -71,7 +71,7 @@ console.log(await server.prompt('Write a short poem about the weather'))
 <a href="https://www.youtube.com/watch?v=ATybwD79jUI"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/install_preview.png?raw=true" width="480" height="270" alt="Step by step install" /></a>
 </p>
 
-Using the AiBrow extension gives the best on-device performance with the broadest feature-set. It's a browser extension that leverages the powerful [llama.cpp](https://github.com/ggerganov/llama.cpp) and can give great performance on all kinds of desktop computers either leveraging the GPU or CPU. Downloaded models are stored in a common repository meaning models only need to be downloaded once. You can use models provided by AiBrow, or any GGUF model hosted on [HuggingFace](https://huggingface.co/).
+Using the AiBrow extension gives the best on-device performance with the broadest feature-set. It's a browser extension that leverages the powerful [node-llama-cpp](https://github.com/withcatai/node-llama-cpp) and [llama.cpp](https://github.com/ggerganov/llama.cpp) and can give great performance on all kinds of desktop computers either leveraging the GPU or CPU. Downloaded models are stored in a common repository meaning models only need to be downloaded once. You can use models provided by AiBrow, or any GGUF model hosted on [HuggingFace](https://huggingface.co/).
 
 ##### Getting started
 
