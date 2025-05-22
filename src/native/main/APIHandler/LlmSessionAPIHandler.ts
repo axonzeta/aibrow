@@ -85,34 +85,33 @@ class LlmSessionAPIHandler {
   /* **************************************************************************/
 
   #handleGetSupportedGpuEngines = async () => {
-    const supportedEngines: AIModelGpuEngine[] = []
-    const possibleEngines: Exclude<AIModelGpuEngine, AIModelGpuEngine.Wasm | AIModelGpuEngine.WebGpu>[] = process.platform === 'darwin'
-      ? [
-          AIModelGpuEngine.Cuda,
-          AIModelGpuEngine.Vulkan,
-          AIModelGpuEngine.Cpu,
-          AIModelGpuEngine.Metal
-        ]
-      : [
-          AIModelGpuEngine.Cuda,
-          AIModelGpuEngine.Vulkan,
-          AIModelGpuEngine.Cpu
-        ]
+    const possibleEngines: Exclude<AIModelGpuEngine, AIModelGpuEngine.Wasm | AIModelGpuEngine.WebGpu>[] = [
+      AIModelGpuEngine.Cuda,
+      AIModelGpuEngine.Vulkan,
+      AIModelGpuEngine.Cpu,
+      AIModelGpuEngine.Metal
+    ]
 
-    const { getLlamaForOptions } = await importLlama()
-    for (const engine of possibleEngines) {
-      try {
-        await getLlamaForOptions(
-          {
+    const { getLlamaGpuTypes, getLlama, LlamaLogLevel } = await importLlama()
+    const llamaSupportedGpuTypes = await getLlamaGpuTypes('supported')
+
+    const supportedEngines: AIModelGpuEngine[] = await Promise.all(possibleEngines
+      .filter((engine) => llamaSupportedGpuTypes.includes(engine === AIModelGpuEngine.Cpu ? false : engine))
+      .map(async (engine) => {
+        try {
+          await getLlama({
             gpu: engine === AIModelGpuEngine.Cpu ? false : engine,
             build: 'never',
-            vramPadding: 0
-          },
-          { skipLlamaInit: true }
-        )
-        supportedEngines.push(engine)
-      } catch (ex) { /* not supported */ }
-    }
+            logLevel: LlamaLogLevel.disabled,
+            dryRun: true
+          })
+          return engine
+        } catch (err) {
+          return undefined
+        }
+      })
+      .filter(Boolean)
+    )
 
     return supportedEngines
   }
