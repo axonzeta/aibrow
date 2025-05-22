@@ -1,3 +1,3 @@
 export async function importLlama () {
-  return import(/* webpackIgnore: true */ 'node-llama-cpp')
+  return import(/* webpackIgnore: true */ '@aibrow/node-llama-cpp')
 }
