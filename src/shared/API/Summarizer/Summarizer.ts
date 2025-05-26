@@ -149,7 +149,6 @@ export class Summarizer extends EventTarget implements AICoreModel {
 
     return new ReadableStream({
       start: (controller) => {
-        let buffer = ''
         IPCRegistrar.ipc.stream(
           kSummarizerPrompt,
           {
@@ -159,8 +158,7 @@ export class Summarizer extends EventTarget implements AICoreModel {
             options
           },
           (chunk: string) => {
-            buffer += chunk
-            controller.enqueue(buffer)
+            controller.enqueue(chunk)
           },
           { signal }
         ).then(

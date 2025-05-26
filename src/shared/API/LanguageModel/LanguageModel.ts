@@ -183,7 +183,6 @@ export class LanguageModel extends EventTarget implements AICoreModel {
 
     return new ReadableStream({
       start: (controller) => {
-        let buffer = ''
         IPCRegistrar.ipc.stream(
           kLanguageModelPrompt,
           {
@@ -192,8 +191,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
             options: { responseConstraint: options.responseConstraint }
           },
           (chunk: string) => {
-            buffer += chunk
-            controller.enqueue(buffer)
+            controller.enqueue(chunk)
           },
           { signal }
         ).then(
