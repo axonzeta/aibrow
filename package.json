@@ -14,7 +14,7 @@
     "start:web-library": "webpack --mode=development --env task=web-library"
   },
   "engines": {
-    "node": ">=20.17.0"
+    "node": ">=22.16.0"
   },
   "author": "Thomas Beverley<tom@aibrow.ai>",
   "license": "MPL-2.0",
