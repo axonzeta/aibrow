@@ -64,7 +64,7 @@ console.log(await server.prompt('Write a short poem about the weather'))
 
 <p>
 <a href="https://chromewebstore.google.com/detail/aibrow/bbkbjiehfkggfkbampigbbakecijicdm"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/chrome_webstore_icon.png?raw=true" width="228" height="64" alt="Get AiBrow for Chrome" /></a>
-<a href="#firefox"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/firefox-addon.png?raw=true" width="183" height="64"alt="Get AiBrow for Firefox"></a>
+<a href="https://addons.mozilla.org/en-GB/firefox/addon/aibrow-local-ai-in-the-browser/"><img src="https://github.com/axonzeta/aibrow/blob/main/.github/assets/firefox-addon.png?raw=true" width="183" height="64"alt="Get AiBrow for Firefox"></a>
 </p>
 
 <p>
