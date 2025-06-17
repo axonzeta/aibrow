@@ -77,9 +77,15 @@ class APIHandler {
       default: platform = platformInfo.os; break
     }
     let arch: string
-    switch (platformInfo.arch) {
-      case 'arm64': arch = 'arm64'; break
-      case 'x86-64': arch = 'x64'; break
+    switch (platformInfo.arch as chrome.runtime.PlatformArch | 'aarch64') {
+      case 'arm64':
+      case 'aarch64': // Firefox comes out with this value on AppleSilicon
+      case 'arm':
+        arch = 'arm64'
+        break
+      case 'x86-64':
+        arch = 'x64'
+        break
     }
 
     const latestUrl = urlJoin(config.native.updateUrl, platform, arch, `latest_${config.native.apiVersion}.json`)
