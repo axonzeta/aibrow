@@ -26,17 +26,13 @@ import {
   kModelInputTooLong
 } from '#Shared/Errors'
 import AIModelId from '#Shared/AIModelId'
-import {
-  getDefaultModel,
-  getDefaultModelEngine,
-  getUseMmap
-} from '#Shared/Prefs'
 import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 import AILlmSession from '../AI/AILlmSession'
 import AIModelManager from '../AI/AIModelManager'
 import TypoObject from '#Shared/Typo/TypoObject'
 import { clamp } from '#Shared/Typo/TypoParser'
 import { nanoid } from 'nanoid'
+import config from '#Shared/Config'
 
 class APIHelper {
   /* **************************************************************************/
@@ -51,7 +47,7 @@ class APIHelper {
   async getModelId (modelId: any, modelType: AIModelType): Promise<AIModelId> {
     return typeof (modelId) === 'string' && modelId.length
       ? new AIModelId(modelId)
-      : new AIModelId(await getDefaultModel(modelType))
+      : new AIModelId(config.defaultModels[modelType])
   }
 
   /**
@@ -60,9 +56,14 @@ class APIHelper {
    * @returns the model id or the default
    */
   async getGpuEngine (gpuEngine: any): Promise<AIModelGpuEngine | undefined> {
-    return Object.values(AIModelGpuEngine).includes(gpuEngine)
-      ? gpuEngine
-      : await getDefaultModelEngine()
+    const supportedEngines = AILlmSession.getSupportedGpuEngines()
+    if (supportedEngines.includes(gpuEngine)) {
+      return gpuEngine
+    } else if (supportedEngines.includes(AIModelGpuEngine.WebGpu)) {
+      return AIModelGpuEngine.WebGpu
+    } else {
+      return AIModelGpuEngine.Wasm
+    }
   }
 
   /**
@@ -218,7 +219,7 @@ class APIHelper {
       dtype: options.getEnum('dtype', AIModelDType, AIModelDType.Auto),
       flashAttention: options.getBool('flashAttention', manifest.config.flashAttention),
       contextSize: clamp(options.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
-      useMmap: await getUseMmap()
+      useMmap: false
     }
   }
 
