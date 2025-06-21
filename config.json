@@ -16,7 +16,8 @@
     "mozExtensionIds": [
       "{048a4901-3fbf-4fcd-b6cd-adb9c419d3c1}"
     ],
-    "installHelperUrl": "https://aibrow.ai/install"
+    "installHelperUrl": "https://aibrow.ai/install",
+    "experimentalFirefoxAi": true
   },
   "extensionLibrary": {
     "name": "@aibrow/extension"

@@ -13,6 +13,7 @@ import {
 } from '#Shared/API/Embedding/EmbeddingTypes'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
 import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
+import config from '#Shared/Config'
 
 type SupportedEngines = {
   engines: AIModelGpuEngine[] | undefined
@@ -123,6 +124,42 @@ class AILlmSession {
    */
   async prompt (sessionId: string, prompt: string, props: Partial<AIModelPromptProps>, streamOptions: PromptStreamOptions) {
     await this.#ensureGpuEngineSupported(props.gpuEngine)
+
+    if (process.env.BROWSER === 'moz' && config.extension.experimentalFirefoxAi) {
+      console.log(">>> Run")
+      console.log(sessionId, prompt, props, streamOptions)
+
+      const ln = (data) => {
+        console.log("Progress:", data)
+      }
+      globalThis.browser.trial.ml.onProgress.addListener(ln)
+
+      try {
+        await globalThis.browser.trial.ml.createEngine({
+          modelHub: "huggingface",
+          taskName: "text-generation",
+          modelId: "onnx-community/Qwen2.5-1.5B-Instruct"//"onnx-community/Qwen2.5-0.5B-Instruct"// "Xenova/Qwen1.5-0.5B"// "Xenova/Qwen1.5-0.5B-Chat"
+        })
+      } catch (ex) {
+        console.error("EX1", ex)
+        throw ex
+      } finally {
+        globalThis.browser.trial.ml.onProgress.removeListener(ln)
+      }
+
+      try {
+        const res = await globalThis.browser.trial.ml.runEngine({
+          args: [prompt],
+          max_new_tokens: 1024
+        })
+        console.log(">>>OUT", res)
+        streamOptions.stream(res[0].generated_text)
+        return
+      } catch (ex) {
+        console.error("EX2", ex)
+        throw ex
+      }
+    }
 
     const res = await NativeIPC.stream(
       kLlmSessionExecPromptSession,

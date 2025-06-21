@@ -1,6 +1,7 @@
 import { setSiteModelPermission, SiteModelPermissionRequest } from '#Shared/Permissions/AISitePermissions'
 import { kGetPermissionRequests, kResolvePermissionRequest } from '#Shared/BackgroundAPI/PermissionIPC'
 import IPCBackgroundMessager from '#Shared/IPC/IPCBackgroundMessager'
+import config from '#Shared/Config'
 
 import './index.less'
 
@@ -30,6 +31,11 @@ async function main () {
   }
 
   document.getElementById('action-allow').addEventListener('click', async () => {
+    //twbtwb
+    if (process.env.BROWSER === 'moz' && config.extension.experimentalFirefoxAi) {
+      await (globalThis.browser as any).permissions.request({ permissions: ['trialML'] })
+    }
+
     await setSiteModelPermission(request.origin, request.modelId, true)
     IPCBackgroundMessager.send(kResolvePermissionRequest, request)
     window.close()

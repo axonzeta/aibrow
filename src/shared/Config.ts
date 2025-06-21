@@ -16,7 +16,8 @@ export type Config = {
   extension: {
     crxExtensionIds: string[]
     mozExtensionIds: string[]
-    installHelperUrl: string
+    installHelperUrl: string,
+    experimentalFirefoxAi: boolean
   }
 
   defaultModels: {

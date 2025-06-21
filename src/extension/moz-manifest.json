@@ -52,5 +52,8 @@
     "storage",
     "scripting",
     "webNavigation"
+  ],
+  "optional_permissions": [
+    "trialML"
   ]
 }
