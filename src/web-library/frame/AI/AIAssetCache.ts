@@ -5,7 +5,7 @@ class AIAssetCache {
 
   #cache: Cache
   #cacheOpening = false
-  #cacheOpenPromises: Array<[(cache: Cache) => void, (err: Error) => void]> = []
+  #cacheOpenPromises: [(cache: Cache) => void, (err: Error) => void][] = []
 
   /* **************************************************************************/
   // MARK: Utils

@@ -265,10 +265,10 @@ class LlmSessionAPIHandler {
         flashAttention: chatOptions.flashAttention,
         lora: manifest.formats[AIModelFormat.GGUF]?.adapter
           ? {
-              adapters: [{
-                filePath: AIModelFileSystem.getAssetPath(manifest.formats[AIModelFormat.GGUF]?.adapter)
-              }]
-            }
+            adapters: [{
+              filePath: AIModelFileSystem.getAssetPath(manifest.formats[AIModelFormat.GGUF]?.adapter)
+            }]
+          }
           : undefined
       })
 

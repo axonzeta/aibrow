@@ -18,7 +18,7 @@ import config from '#Shared/Config'
 type SupportedEngines = {
   engines: AIModelGpuEngine[] | undefined
   resolving: boolean
-  callbacks: Array<(engines: AIModelGpuEngine[]) => void>
+  callbacks: ((engines: AIModelGpuEngine[]) => void)[]
 }
 
 type GetEmbeddingRequestOptions = {

@@ -21,7 +21,7 @@ export async function getPref (key: string, defaultValue: any) {
   return res[storageKey] ?? defaultValue
 }
 
-export async function getEnumPref (key: string, options: { [key: string]: any}, defaultValue: any) {
+export async function getEnumPref (key: string, options: Record<string, any>, defaultValue: any) {
   const value = await getPref(key, defaultValue)
   return Object.values(options).includes(value) ? value : defaultValue
 }
@@ -79,7 +79,7 @@ export enum ModelUpdatePeriod {
   Before = 'before',
   Hourly = 'hourly',
   Daily = 'daily',
-  Weekly = 'weekly',
+  Weekly = 'weekly'
 }
 export const ModelUpdateMillis = {
   [ModelUpdatePeriod.Before]: 0,

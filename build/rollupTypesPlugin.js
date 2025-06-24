@@ -1,6 +1,6 @@
-const path = require('path')
-const fs = require('fs-extra')
-const childProcess = require('child_process')
+import path from 'path'
+import fs from 'fs-extra'
+import childProcess from 'child_process'
 
 /**
  * Creates typescript typings using rollup
@@ -8,7 +8,7 @@ const childProcess = require('child_process')
  * @param configPath: the rollup config file
  * @param outputPath: the output file
  */
-module.exports = function rollupTypesPlugin (
+export default function rollupTypesPlugin (
   inputPath,
   configPath,
   outputPath

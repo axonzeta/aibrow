@@ -239,14 +239,14 @@ class APIHelper {
     const modelId = await this.getModelId(options.getString('model'), modelType)
     const gpuEngine = await this.getGpuEngine(options.getString('gpuEngine'))
 
-    return <AIModelCoreState> {
+    return {
       model: modelId.toString(),
       gpuEngine,
       dtype: options.getEnum('dtype', AIModelDType, AIModelDType.Auto),
       flashAttention: options.getBool('flashAttention', manifest.config.flashAttention),
       contextSize: clamp(options.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
       useMmap: await getUseMmap()
-    }
+    } as AIModelCoreState
   }
 
   /**

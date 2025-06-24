@@ -1,17 +1,17 @@
-const path = require('path')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
-const CircularDependencyPlugin = require('circular-dependency-plugin')
-const TerserPlugin = require('terser-webpack-plugin')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const { pathsToWebpackAlias } = require('../../build/tsconfig_util.cjs')
-const webpack = require('webpack')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const rollupTypesPlugin = require('../../build/rollupTypesPlugin.cjs')
+import path from 'path'
+import CopyWebpackPlugin from 'copy-webpack-plugin'
+import CaseSensitivePathsPlugin from 'case-sensitive-paths-webpack-plugin'
+import CircularDependencyPlugin from 'circular-dependency-plugin'
+import TerserPlugin from 'terser-webpack-plugin'
+import { CleanWebpackPlugin } from 'clean-webpack-plugin'
+import { pathsToWebpackAlias } from '../../build/tsconfig_util.js'
+import webpack from 'webpack'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import rollupTypesPlugin from '../../build/rollupTypesPlugin.js'
 
-module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
-  const srcDir = __dirname
+export default function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
+  const srcDir = import.meta.dirname
 
   const uiEntryPoints = ['ui-permission-popup', 'ui-model-install-popup', 'ui-options']
   return ['crx', 'moz'].map((browser) => {
@@ -121,7 +121,7 @@ module.exports = function ({ outDir, nodeModulesDir, pkg, config }, { mode }) {
     plugins: [
       rollupTypesPlugin(
         path.join(srcDir, 'contentscript-main/index.ts'),
-        path.join(__dirname, 'types-rollup.config.js'),
+        path.join(import.meta.dirname, 'types-rollup.config.js'),
         path.join(outDir, 'domtypeslib', 'index.d.ts')
       ),
       new CopyWebpackPlugin({

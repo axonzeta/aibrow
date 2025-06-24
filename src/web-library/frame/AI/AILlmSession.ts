@@ -155,20 +155,20 @@ class AILlmSession {
     const totalProgress = new Map<string, [number, number]>()
     const progressCallback = progressFn
       ? (progress: ProgressInfo) => {
-          switch (progress.status) {
-            case 'progress': {
-              totalProgress.set(progress.file, [progress.loaded, progress.total])
-              let loaded = 0
-              let total = 0
-              for (const [l, t] of totalProgress.values()) {
-                loaded += l
-                total += t
-              }
-              progressFn(loaded, total)
-              break
+        switch (progress.status) {
+          case 'progress': {
+            totalProgress.set(progress.file, [progress.loaded, progress.total])
+            let loaded = 0
+            let total = 0
+            for (const [l, t] of totalProgress.values()) {
+              loaded += l
+              total += t
             }
+            progressFn(loaded, total)
+            break
           }
         }
+      }
       : undefined
 
     // Create the tokenizer and model

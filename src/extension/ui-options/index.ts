@@ -44,7 +44,7 @@ import { UpdateResult } from '#Shared/Updater'
 function renderDefaultModelOptions (
   $el: HTMLSelectElement,
   selectedModelId: string,
-  modelList: Array<{ id: string, name: string }>
+  modelList: { id: string, name: string }[]
 ) {
   UI.empty($el)
 
@@ -62,7 +62,7 @@ function renderDefaultModelOptions (
 async function renderDefaultEngineOptions (
   $el: HTMLSelectElement,
   selectedModelEngine: AIModelGpuEngine | undefined,
-  supportedEngines: Array<AIModelGpuEngine>
+  supportedEngines: AIModelGpuEngine[]
 ) {
   UI.empty($el)
 
@@ -132,7 +132,7 @@ async function renderSettings () {
   const $defaultEngineOpt = document.getElementById('opt-engine-default') as HTMLSelectElement
   $defaultEngineOpt.addEventListener('change', async () => {
     const id = ($defaultEngineOpt as HTMLSelectElement).value
-    const supportedEngines = await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as Array<AIModelGpuEngine>
+    const supportedEngines = await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as AIModelGpuEngine[]
     if (supportedEngines.includes(id as AIModelGpuEngine)) {
       await setDefaultModelEngine(id)
     } else {
@@ -143,7 +143,7 @@ async function renderSettings () {
     renderDefaultEngineOptions(
       $defaultEngineOpt,
       await getDefaultModelEngine(),
-      await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as Array<AIModelGpuEngine>
+      await IPCBackgroundMessager.request(kGetSupportedGpuEngines) as AIModelGpuEngine[]
     )
   })()
 
@@ -183,7 +183,7 @@ async function renderSettings () {
  * Renders the installed models
  */
 async function renderInstalledModels () {
-  const models = await IPCBackgroundMessager.request(kGetInstalledModels, { stats: true }) as Array<{ manifest: AIModelManifest, stats: AIModelStats }>
+  const models = await IPCBackgroundMessager.request(kGetInstalledModels, { stats: true }) as { manifest: AIModelManifest, stats: AIModelStats }[]
 
   UI.empty('#installed-models')
   if (models.length) {

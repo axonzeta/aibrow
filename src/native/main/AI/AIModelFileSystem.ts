@@ -64,7 +64,7 @@ class AIModelFileSystem {
    * @return an array of model manifests
    */
   async getModels (stats = false) {
-    const models: Array<{ manifest: AIModelManifest, stats: AIModelStats } | AIModelManifest> = []
+    const models: ({ manifest: AIModelManifest, stats: AIModelStats } | AIModelManifest)[] = []
 
     try {
       for await (const file of klaw(Paths.models)) {

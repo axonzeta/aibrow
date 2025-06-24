@@ -56,7 +56,7 @@ class AIModelManager {
       }
     }
 
-    return this.#manifestCache.get(modelId.toString())!
+    return this.#manifestCache.get(modelId.toString())
   }
 
   /* **************************************************************************/

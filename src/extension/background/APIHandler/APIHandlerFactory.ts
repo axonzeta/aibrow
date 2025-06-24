@@ -8,7 +8,7 @@ class APIHandlerFactory {
   // MARK: Private
   /* **************************************************************************/
 
-  #ipc: Map<chrome.runtime.Port, APIHandler> = new Map()
+  #ipc = new Map<chrome.runtime.Port, APIHandler>()
   #started = false
 
   /* **************************************************************************/
