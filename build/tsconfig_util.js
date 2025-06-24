@@ -1,12 +1,12 @@
-const fs = require('fs-extra')
-const path = require('path')
+import fs from 'fs-extra'
+import path from 'path'
 
 /**
  * Converts the paths in a tsconfig.json file to a format that webpack can understand
  * @param tsconfigPath: the path to the tsconfig.json file
  * @returns a mapping of paths to their resolutions
  */
-function pathsToWebpackAlias (tsconfigPath) {
+export function pathsToWebpackAlias (tsconfigPath) {
   const tsconfigDir = path.dirname(tsconfigPath)
   const tsconfig = fs.readJsonSync(tsconfigPath)
 
@@ -17,8 +17,4 @@ function pathsToWebpackAlias (tsconfigPath) {
     acc[id] = resolution
     return acc
   }, {})
-}
-
-module.exports = {
-  pathsToWebpackAlias
 }

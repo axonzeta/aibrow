@@ -1,8 +1,8 @@
-const path = require('path')
-const bootWebpackConfig = require('./boot/webpack.config.cjs')
-const mainWebpackConfig = require('./main/webpack.config.cjs')
+import path from 'path'
+import bootWebpackConfig from './boot/webpack.config.js'
+import mainWebpackConfig from './main/webpack.config.js'
 
-module.exports = function (taskConfig, { mode }) {
+export default function (taskConfig, { mode }) {
   const {
     outDir: rootOutDir,
     nodeModulesDir,
@@ -11,7 +11,7 @@ module.exports = function (taskConfig, { mode }) {
     config
   } = taskConfig
   const dirs = {
-    src: __dirname,
+    src: import.meta.dirname,
     out: path.join(rootOutDir, 'native'),
     nodeModules: nodeModulesDir
   }

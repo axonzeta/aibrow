@@ -1,18 +1,18 @@
-const path = require('path')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
-const CircularDependencyPlugin = require('circular-dependency-plugin')
-const TerserPlugin = require('terser-webpack-plugin')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
-const { pathsToWebpackAlias } = require('../../build/tsconfig_util.cjs')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const rollupTypesPlugin = require('../../build/rollupTypesPlugin.cjs')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const http = require('http')
-const fs = require('fs-extra')
-const mime = require('mime-types')
-const sanitizeFilename = require('sanitize-filename')
-const webpack = require('webpack')
+import path from 'path'
+import CopyWebpackPlugin from 'copy-webpack-plugin'
+import CaseSensitivePathsPlugin from 'case-sensitive-paths-webpack-plugin'
+import CircularDependencyPlugin from 'circular-dependency-plugin'
+import TerserPlugin from 'terser-webpack-plugin'
+import { CleanWebpackPlugin } from 'clean-webpack-plugin'
+import { pathsToWebpackAlias } from '../../build/tsconfig_util.js'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import rollupTypesPlugin from '../../build/rollupTypesPlugin.js'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import http from 'http'
+import fs from 'fs-extra'
+import mime from 'mime-types'
+import sanitizeFilename from 'sanitize-filename'
+import webpack from 'webpack'
 
 class WebLibraryFrameServePlugin {
   constructor (outPath, port, watch) {
@@ -29,7 +29,7 @@ class WebLibraryFrameServePlugin {
       try {
         if (!this.watch) {
           logger.warn(
-`The web-library uses an iframe for shared model caching. This frame needs to be served
+            `The web-library uses an iframe for shared model caching. This frame needs to be served
 from a url in development mode. To do this, either:
 
 1. Quit webpack and instead use: npm run watch
@@ -71,11 +71,11 @@ from a url in development mode. To do this, either:
   }
 }
 
-module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
+export default async function ({ outDir, nodeModulesDir, pkg, config, env }, { mode }) {
   const framePort = await (await import('get-port')).default({ port: 63779 })
   const urlJoin = (await import('url-join')).default
   return ['library', 'frame'].map((component) => {
-    const srcDir = __dirname
+    const srcDir = import.meta.dirname
 
     let output
     let plugins
@@ -92,7 +92,7 @@ module.exports = async function ({ outDir, nodeModulesDir, pkg, config, env }, {
         plugins = [
           rollupTypesPlugin(
             path.join(srcDir, component, 'index.ts'),
-            path.join(__dirname, 'types-rollup.config.js'),
+            path.join(import.meta.dirname, 'types-rollup.config.js'),
             path.join(outDir, 'web-library/index.d.ts')
           ),
           new CopyWebpackPlugin({

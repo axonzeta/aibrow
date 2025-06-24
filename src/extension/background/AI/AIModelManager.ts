@@ -177,7 +177,7 @@ class AIModelManagerImpl extends EventEmitter {
         progressFn(manifest.id, loaded, total)
       }
     }
-    const progress: { [key: string]: { size: number, loaded: number }} = assets.reduce((acc, asset) => {
+    const progress: Record<string, { size: number, loaded: number }> = assets.reduce((acc, asset) => {
       acc[asset.id] = { size: asset.size, loaded: 0 }
       return acc
     }, {})

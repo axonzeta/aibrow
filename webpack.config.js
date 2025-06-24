@@ -1,23 +1,28 @@
-const path = require('path')
-const pkg = require('./package.json')
-const pkgLock = require('./package-lock.json')
-const config = require('./config.json')
-const webpack = require('webpack')
-const fs = require('fs-extra')
+import path from 'path'
+import fs from 'fs-extra'
+import webpack from 'webpack'
+import extensionConfig from './src/extension/webpack.config.js'
+import extensionLibraryConfig from './src/extension-library/webpack.config.js'
+import nativeConfig from './src/native/webpack.config.js'
+import webLibraryConfig from './src/web-library/webpack.config.js'
+
+const pkg = fs.readJsonSync(path.join(import.meta.dirname, 'package.json'))
+const pkgLock = fs.readJsonSync(path.join(import.meta.dirname, 'package-lock.json'))
+const config = fs.readJsonSync(path.join(import.meta.dirname, 'config.json'))
 
 const registry = {
-  extension: require('./src/extension/webpack.config.cjs'),
-  'extension-library': require('./src/extension-library/webpack.config.cjs'),
-  native: require('./src/native/webpack.config.cjs'),
-  'web-library': require('./src/web-library/webpack.config.cjs')
+  extension: extensionConfig,
+  'extension-library': extensionLibraryConfig,
+  native: nativeConfig,
+  'web-library': webLibraryConfig
 }
 
-module.exports = async function (env, args) {
+export default async function (env, args) {
   const taskInput = env.task ? env.task.split(',') : ['all']
   const taskIds = taskInput.includes('all') ? Object.keys(registry) : taskInput
   const taskConfig = {
-    outDir: path.join(__dirname, 'out'),
-    nodeModulesDir: path.join(__dirname, 'node_modules'),
+    outDir: path.join(import.meta.dirname, 'out'),
+    nodeModulesDir: path.join(import.meta.dirname, 'node_modules'),
     env,
     pkg,
     pkgLock,

@@ -1,8 +1,8 @@
 type TemplateOptions = {
-  text?: { [key: string]: string }
-  click?: { [key: string]: (evt: MouseEvent) => void },
+  text?: Record<string, string>
+  click?: Record<string, (evt: MouseEvent) => void>,
   into?: HTMLElement | string,
-  render?: { [key: string]: () => HTMLElement | HTMLElement[] }
+  render?: Record<string, () => HTMLElement | HTMLElement[]>
 }
 
 /* **************************************************************************/

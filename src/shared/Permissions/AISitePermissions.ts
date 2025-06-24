@@ -75,7 +75,7 @@ export async function getAllSitePermissions () {
  */
 export async function getAllSitePermissionsGroupedByOrigin () {
   const permissions = await getAllSitePermissions()
-  const nested: { [key: string]: { origin: string, models: SitePermission[] }} = {}
+  const nested: Record<string, { origin: string, models: SitePermission[] }> = {}
   for (const permission of permissions) {
     if (!nested[permission.origin]) {
       nested[permission.origin] = {

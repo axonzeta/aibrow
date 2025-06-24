@@ -20,7 +20,7 @@ export class IPCClient {
 
   #destroyed = false
   #port: chrome.runtime.Port
-  #requests: Set<IPCInflightRequest> = new Set()
+  #requests = new Set<IPCInflightRequest>()
 
   /* **************************************************************************/
   // MARK: Lifecycle

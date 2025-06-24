@@ -224,7 +224,7 @@ class LanguageModelHandler {
         }
       }
 
-      return <LanguageModelParams> {
+      return {
         defaultTopK: manifest.config.topK?.[1] ?? null,
         maxTopK: manifest.config.topK?.[2] ?? null,
         defaultTopP: manifest.config.topP?.[1] ?? null,
@@ -233,7 +233,7 @@ class LanguageModelHandler {
         maxRepeatPenalty: manifest.config.repeatPenalty?.[2] ?? null,
         defaultTemperature: manifest.config.temperature?.[1] ?? null,
         maxTemperature: manifest.config.temperature?.[2] ?? null
-      }
+      } as LanguageModelParams
     })
   }
 

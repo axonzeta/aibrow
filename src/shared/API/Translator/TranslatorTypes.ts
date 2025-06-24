@@ -8,8 +8,8 @@ import {
 /* **************************************************************************/
 
 export type TranslatorCreateOptions = AIModelCoreCreateOptions & {
-    sourceLanguage: string
-    targetLanguage: string
+  sourceLanguage: string
+  targetLanguage: string
 }
 
 /* **************************************************************************/

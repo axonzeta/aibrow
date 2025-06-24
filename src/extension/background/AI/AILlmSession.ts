@@ -17,7 +17,7 @@ import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
 type SupportedEngines = {
   engines: AIModelGpuEngine[] | undefined
   resolving: boolean
-  callbacks: Array<(engines: AIModelGpuEngine[]) => void>
+  callbacks: ((engines: AIModelGpuEngine[]) => void)[]
 }
 
 type GetEmbeddingRequestOptions = {

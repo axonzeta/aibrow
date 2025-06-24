@@ -14,7 +14,7 @@ export class IPCServer {
 
   #port: chrome.runtime.Port
   #destroyed = false
-  #requestHandlers: Map<string, RequestHandler> = new Map()
+  #requestHandlers = new Map<string, RequestHandler>()
 
   /* **************************************************************************/
   // MARK: Lifecycle

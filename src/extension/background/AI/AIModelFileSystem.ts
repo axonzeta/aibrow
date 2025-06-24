@@ -43,7 +43,7 @@ class AIModelFileSystem {
    * @param stats=false: true to include the stats info
    * @returns an array of installed models
    */
-  async getInstalledModels (stats = false): Promise<Array<{ manifest: AIModelManifest, stats: AIModelStats } | AIModelManifest>> {
+  async getInstalledModels (stats = false): Promise<({ manifest: AIModelManifest, stats: AIModelStats } | AIModelManifest)[]> {
     return await NativeIPC.request(kModelFileSystemGetInstalledModels, { stats })
   }
 

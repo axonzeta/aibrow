@@ -24,10 +24,10 @@ import {
 } from '../../Errors'
 import { createDownloadProgressFn } from '../Helpers'
 
-type AIEmbeddingVectorListItem = Array<{
+type AIEmbeddingVectorListItem = {
   id: any
   vector: EmbeddingVector
-}>
+}[]
 
 export class LanguageModel extends EventTarget implements AICoreModel {
   /* **************************************************************************/
@@ -197,7 +197,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
     }
 
     return Array.from(similarities.keys()).sort((a, b) => (
-      similarities.get(b)! - similarities.get(a)!
+      similarities.get(b) - similarities.get(a)
     ))
   }
 }

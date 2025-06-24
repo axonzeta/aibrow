@@ -1,10 +1,10 @@
-const path = require('path')
-const fs = require('fs-extra')
-const CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin')
-const CircularDependencyPlugin = require('circular-dependency-plugin')
-const webpack = require('webpack')
-const TerserPlugin = require('terser-webpack-plugin')
-const { pathsToWebpackAlias } = require('../../../build/tsconfig_util.cjs')
+import path from 'path'
+import fs from 'fs-extra'
+import CaseSensitivePathsPlugin from 'case-sensitive-paths-webpack-plugin'
+import CircularDependencyPlugin from 'circular-dependency-plugin'
+import webpack from 'webpack'
+import TerserPlugin from 'terser-webpack-plugin'
+import { pathsToWebpackAlias } from '../../../build/tsconfig_util.js'
 
 /* **************************************************************************/
 // MARK: Node modules
@@ -101,12 +101,12 @@ function externalNodeModulesTracker (pkg, nodeModulesDir, $externals) {
  * @param config: the app config
  * @returns the webpack config
  */
-module.exports = function (
+export default function (
   { src: srcDir, out: outDir, nodeModules: nodeModulesDir },
   pkg,
   pkgLock,
   mode,
-  config
+  _config
 ) {
   const bootOutputPath = path.join(outDir, 'boot.cjs')
 
