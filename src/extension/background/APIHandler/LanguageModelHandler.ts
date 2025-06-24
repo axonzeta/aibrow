@@ -113,7 +113,8 @@ class LanguageModelHandler {
   async #buildPrompt (
     manifest: AIModelManifest,
     promptProps: Partial<AIModelPromptProps>,
-    messages: LanguageModelMessage[]
+    messages: LanguageModelMessage[],
+    prefix: string | undefined
   ) {
     if (!manifest.prompts[AIModelPromptType.LanguageModel]) {
       throw new Error(kModelPromptTypeNotSupported)
@@ -154,7 +155,8 @@ class LanguageModelHandler {
         bos_token: manifest.tokens.bosToken,
         eos_token: manifest.tokens.eosToken,
         add_generation_prompt: true
-      })
+      }) + (prefix ? prefix.trim() : '')
+
       const tokenCount = await AILlmSession.countTokens(prompt, promptProps, {})
       const contextSize = promptProps.contextSize ?? manifest.tokens.max
       if (tokenCount <= contextSize) {
@@ -249,7 +251,7 @@ class LanguageModelHandler {
       const messages = this.#parseTypoMessages(payload.getAny('initialPrompts', undefined))
       const state = await this.#buildStateFromPayload(manifest, payload, messages)
       const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
-      state.inputUsage = (await this.#buildPrompt(manifest, promptProps, messages)).usage
+      state.inputUsage = (await this.#buildPrompt(manifest, promptProps, messages, undefined)).usage
 
       return { sessionId: nanoid(), state }
     })
@@ -274,7 +276,7 @@ class LanguageModelHandler {
       const { usage } = await this.#buildPrompt(manifest, promptProps, [
         ...messages,
         { role: LanguageModelMessageRole.User, content: [{ type: LanguageModelMessageType.Text, content: input }] }
-      ])
+      ], undefined)
       return usage
     })
   }
@@ -296,31 +298,45 @@ class LanguageModelHandler {
       const sessionId = payload.getNonEmptyString('sessionId')
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
       const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
-      const { prompt } = await this.#buildPrompt(manifest, promptProps, messages)
       const responseConstraint = payload.getAny('options.responseConstraint', undefined)
+      const prefix = payload.getNonEmptyTrimString('options.prefix', '')
+      const { prompt } = await this.#buildPrompt(manifest, promptProps, messages, prefix)
 
       let grammar: any
       if (responseConstraint) {
         grammar = responseConstraint
       }
 
+      let pendingPrefixEmit = !!prefix
       const reply = (await AILlmSession.prompt(
         sessionId,
         prompt,
         grammar ? { ...promptProps, grammar } : promptProps,
         {
           signal: channel.abortSignal,
-          stream: (chunk: string) => channel.emit(chunk)
+          stream: (chunk: string) => {
+            if (pendingPrefixEmit) {
+              pendingPrefixEmit = false
+              channel.emit(prefix)
+            }
+            channel.emit(chunk)
+          }
         }
       )) as string
 
       const nextMessages = [
         ...messages,
-        { role: LanguageModelMessageRole.Assistant, content: [{ type: LanguageModelMessageType.Text, content: reply }] }
+        {
+          role: LanguageModelMessageRole.Assistant,
+          content: [{
+            type: LanguageModelMessageType.Text,
+            content: prefix + reply
+          }]
+        }
       ]
       return {
         messages: nextMessages,
-        usage: (await this.#buildPrompt(manifest, promptProps, nextMessages)).usage
+        usage: (await this.#buildPrompt(manifest, promptProps, nextMessages, undefined)).usage
       }
     })
   }

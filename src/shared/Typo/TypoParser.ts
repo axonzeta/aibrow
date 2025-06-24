@@ -16,6 +16,15 @@ export function getNonEmptyString (val: any, defaultVal?: string | undefined): s
   return typeof val === 'string' && val.length > 0 ? val : defaultVal
 }
 
+export function getNonEmptyTrimString (val: any, defaultVal?: string | undefined): string | undefined {
+  if (typeof val === 'string') {
+    const trimmed = val.trim()
+    return trimmed.length > 0 ? trimmed : defaultVal
+  } else {
+    return defaultVal
+  }
+}
+
 export function getNumber (val: any, defaultVal?: number | undefined): number | undefined {
   return typeof val === 'number' ? val : defaultVal
 }

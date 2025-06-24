@@ -11,7 +11,8 @@ import {
   LanguageModelAppendOptions,
   LanguageModelState,
   LanguageModelPrompt,
-  languageModelPromptToMessages
+  languageModelPromptToMessages,
+  languageModelPromptAssistantPrefix
 } from './LanguageModelTypes'
 import IPCRegistrar from '../IPCRegistrar'
 import {
@@ -188,7 +189,10 @@ export class LanguageModel extends EventTarget implements AICoreModel {
           {
             sessionId: this.#sessionId,
             state: this.#state,
-            options: { responseConstraint: options.responseConstraint }
+            options: {
+              responseConstraint: options.responseConstraint,
+              prefix: languageModelPromptAssistantPrefix(input)
+            }
           },
           (chunk: string) => {
             controller.enqueue(chunk)

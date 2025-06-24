@@ -29,11 +29,13 @@ export type LanguageModelMessageContent = {
 export type LanguageModelMessage = {
   role: LanguageModelMessageRole
   content: LanguageModelMessageContent[]
+  prefix?: boolean
 }
 
 export type LanguageModelMessageShorthand = {
   role: LanguageModelMessageRole
   content: string
+  prefix?: boolean
 }
 
 export type LanguageModelPrompt = LanguageModelMessage[] | LanguageModelMessageShorthand[] | string
@@ -41,7 +43,7 @@ export type LanguageModelPrompt = LanguageModelMessage[] | LanguageModelMessageS
 export type LanguageModelInitialPrompts = LanguageModelMessage[] | LanguageModelMessageShorthand[]
 
 /**
- * Converts a LanguageModelPrompt to an array of LanguageModelMessage
+ * Converts a LanguageModelPrompt to an array of LanguageModelMessage. Removes any items with prefix set to true.
  * @param input: the input to convert
  * @returns: the full languageModel message
  */
@@ -52,14 +54,17 @@ export function languageModelPromptToMessages (input: LanguageModelPrompt): Lang
       role: LanguageModelMessageRole.User
     }]
   } else if (Array.isArray(input)) {
-    return input.map((item: LanguageModelMessage | LanguageModelMessageShorthand) => {
+    return input.reduce((acc, item: LanguageModelMessage | LanguageModelMessageShorthand) => {
+      if (item.prefix === true) {
+        return acc // Skip prefix items
+      }
       if (typeof (item.content) === 'string') {
-        return {
+        acc.push({
           content: [{ type: LanguageModelMessageType.Text, content: item.content }],
           role: item.role
-        }
+        })
       } else if (Array.isArray(item.content)) {
-        return {
+        acc.push({
           content: item.content.map((contentItem) => {
             if (typeof contentItem === 'string') {
               return { type: LanguageModelMessageType.Text, content: contentItem }
@@ -68,14 +73,36 @@ export function languageModelPromptToMessages (input: LanguageModelPrompt): Lang
             }
           }),
           role: item.role
-        }
+        })
+      } else {
+        throw new Error('Malformed input')
       }
 
-      throw new Error('Malformed input')
-    })
+      return acc
+    }, [] as LanguageModelMessage[])
   }
 
   throw new Error('Malformed input')
+}
+
+/**
+ * Extracts the languageModel prefix from the prompt. The prefix item must be the last item in
+ * the array, have prefix set to true, and have a role of LanguageModelMessageRole.Assistant.
+ * @param input: the input to convert
+ * @returns: the the prefix or undefined
+ */
+export function languageModelPromptAssistantPrefix (input: LanguageModelPrompt): string | undefined {
+  if (Array.isArray(input)) {
+    const last = input.at(-1)
+    if (last && last.prefix === true && last.role === LanguageModelMessageRole.Assistant) {
+      if (typeof last.content === 'string') {
+        return last.content
+      } else if (Array.isArray(last.content)) {
+        throw new Error('Malformed input')
+      }
+    }
+  }
+  return undefined
 }
 
 /* **************************************************************************/

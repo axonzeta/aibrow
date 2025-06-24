@@ -27,9 +27,9 @@ export function createDownloadProgressFn (monitorTarget: AICreateMonitor, signal
  * @returns the last string that was output
  */
 export async function readablePromptStreamToString (stream: ReadableStream) {
-  let last = ''
+  let content = ''
   for await (const chunk of stream) {
-    last = chunk
+    content += chunk
   }
-  return last
+  return content
 }

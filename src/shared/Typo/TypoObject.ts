@@ -3,6 +3,7 @@ import {
   getString,
   getStringArray,
   getNonEmptyString,
+  getNonEmptyTrimString,
   getNumber,
   getEnum,
   getBool,
@@ -47,6 +48,10 @@ class TypoObject {
 
   getNonEmptyString (path: string, defaultVal?: string | undefined): string | undefined {
     return getNonEmptyString(this.#get(path), defaultVal)
+  }
+
+  getNonEmptyTrimString (path: string, defaultVal?: string | undefined): string | undefined {
+    return getNonEmptyTrimString(this.#get(path), defaultVal)
   }
 
   getNumber (path: string, defaultVal?: number | undefined): number | undefined {
