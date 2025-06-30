@@ -23,7 +23,7 @@ export enum LanguageModelMessageRole {
 
 export type LanguageModelMessageContent = {
   type: LanguageModelMessageType
-  content: LanguageModelMessageContentValue
+  value: LanguageModelMessageContentValue
 }
 
 export type LanguageModelMessage = {
@@ -50,7 +50,7 @@ export type LanguageModelInitialPrompts = LanguageModelMessage[] | LanguageModel
 export function languageModelPromptToMessages (input: LanguageModelPrompt): LanguageModelMessage[] {
   if (typeof input === 'string') {
     return [{
-      content: [{ type: LanguageModelMessageType.Text, content: input }],
+      content: [{ type: LanguageModelMessageType.Text, value: input }],
       role: LanguageModelMessageRole.User
     }]
   } else if (Array.isArray(input)) {
@@ -60,16 +60,16 @@ export function languageModelPromptToMessages (input: LanguageModelPrompt): Lang
       }
       if (typeof (item.content) === 'string') {
         acc.push({
-          content: [{ type: LanguageModelMessageType.Text, content: item.content }],
+          content: [{ type: LanguageModelMessageType.Text, value: item.content }],
           role: item.role
         })
       } else if (Array.isArray(item.content)) {
         acc.push({
           content: item.content.map((contentItem) => {
             if (typeof contentItem === 'string') {
-              return { type: LanguageModelMessageType.Text, content: contentItem }
+              return { type: LanguageModelMessageType.Text, value: contentItem }
             } else {
-              return contentItem
+              return { ...contentItem }
             }
           }),
           role: item.role

@@ -80,13 +80,12 @@ class LanguageModelHandler {
           const role: LanguageModelMessageRole = getEnum(item.role, LanguageModelMessageRole, LanguageModelMessageRole.User)
           const content: LanguageModelMessageContent[] = []
           if (typeof (item.content) === 'string') {
-            content.push({ type: LanguageModelMessageType.Text, content: item.content })
+            content.push({ type: LanguageModelMessageType.Text, value: item.content })
           } else if (Array.isArray(item.content)) {
             for (const contentItem of item.content) {
               if (typeof (contentItem) === 'object') {
                 const type: LanguageModelMessageType = getEnum(contentItem.type, LanguageModelMessageType, LanguageModelMessageType.Text)
-                const contentValue = contentItem.content
-                content.push({ type, content: contentValue })
+                content.push({ type, value: contentItem.value })
               }
             }
           }
@@ -145,7 +144,7 @@ class LanguageModelHandler {
         ].flatMap((item) => {
           return item.content.map((contentItem) => {
             if (contentItem.type === LanguageModelMessageType.Text) {
-              return { role: item.role, content: contentItem.content }
+              return { role: item.role, content: contentItem.value }
             } else {
               throw new Error(kModelInputTypeNotSupported)
             }
@@ -261,7 +260,7 @@ class LanguageModelHandler {
       const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
       const { usage } = await this.#buildPrompt(manifest, sessionId, promptProps, [
         ...messages,
-        { role: LanguageModelMessageRole.User, content: [{ type: LanguageModelMessageType.Text, content: input }] }
+        { role: LanguageModelMessageRole.User, content: [{ type: LanguageModelMessageType.Text, value: input }] }
       ], undefined)
       return usage
     })
@@ -315,7 +314,7 @@ class LanguageModelHandler {
           role: LanguageModelMessageRole.Assistant,
           content: [{
             type: LanguageModelMessageType.Text,
-            content: prefix + reply
+            value: prefix + reply
           }]
         }
       ]
