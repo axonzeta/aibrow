@@ -136,9 +136,6 @@ export default async function ({ outDir, nodeModulesDir, pkg, config, env }, { m
             : []
           )
         ]
-        alias = {
-          '@huggingface/transformers': path.resolve(path.join(nodeModulesDir, '@huggingface/transformers'))
-        }
         break
     }
 
@@ -153,7 +150,13 @@ export default async function ({ outDir, nodeModulesDir, pkg, config, env }, { m
         new CleanWebpackPlugin(),
         new CaseSensitivePathsPlugin(),
         new CircularDependencyPlugin({ exclude: /node_modules/, failOnError: true, allowAsyncCycles: false }),
-        new MiniCssExtractPlugin()
+        new MiniCssExtractPlugin(),
+
+        // @huggingface/transformers imports a few node things, which normally fails,
+        // but we need to tell webpack not to try to resolve them
+        new webpack.IgnorePlugin({
+          resourceRegExp: /(^node:)|(.node$)/
+        })
       ],
       module: {
         rules: [
