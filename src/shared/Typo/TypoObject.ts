@@ -78,6 +78,14 @@ class TypoObject {
     const data = this.#get(path)
     return new TypoObject(typeof (data) === 'object' ? data : {})
   }
+
+  /* **************************************************************************/
+  // MARK:
+  /* **************************************************************************/
+
+  has (path: string): boolean {
+    return objectPath.has(this.#data, path)
+  }
 }
 
 export default TypoObject

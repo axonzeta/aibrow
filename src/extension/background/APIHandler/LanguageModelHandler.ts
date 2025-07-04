@@ -9,6 +9,7 @@ import {
   kLanguageModelCreate,
   kLanguageModelDestroy,
   kLanguageModelPrompt,
+  kLanguageModelChat,
   kLanguageModelMeasureInput
 } from '#Shared/API/LanguageModel/LanguageModelIPCTypes'
 import {
@@ -64,6 +65,7 @@ class LanguageModelHandler {
       .addRequestHandler(kLanguageModelCreate, this.#handleCreate)
       .addRequestHandler(kLanguageModelDestroy, this.#handleDestroy)
       .addRequestHandler(kLanguageModelPrompt, this.#handlePrompt)
+      .addRequestHandler(kLanguageModelChat, this.#handleChat)
       .addRequestHandler(kLanguageModelMeasureInput, this.#handleMeasureInput)
   }
 
@@ -340,6 +342,43 @@ class LanguageModelHandler {
         messages: nextMessages,
         usage: (await this.#buildPrompt(manifest, promptProps, nextMessages, undefined)).usage
       }
+    })
+  }
+
+  #handleChat = async (channel: IPCInflightChannel) => {
+    return await APIHelper.handleStandardPromptPreflight(channel, AIModelType.Text, async (
+      manifest,
+      payload
+    ) => {
+      const sessionId = payload.getNonEmptyString('sessionId')
+      const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
+      const responseConstraint = payload.getAny('options.responseConstraint', undefined)
+      const prefix = payload.getNonEmptyTrimString('options.prefix', undefined)
+      const history = payload.has('state.history')
+        ? this.#parseTypoMessages(payload.getAny('state.history', []))
+        : undefined
+      const historyHash = payload.getString('state.historyHash', undefined)
+      const prompt = payload.has('options.prompt')
+        ? this.#parseTypoMessages([payload.getAny('options.prompt')])[0]
+        : undefined
+
+      const reply = await AILlmSession.chat(
+        sessionId,
+        prompt,
+        historyHash,
+        history,
+        {
+          ...promptProps,
+          prefix,
+          grammar: responseConstraint
+        },
+        {
+          signal: channel.abortSignal,
+          stream: (chunk: string) => { channel.emit(chunk) }
+        }
+      )
+
+      return reply
     })
   }
 }

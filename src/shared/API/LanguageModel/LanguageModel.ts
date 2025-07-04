@@ -12,7 +12,9 @@ import {
   LanguageModelState,
   LanguageModelPrompt,
   languageModelPromptToMessages,
-  languageModelPromptAssistantPrefix
+  languageModelPromptAssistantPrefix,
+  LanguageModelMessageRole,
+  LanguageModelMessageType
 } from './LanguageModelTypes'
 import IPCRegistrar from '../IPCRegistrar'
 import {
@@ -22,6 +24,7 @@ import {
   kLanguageModelCreate,
   kLanguageModelDestroy,
   kLanguageModelPrompt,
+  kLanguageModelChat,
   kLanguageModelMeasureInput
 } from './LanguageModelIPCTypes'
 import { throwIPCErrorResponse } from '../../IPC/IPCErrorHelper'
@@ -180,35 +183,109 @@ export class LanguageModel extends EventTarget implements AICoreModel {
     this.#guardDestroyed()
     const signal = AbortSignal.any([options.signal, this.#options.signal].filter((s) => s !== undefined))
 
-    this.#state.messages.push(...languageModelPromptToMessages(input))
+    if (process.env.BROWSER === 'crx' || process.env.BROWSER === 'moz') {
+      this.#state.messages.push(...languageModelPromptToMessages(input))
+      return new ReadableStream({
+        start: (controller) => {
+          const { responseConstraint } = options
+          const { messages, ...passState } = this.#state
+          const prefix = languageModelPromptAssistantPrefix(input)
 
-    return new ReadableStream({
-      start: (controller) => {
-        IPCRegistrar.ipc.stream(
-          kLanguageModelPrompt,
-          {
-            sessionId: this.#sessionId,
-            state: this.#state,
-            options: {
-              responseConstraint: options.responseConstraint,
-              prefix: languageModelPromptAssistantPrefix(input)
-            }
-          },
-          (chunk: string) => {
-            controller.enqueue(chunk)
-          },
-          { signal }
-        ).then(
-          (stateDelta: unknown) => {
-            this.#state = { ...this.#state, ...(stateDelta as Partial<LanguageModelState>) }
-            controller.close()
-          },
-          (ex: Error) => {
-            controller.error(ex)
+          type ChatResponse = {
+            historyRestored: boolean,
+            stateDelta: Partial<LanguageModelState> | undefined
           }
-        )
-      }
-    })
+
+          ;(async () => {
+            try {
+              let res: ChatResponse
+              const options = {
+                responseConstraint,
+                prefix,
+                prompt: messages.at(-1)
+              }
+              let reply = ''
+              const chunkHandler = (chunk: string) => {
+                controller.enqueue(chunk)
+                reply += chunk
+              }
+              const requestOptions = {
+                signal
+              }
+
+              // First request, assume the other side has the chat history
+              res = (await IPCRegistrar.ipc.stream(
+                kLanguageModelChat,
+                {
+                  sessionId: this.#sessionId,
+                  state: passState,
+                  options
+                },
+                chunkHandler,
+                requestOptions
+              )) as unknown as ChatResponse
+
+              // If we fail to restore the history, then we need to re-make the request with the chat messages
+              if (res?.historyRestored === false) {
+                res = (await IPCRegistrar.ipc.stream(
+                  kLanguageModelChat,
+                  {
+                    sessionId: this.#sessionId,
+                    state: { ...passState, history: messages.slice(0, -1) }, // Exclude the last message which is the prompt
+                    options
+                  },
+                  chunkHandler,
+                  requestOptions
+                )) as unknown as ChatResponse
+
+                if (res?.historyRestored === false) {
+                  throw new Error('Failed to restore chat history for language model prompt')
+                }
+              }
+
+              this.#state.messages.push({
+                role: LanguageModelMessageRole.Assistant,
+                content: [{ type: LanguageModelMessageType.Text, value: reply }]
+              })
+              this.#state = { ...this.#state, ...res.stateDelta }
+              controller.close()
+            } catch (ex) {
+              controller.error(ex)
+            }
+          })()
+        }
+      })
+    } else {
+      this.#state.messages.push(...languageModelPromptToMessages(input))
+
+      return new ReadableStream({
+        start: (controller) => {
+          IPCRegistrar.ipc.stream(
+            kLanguageModelPrompt,
+            {
+              sessionId: this.#sessionId,
+              state: this.#state,
+              options: {
+                responseConstraint: options.responseConstraint,
+                prefix: languageModelPromptAssistantPrefix(input)
+              }
+            },
+            (chunk: string) => {
+              controller.enqueue(chunk)
+            },
+            { signal }
+          ).then(
+            (stateDelta: unknown) => {
+              this.#state = { ...this.#state, ...(stateDelta as Partial<LanguageModelState>) }
+              controller.close()
+            },
+            (ex: Error) => {
+              controller.error(ex)
+            }
+          )
+        }
+      })
+    }
   }
 
   append = async (input: string, _options: LanguageModelAppendOptions = {}): Promise<void> => {

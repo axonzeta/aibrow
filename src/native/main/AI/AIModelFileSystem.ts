@@ -1,5 +1,6 @@
 import fs from 'fs-extra'
 import path from 'path'
+import os from 'os'
 import * as Paths from '../Paths'
 import sanitizeFilename from 'sanitize-filename'
 import {
@@ -15,9 +16,14 @@ import Logger from '#R/Logger'
 import AIModelId from '#Shared/AIModelId'
 import klaw from 'klaw'
 import normalizePath from 'normalize-path'
+import type { ChatHistoryItem, LlamaContextSequence } from '@aibrow/node-llama-cpp'
+import config from '#Shared/Config'
+import objectHash from 'object-hash'
 
 const kManifestFilename = 'manifest.json'
 const kStatsFilename = 'stats.json'
+const kContextMetaFilename = 'context.json'
+const kContextFilename = 'context.bin'
 
 class AIModelFileSystem {
   /* **************************************************************************/
@@ -155,9 +161,12 @@ class AIModelFileSystem {
       }
     }
 
-    const stats = await fs.readJSON(statsPath, { throws: false })
-    await fs.writeJSON(statsPath, { ...stats, ...delta, id: modelId })
-    await release()
+    try {
+      const stats = await fs.readJSON(statsPath, { throws: false })
+      await fs.writeJSON(statsPath, { ...stats, ...delta, id: modelId })
+    } finally {
+      await release()
+    }
   }
 
   /**
@@ -223,6 +232,132 @@ class AIModelFileSystem {
     const manifest = await this.readModelManifest(modelId)
     if (!manifest.formats[AIModelFormat.GGUF]) { throw new Error('Model has no GGUF format') }
     return this.getAssetPath(manifest.formats[AIModelFormat.GGUF].model)
+  }
+
+  /* **************************************************************************/
+  // MARK: LLM State
+  /* **************************************************************************/
+
+  /**
+   * @param trackingId: the tracking id for the session
+   * @returns the path to the LLM context repo
+   */
+  #getLLMChatContextRepoPath (trackingId: string) {
+    return path.join(os.tmpdir(), 'aibrow_context', sanitizeFilename(trackingId))
+  }
+
+  /**
+   * Gets the version hash for the LLM context
+   * @param manifest: the model manifest
+   * @returns a string hash of the LLM context version
+   */
+  #getLLMChatContextVersionHash (manifest: AIModelManifest) {
+    return objectHash({
+      appVersion: config.version,
+      modelId: manifest.id,
+      modelVersion: manifest.version
+    })
+  }
+
+  /**
+   * Aquires a lock for the LLM context path
+   * @param repoPath: the path to the repo
+   * @returns: the lock release function
+   */
+  async #aquireLLMChatContextLock (repoPath: string): Promise<any> {
+    try {
+      return await lockfile.lock(repoPath)
+    } catch (ex) {
+      if (ex.message.startsWith('ENOENT')) {
+        await fs.ensureDir(repoPath)
+        return await lockfile.lock(repoPath)
+      } else {
+        throw ex
+      }
+    }
+  }
+
+  /**
+   * Writes an LLM context to disk
+   * @param trackingId: the tracking id for the session
+   * @param manifest: the model manifest
+   * @param context: the LLM context sequence
+   * @returns the hash of the chat history
+   */
+  async writeLLMChatContext (
+    trackingId: string,
+    manifest: AIModelManifest,
+    context: LlamaContextSequence,
+    history: ChatHistoryItem[]
+  ) {
+    const contextRepoPath = this.#getLLMChatContextRepoPath(trackingId)
+    const release = await this.#aquireLLMChatContextLock(contextRepoPath)
+    const hash = objectHash(history)
+
+    // Remove and write the files
+    try {
+      await fs.remove(path.join(contextRepoPath, kContextMetaFilename))
+      await fs.remove(path.join(contextRepoPath, kContextFilename))
+      await context.saveStateToFile(path.join(contextRepoPath, kContextFilename))
+      await fs.writeJSON(path.join(contextRepoPath, kContextMetaFilename), {
+        version: this.#getLLMChatContextVersionHash(manifest),
+        history,
+        hash,
+        ts: Date.now()
+      }, { spaces: 2 })
+    } finally {
+      await release()
+    }
+
+    return hash
+  }
+
+  /**
+   * Loads an LLM context from disk
+   * @param trackingId: the tracking id for the session
+   * @param manifest: the model manifest
+   * @param context: the LLM context sequence to load into
+   * @return the chat history or false if the context is not found
+   */
+  async loadLLMChatContext (
+    trackingId: string,
+    manifest: AIModelManifest,
+    hash: string,
+    context: LlamaContextSequence
+  ): Promise<ChatHistoryItem[] | false> {
+    const contextRepoPath = this.#getLLMChatContextRepoPath(trackingId)
+    const release = await this.#aquireLLMChatContextLock(contextRepoPath)
+
+    try {
+      const metadata = await fs.readJSON(path.join(contextRepoPath, kContextMetaFilename))
+      if (
+        metadata.version === this.#getLLMChatContextVersionHash(manifest) &&
+        metadata.hash === hash
+      ) {
+        await context.loadStateFromFile(path.join(contextRepoPath, kContextFilename), { acceptRisk: true })
+        return metadata.history
+      }
+    } finally {
+      await release()
+    }
+
+    return false
+  }
+
+  /**
+   * Removes the LLM context for a given tracking id
+   * @param trackingId: the id of the tracker
+   */
+  async removeLLMChatContext (trackingId: string) {
+    const contextRepoPath = this.#getLLMChatContextRepoPath(trackingId)
+    const release = await this.#aquireLLMChatContextLock(contextRepoPath)
+
+    try {
+      await fs.remove(path.join(contextRepoPath, kContextMetaFilename))
+      await fs.remove(path.join(contextRepoPath, kContextFilename))
+    } finally {
+      await release()
+    }
   }
 }
 

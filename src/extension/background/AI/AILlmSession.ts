@@ -4,6 +4,7 @@ import {
   kLlmSessionGetSupportedGpuEngines,
   kLlmSessionGetModelScore,
   kLlmSessionExecPromptSession,
+  kLlmSessionExecChatSession,
   kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
   kLlmSessionDisposeSession
@@ -13,6 +14,9 @@ import {
 } from '#Shared/API/Embedding/EmbeddingTypes'
 import { kGpuEngineNotSupported } from '#Shared/Errors'
 import { AIModelFormat, AIModelManifest } from '#Shared/AIModelManifest'
+import {
+  LanguageModelMessage
+} from '#Shared/API/LanguageModel/LanguageModelTypes'
 
 type SupportedEngines = {
   engines: AIModelGpuEngine[] | undefined
@@ -121,12 +125,45 @@ class AILlmSession {
    * @param props: the prompt model props
    * @param streamOptions: the options for the return stream
    */
-  async prompt (sessionId: string, prompt: string, props: Partial<AIModelPromptProps>, streamOptions: PromptStreamOptions) {
+  async prompt (
+    sessionId: string,
+    prompt: string,
+    props: Partial<AIModelPromptProps>,
+    streamOptions: PromptStreamOptions
+  ) {
     await this.#ensureGpuEngineSupported(props.gpuEngine)
 
     const res = await NativeIPC.stream(
       kLlmSessionExecPromptSession,
       { props, prompt, sessionId },
+      (chunk: string) => streamOptions.stream(chunk),
+      { signal: streamOptions.signal }
+    )
+    return res
+  }
+
+  /**
+   * Continues a chat session with the given prompt and history
+   * @param sessionId: the id of the session
+   * @param prompt: the next prompt to execute
+   * @param historyHash: the hash of the chat history or undefined
+   * @param history: the chat history or undefined
+   * @param props: the prompt model props
+   * @param streamOptions: the options for the return stream
+   */
+  async chat (
+    sessionId: string,
+    prompt: LanguageModelMessage,
+    historyHash: string | undefined,
+    history: LanguageModelMessage[] | undefined,
+    props: Partial<AIModelPromptProps>,
+    streamOptions: PromptStreamOptions
+  ) {
+    await this.#ensureGpuEngineSupported(props.gpuEngine)
+
+    const res = await NativeIPC.stream(
+      kLlmSessionExecChatSession,
+      { props, prompt, sessionId, historyHash, history },
       (chunk: string) => streamOptions.stream(chunk),
       { signal: streamOptions.signal }
     )

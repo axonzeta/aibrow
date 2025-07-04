@@ -95,6 +95,7 @@ export type AIModelPromptProps = AIModelCoreState & {
   temperature: number
   repeatPenalty: number
   grammar?: any
+  prefix?: string
 }
 
 /* **************************************************************************/

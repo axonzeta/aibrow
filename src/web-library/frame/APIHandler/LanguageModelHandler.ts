@@ -9,6 +9,7 @@ import {
   kLanguageModelCreate,
   kLanguageModelDestroy,
   kLanguageModelPrompt,
+  kLanguageModelChat,
   kLanguageModelMeasureInput
 } from '#Shared/API/LanguageModel/LanguageModelIPCTypes'
 import {
@@ -61,6 +62,7 @@ class LanguageModelHandler {
       .addRequestHandler(kLanguageModelCreate, this.#handleCreate)
       .addRequestHandler(kLanguageModelDestroy, this.#handleDestroy)
       .addRequestHandler(kLanguageModelPrompt, this.#handlePrompt)
+      .addRequestHandler(kLanguageModelChat, this.#handleChat)
       .addRequestHandler(kLanguageModelMeasureInput, this.#handleMeasureInput)
   }
 
@@ -323,6 +325,10 @@ class LanguageModelHandler {
         usage: (await this.#buildPrompt(manifest, sessionId, promptProps, nextMessages, undefined)).usage
       }
     })
+  }
+
+  #handleChat = async (_channel: IPCInflightChannel) => {
+    throw new Error('Chat functionality is not supported in the web library frame. Please use the native binary for chat functionality.')
   }
 }
 
