@@ -7,7 +7,8 @@ import {
   kLlmSessionExecChatSession,
   kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
-  kLlmSessionDisposeSession
+  kLlmSessionDisposeSession,
+  kLlmSessionToolResult
 } from '#Shared/NativeAPI/LlmSessionIPC'
 import {
   EmbeddingVector
@@ -35,6 +36,7 @@ type CountTokensRequestOptions = {
 type PromptStreamOptions = {
   signal?: AbortSignal
   stream: (chunk: string) => void
+  onToolCall?: (toolCall: any) => Promise<any>
 }
 
 class AILlmSession {
@@ -136,7 +138,9 @@ class AILlmSession {
     const res = await NativeIPC.stream(
       kLlmSessionExecPromptSession,
       { props, prompt, sessionId },
-      (chunk: string) => streamOptions.stream(chunk),
+      (chunk: any) => {
+        streamOptions.stream(chunk)
+      },
       { signal: streamOptions.signal }
     )
     return res
@@ -164,7 +168,34 @@ class AILlmSession {
     const res = await NativeIPC.stream(
       kLlmSessionExecChatSession,
       { props, prompt, sessionId, historyHash, history },
-      (chunk: string) => streamOptions.stream(chunk),
+      (chunk: any) => {
+        if (typeof chunk === 'string') {
+          streamOptions.stream(chunk)
+        } else if (chunk?.type === 'chunk') {
+          streamOptions.stream(chunk.data)
+        } else if (chunk?.type === 'toolCall' && streamOptions.onToolCall) {
+          // Handle tool call from native
+          streamOptions.onToolCall(chunk.toolCall).then(result => {
+            // Send result back to native
+            NativeIPC.request(kLlmSessionToolResult, {
+              toolCallId: chunk.toolCallId,
+              result: result.result || result
+            }).catch(error => {
+              console.error('Failed to send tool result:', error)
+              NativeIPC.request(kLlmSessionToolResult, {
+                toolCallId: chunk.toolCallId,
+                error: error.message
+              })
+            })
+          }).catch(error => {
+            // Send error back to native
+            NativeIPC.request(kLlmSessionToolResult, {
+              toolCallId: chunk.toolCallId,
+              error: error.message
+            })
+          })
+        }
+      },
       { signal: streamOptions.signal }
     )
     return res
@@ -185,7 +216,9 @@ class AILlmSession {
     await NativeIPC.stream(
       kLlmSessionGetEmbeddingVectors,
       { inputs, props },
-      (chunk: EmbeddingVector) => { res.push(chunk) },
+      (chunk: any) => {
+        res.push(chunk as EmbeddingVector)
+      },
       { signal: requestOptions.signal }
     )
 

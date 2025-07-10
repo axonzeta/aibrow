@@ -13,6 +13,7 @@ class IPCInflightChannel {
   #id: string
   #openMessage: IPCOpenMessage
   #abortController: AbortController
+  #toolCallResolvers = new Map<string, (result: any) => void>()
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -66,6 +67,15 @@ class IPCInflightChannel {
       case IPCMessageType.clientPing:
         this.#port?.postMessage({ id: this.#id, ipcType: IPCMessageType.serverPong, payload: null } as IPCMessage)
         break
+      case IPCMessageType.clientToolResult: {
+        const { toolCallId, result } = message.payload
+        const resolver = this.#toolCallResolvers.get(toolCallId)
+        if (resolver) {
+          this.#toolCallResolvers.delete(toolCallId)
+          resolver(result)
+        }
+        break
+      }
     }
   }
 
@@ -132,6 +142,26 @@ class IPCInflightChannel {
       payload: null
     } as IPCMessage)
     this.#destroy()
+  }
+
+  /**
+   * Requests tool execution from the client
+   * @param toolCallId: unique ID for this tool call
+   * @param toolCall: the tool call data
+   * @returns Promise that resolves with the tool result
+   */
+  requestToolExecution (toolCallId: string, toolCall: any): Promise<any> {
+    this.#guardDestroyed()
+
+    return new Promise((resolve) => {
+      this.#toolCallResolvers.set(toolCallId, resolve)
+
+      this.#port?.postMessage({
+        id: this.#id,
+        ipcType: IPCMessageType.serverToolCall,
+        payload: { toolCallId, toolCall }
+      } as IPCMessage)
+    })
   }
 }
 

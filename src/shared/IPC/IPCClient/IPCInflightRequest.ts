@@ -5,7 +5,7 @@ import {
 } from '../IPCMessages'
 import { nanoid } from 'nanoid'
 
-export type IPCInflightStreamCallback = (message: any) => void
+export type IPCInflightStreamCallback = (chunk: any) => void | Promise<void>
 export type IPCInflightResolve = (response: any) => void
 export type IPCInflightReject = (error: Error) => void
 

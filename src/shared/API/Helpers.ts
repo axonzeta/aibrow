@@ -7,9 +7,11 @@ import { AICreateMonitor } from './AICoreTypes'
  * @returns a function that can be used as the stream callback to monitor download progress
  */
 export function createDownloadProgressFn (monitorTarget: AICreateMonitor, signal?: AbortSignal) {
-  return (downloadProgress: { loaded: number, total: number, model: string }) => {
+  return (chunk: any) => {
     if (signal?.aborted) { return }
+    if (!chunk) { return }
 
+    const downloadProgress = chunk
     const evt: Event & { loaded?: number, total?: number, model?: string } = new Event('downloadprogress')
     evt.loaded = downloadProgress.loaded
     evt.total = downloadProgress.total

@@ -10,7 +10,9 @@ import {
   kLanguageModelDestroy,
   kLanguageModelPrompt,
   kLanguageModelChat,
-  kLanguageModelMeasureInput
+  kLanguageModelMeasureInput,
+  kLanguageModelToolResult,
+  LanguageModelStreamChunkType
 } from '#Shared/API/LanguageModel/LanguageModelIPCTypes'
 import {
   LanguageModelParams,
@@ -18,7 +20,8 @@ import {
   LanguageModelMessage,
   LanguageModelMessageContent,
   LanguageModelMessageType,
-  LanguageModelMessageRole
+  LanguageModelMessageRole,
+  LanguageModelTool
 } from '#Shared/API/LanguageModel/LanguageModelTypes'
 import APIHelper from './APIHelper'
 import {
@@ -50,6 +53,7 @@ class LanguageModelHandler {
   /* **************************************************************************/
 
   #server: IPCServer
+  #toolCallResolvers = new Map<string, (result: any) => void>()
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -67,6 +71,7 @@ class LanguageModelHandler {
       .addRequestHandler(kLanguageModelPrompt, this.#handlePrompt)
       .addRequestHandler(kLanguageModelChat, this.#handleChat)
       .addRequestHandler(kLanguageModelMeasureInput, this.#handleMeasureInput)
+      .addRequestHandler(kLanguageModelToolResult, this.#handleToolResult)
   }
 
   /* **************************************************************************/
@@ -173,6 +178,14 @@ class LanguageModelHandler {
   /* **************************************************************************/
 
   #buildStateFromPayload = async (manifest: AIModelManifest, payload: TypoObject, messages: LanguageModelMessage[]) => {
+    // Extract tools but strip execute functions for security
+    const tools = payload.getAny('tools', []) as LanguageModelTool[]
+    const toolDescriptors = tools.map(tool => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema
+    }))
+
     return {
       ...await APIHelper.getCoreModelState(manifest, AIModelType.Text, payload),
       topK: payload.getNumber('topK', manifest.config.topK?.[1] ?? 0),
@@ -180,6 +193,7 @@ class LanguageModelHandler {
       repeatPenalty: payload.getNumber('repeatPenalty', manifest.config.repeatPenalty?.[1] ?? 0),
       temperature: payload.getNumber('temperature', manifest.config.temperature?.[1] ?? 0),
       messages,
+      tools: toolDescriptors,
       inputUsage: -1, // Optionally filled later
       inputQuota: manifest.tokens.max
     } as LanguageModelState
@@ -299,6 +313,12 @@ class LanguageModelHandler {
       manifest,
       payload
     ) => {
+      // Check if tools are present and throw error since prompt() doesn't support tools
+      const tools = payload.getAny('state.tools', [])
+      if (tools && tools.length > 0) {
+        throw new Error('Tool calling is not supported with the prompt() method. Use chat() instead.')
+      }
+
       const sessionId = payload.getNonEmptyString('sessionId')
       const messages = this.#parseTypoMessages(payload.getAny('state.messages', undefined))
       const promptProps = await this.#buildPromptPropsFromPayload(manifest, payload)
@@ -362,6 +382,9 @@ class LanguageModelHandler {
         ? this.#parseTypoMessages([payload.getAny('options.prompt')])[0]
         : undefined
 
+      // Extract tools for passing to native backend
+      const tools = payload.getAny('state.tools', [])
+
       const reply = await AILlmSession.chat(
         sessionId,
         prompt,
@@ -370,16 +393,44 @@ class LanguageModelHandler {
         {
           ...promptProps,
           prefix,
-          grammar: responseConstraint
+          grammar: responseConstraint,
+          tools
         },
         {
           signal: channel.abortSignal,
-          stream: (chunk: string) => { channel.emit(chunk) }
+          stream: (chunk: string) => { channel.emit({ type: LanguageModelStreamChunkType.Reply, data: chunk }) },
+          onToolCall: tools && tools.length > 0 ? async (toolCall: any) => {
+            // Create a unique ID for this tool call
+            const toolCallId = nanoid()
+
+            // Emit tool call event to content script
+            channel.emit({ type: LanguageModelStreamChunkType.ToolCall, toolCallId, toolCall })
+
+            // Wait for the tool result
+            return new Promise((resolve) => {
+              this.#toolCallResolvers.set(toolCallId, resolve)
+            })
+          } : undefined
         }
       )
 
       return reply
     })
+  }
+
+  #handleToolResult = async (channel: IPCInflightChannel) => {
+    const payload = new TypoObject(channel.payload)
+    const toolCallId = payload.getNonEmptyString('toolCallId')
+    const result = payload.getAny('result')
+
+    const resolver = this.#toolCallResolvers.get(toolCallId)
+    if (resolver) {
+      this.#toolCallResolvers.delete(toolCallId)
+      resolver(result)
+      return { success: true }
+    } else {
+      throw new Error(`No pending tool call found with ID: ${toolCallId}`)
+    }
   }
 }
 

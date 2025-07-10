@@ -80,7 +80,7 @@ class NativeIPC {
     return await this.stream(
       channel.type,
       channel.payload,
-      (chunk: string) => channel.emit(chunk),
+      (chunk: any) => channel.emit(chunk),
       { signal: channel.abortSignal }
     )
   }

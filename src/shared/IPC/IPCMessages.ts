@@ -2,11 +2,13 @@ export enum IPCMessageType {
   clientOpen,
   clientAbort,
   clientPing,
+  clientToolResult,
   serverResolve,
   serverReject,
   serverEmit,
   serverPong,
-  serverAbort
+  serverAbort,
+  serverToolCall
 }
 
 export type IPCMessage = {

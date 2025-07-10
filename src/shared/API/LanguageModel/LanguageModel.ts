@@ -14,7 +14,10 @@ import {
   languageModelPromptToMessages,
   languageModelPromptAssistantPrefix,
   LanguageModelMessageRole,
-  LanguageModelMessageType
+  LanguageModelMessageType,
+  LanguageModelTool,
+  LanguageModelToolCall,
+  LanguageModelToolResult
 } from './LanguageModelTypes'
 import IPCRegistrar from '../IPCRegistrar'
 import {
@@ -25,7 +28,9 @@ import {
   kLanguageModelDestroy,
   kLanguageModelPrompt,
   kLanguageModelChat,
-  kLanguageModelMeasureInput
+  kLanguageModelMeasureInput,
+  kLanguageModelToolResult,
+  LanguageModelStreamChunkType
 } from './LanguageModelIPCTypes'
 import { throwIPCErrorResponse } from '../../IPC/IPCErrorHelper'
 import {
@@ -93,6 +98,7 @@ export class LanguageModel extends EventTarget implements AICoreModel {
   #options: LanguageModelCreateOptions
   #state: LanguageModelState
   #destroyed = false
+  #tools = new Map<string, LanguageModelTool>()
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -103,6 +109,13 @@ export class LanguageModel extends EventTarget implements AICoreModel {
     this.#sessionId = sessionId
     this.#options = { ...options }
     this.#state = state
+
+    // Set up tools
+    if (options.tools) {
+      for (const tool of options.tools) {
+        this.#tools.set(tool.name, tool)
+      }
+    }
 
     if (this.#options.signal) {
       this.#options.signal.addEventListener('abort', () => this.destroy())
@@ -130,6 +143,32 @@ export class LanguageModel extends EventTarget implements AICoreModel {
     }
 
     return new LanguageModel(sessionId, options, state)
+  }
+
+  #handleToolCall = async (_toolCallId: string, toolCall: LanguageModelToolCall): Promise<LanguageModelToolResult> => {
+    const tool = this.#tools.get(toolCall.name)
+    if (!tool) {
+      return {
+        id: toolCall.id,
+        result: null,
+        error: `Tool '${toolCall.name}' not found`
+      }
+    }
+
+    try {
+      const result = await tool.execute(toolCall.arguments)
+      return {
+        id: toolCall.id,
+        result,
+        error: undefined
+      }
+    } catch (error) {
+      return {
+        id: toolCall.id,
+        result: null,
+        error: error instanceof Error ? error.message : String(error)
+      }
+    }
   }
 
   destroy = () => {
@@ -205,9 +244,32 @@ export class LanguageModel extends EventTarget implements AICoreModel {
                 prompt: messages.at(-1)
               }
               let reply = ''
-              const chunkHandler = (chunk: string) => {
-                controller.enqueue(chunk)
-                reply += chunk
+              const chunkHandler = async (event: any) => {
+                switch (event?.type) {
+                  case LanguageModelStreamChunkType.Reply: {
+                    const chunk = event.data as string
+                    controller.enqueue(chunk)
+                    reply += chunk
+                    break
+                  }
+                  case LanguageModelStreamChunkType.ToolCall: {
+                    try {
+                      // Handle tool call
+                      const result = await this.#handleToolCall(event.toolCallId, event.toolCall)
+                      // Send result back via separate IPC request
+                      await IPCRegistrar.ipc.request(kLanguageModelToolResult, {
+                        sessionId: this.#sessionId,
+                        toolCallId: event.toolCallId,
+                        result
+                      })
+                    } catch (error) {
+                      // Bubble up errors to parent try/catch
+                      controller.error(error)
+                      throw error
+                    }
+                    break
+                  }
+                }
               }
               const requestOptions = {
                 signal
@@ -256,6 +318,11 @@ export class LanguageModel extends EventTarget implements AICoreModel {
         }
       })
     } else {
+      // Check if tools are defined and throw error since kLanguageModelPrompt doesn't support tools
+      if (this.#tools.size > 0) {
+        throw new Error('Tool calling is not supported in this mode.')
+      }
+
       this.#state.messages.push(...languageModelPromptToMessages(input))
 
       return new ReadableStream({

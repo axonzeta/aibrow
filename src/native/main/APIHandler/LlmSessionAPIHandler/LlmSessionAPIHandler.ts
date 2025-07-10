@@ -6,7 +6,8 @@ import {
   kLlmSessionExecChatSession,
   kLlmSessionGetEmbeddingVectors,
   kLlmSessionCountPromptTokens,
-  kLlmSessionDisposeSession
+  kLlmSessionDisposeSession,
+  kLlmSessionToolResult
 } from '#Shared/NativeAPI/LlmSessionIPC'
 import { AIModelGpuEngine, AIModelPromptProps, AIModelType } from '#Shared/API/AICoreTypes'
 import { importLlama } from '#R/Llama'
@@ -25,7 +26,8 @@ import type {
   ChatHistoryItem,
   ChatSystemMessage,
   ChatUserMessage,
-  ChatModelResponse
+  ChatModelResponse,
+  LLamaChatPromptOptions
 } from '@aibrow/node-llama-cpp'
 import {
   LanguageModelMessage,
@@ -39,6 +41,7 @@ class LlmSessionAPIHandler {
 
   #activeSession: LlmSession
   #requestQueue: AsyncQueue
+  #toolCallResolvers: Map<string, { resolve: (value: any) => void, reject: (reason?: any) => void }>
 
   /* **************************************************************************/
   // MARK: Lifecycle
@@ -47,6 +50,7 @@ class LlmSessionAPIHandler {
   constructor () {
     this.#activeSession = new LlmSession()
     this.#requestQueue = new AsyncQueue()
+    this.#toolCallResolvers = new Map()
 
     BrowserIPC
       .addRequestHandler(kLlmSessionGetSupportedGpuEngines, this.#handleGetSupportedGpuEngines)
@@ -56,6 +60,7 @@ class LlmSessionAPIHandler {
       .addRequestHandler(kLlmSessionGetEmbeddingVectors, this.#handleGetEmbeddingVectors)
       .addRequestHandler(kLlmSessionCountPromptTokens, this.#handleExecCountPromptTokens)
       .addRequestHandler(kLlmSessionDisposeSession, this.#handleDisposeSession)
+      .addRequestHandler(kLlmSessionToolResult, this.#handleToolResult)
   }
 
   /* **************************************************************************/
@@ -151,7 +156,8 @@ class LlmSessionAPIHandler {
       flashAttention: props.getBool('flashAttention', manifest.config.flashAttention),
       contextSize: clamp(props.getNumber('contextSize', manifest.tokens.default), 1, manifest.tokens.max),
       useMmap: props.getBool('useMmap', true),
-      grammar: props.getAny('grammar')
+      grammar: props.getAny('grammar'),
+      tools: props.getAny('tools')
     } as AIModelPromptProps
   }
 
@@ -300,7 +306,8 @@ class LlmSessionAPIHandler {
           contextSize,
           useMmap,
           grammar,
-          prefix
+          prefix,
+          tools
         } = this.#sanitizeModelProps(payload.getAny('props'), manifest)
         const sessionId = payload.getNonEmptyString('sessionId')
         const historyHash = payload.getNonEmptyString('historyHash', undefined)
@@ -331,8 +338,60 @@ class LlmSessionAPIHandler {
         // Preflight checks
         if (channel.abortSignal.aborted) { throw new Error(kModelPromptAborted) }
 
+        // Convert tools to node-llama-cpp functions format
+        const functions: Record<string, any> = {}
+        if (tools && tools.length > 0) {
+          Logger.log(`Tools available for session ${sessionId}:`, tools.map((t: any) => t.name))
+
+          const { defineChatSessionFunction } = await importLlama()
+          for (const tool of tools) {
+            functions[tool.name] = defineChatSessionFunction({
+              description: tool.description || '',
+              params: tool.inputSchema || {
+                type: 'object',
+                properties: {}
+              },
+              handler: async (params: any) => {
+                // Generate unique ID for this tool call
+                const toolCallId = `${sessionId}_${tool.name}_${Date.now()}`
+
+                Logger.log(`Tool call requested: ${tool.name} with params:`, params)
+
+                // Emit tool call request to extension
+                channel.emit({
+                  type: 'toolCall',
+                  toolCallId,
+                  toolCall: {
+                    id: toolCallId,
+                    name: tool.name,
+                    arguments: params
+                  }
+                })
+
+                // Wait for result from extension
+                return new Promise((resolve, reject) => {
+                  this.#toolCallResolvers.set(toolCallId, { resolve, reject })
+
+                  // Set timeout to prevent hanging
+                  setTimeout(() => {
+                    if (this.#toolCallResolvers.has(toolCallId)) {
+                      this.#toolCallResolvers.delete(toolCallId)
+                      reject(new Error(`Tool call ${tool.name} timed out`))
+                    }
+                  }, 300000) // 5 minute timeout
+                })
+              }
+            })
+          }
+        }
+
+        // Check for grammar + tools conflict
+        if (grammar && tools && tools.length > 0) {
+          throw new Error('Cannot use both grammar and tools at the same time')
+        }
+
         // Run the prompt
-        const result = await session.promptWithMeta(prompt, {
+        const promptOptions: LLamaChatPromptOptions = {
           signal: channel.abortSignal,
           topK,
           topP,
@@ -340,14 +399,20 @@ class LlmSessionAPIHandler {
           responsePrefix: prefix,
           temperature,
           onTextChunk: (chunk) => {
-            channel.emit(chunk)
+            channel.emit({ type: 'chunk', data: chunk })
             output += chunk
           },
-          grammar: grammar
-            ? await this.#activeSession.llama.createGrammarForJsonSchema(grammar)
-            : undefined,
           customStopTriggers: manifest.tokens.stop
-        })
+        }
+
+        // Add either grammar or functions, but not both
+        if (grammar) {
+          promptOptions.grammar = await this.#activeSession.llama.createGrammarForJsonSchema(grammar)
+        } else if (Object.keys(functions).length > 0) {
+          promptOptions.functions = functions
+        }
+
+        const result = await session.promptWithMeta(prompt, promptOptions)
 
         // Persist the new chat history
         const nextHistoryHash = await this.#activeSession.saveChatHistory(sessionId, manifest)
@@ -458,6 +523,28 @@ class LlmSessionAPIHandler {
       const sessionId = channel.payload.session
       this.#activeSession.userRequestsDisposal(sessionId)
     })
+  }
+
+  /* **************************************************************************/
+  // MARK: Tool handling
+  /* **************************************************************************/
+
+  #handleToolResult = async (channel: IPCInflightChannel) => {
+    const { toolCallId, result, error } = channel.payload
+    const resolver = this.#toolCallResolvers.get(toolCallId)
+    if (resolver) {
+      this.#toolCallResolvers.delete(toolCallId)
+      if (error) {
+        Logger.error(`Tool call result error for ${toolCallId}:`, error)
+        resolver.reject(new Error(error))
+      } else {
+        Logger.log(`Tool call result for ${toolCallId}:`, result)
+        resolver.resolve(result)
+      }
+    } else {
+      Logger.warn(`No resolver found for tool call ${toolCallId}`)
+    }
+    return { success: true }
   }
 }
 

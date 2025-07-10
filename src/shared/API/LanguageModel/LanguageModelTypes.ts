@@ -114,6 +114,29 @@ export type LanguageModelExpectedInput = {
   languages?: string[];
 }
 
+export type LanguageModelTool = {
+  name: string
+  description?: string
+  inputSchema?: {
+    type: 'object'
+    properties: Record<string, any>
+    required?: string[]
+  }
+  execute: (args: any) => Promise<any> | any
+}
+
+export type LanguageModelToolCall = {
+  id: string
+  name: string
+  arguments: any
+}
+
+export type LanguageModelToolResult = {
+  id: string
+  result: any
+  error?: string
+}
+
 export type LanguageModelCreateOptions = AIModelCoreCreateOptions & {
   initialPrompts?: LanguageModelInitialPrompts
   topK?: number
@@ -121,6 +144,7 @@ export type LanguageModelCreateOptions = AIModelCoreCreateOptions & {
   repeatPenalty?: number
   temperature?: number
   expectedInputs?: LanguageModelExpectedInput[]
+  tools?: LanguageModelTool[]
 }
 
 export type LanguageModelCloneOptions = {
@@ -173,4 +197,5 @@ export type LanguageModelState = AIModelCoreState & {
   inputUsage: number
   inputQuota: number
   messages: LanguageModelMessage[]
+  tools?: LanguageModelTool[]
 }

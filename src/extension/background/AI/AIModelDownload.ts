@@ -61,7 +61,12 @@ class AIModelDownload {
     return await NativeIPC.stream(
       kModelDownloadAsset,
       { asset },
-      ({ loaded, total }) => progressFn?.(asset.id, loaded, total)
+      (chunk: any) => {
+        if (chunk) {
+          const { loaded, total } = chunk
+          progressFn?.(asset.id, loaded, total)
+        }
+      }
     )
   }
 }

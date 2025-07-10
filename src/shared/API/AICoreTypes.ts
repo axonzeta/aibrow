@@ -96,6 +96,7 @@ export type AIModelPromptProps = AIModelCoreState & {
   repeatPenalty: number
   grammar?: any
   prefix?: string
+  tools?: any[]
 }
 
 /* **************************************************************************/
